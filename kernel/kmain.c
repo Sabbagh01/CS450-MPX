@@ -28,44 +28,57 @@ static void klogv(device dev, const char *msg)
 
 void kmain(void)
 {
+    int stat;
 	// 0) Serial I/O -- mpx/serial.h
 	// Note that here, you should call the function *before* the output via klogv(),
 	// or the message won't print. In all other cases, the output should come first
 	// as it describes what is about to happen.
+    stat = serial_init (COM1);
+    if (!stat)
+    {
+        // handle the error
+    }
 	klogv(COM1, "Initialized serial I/O on COM1 device...");
 
 	// 1) Global Descriptor Table -- mpx/gdt.h
 	// Keeps track of the various memory segments (Code, Data, Stack, etc.) required by the
 	// x86 architecture.
 	klogv(COM1, "Initializing Global Descriptor Table...");
+    gdt_init ();
 
 	// 2) Interrupt Descriptor Table -- mpx/interrupts.h
 	// Keeps track of where the various Interrupt Vectors are stored.
 	klogv(COM1, "Initializing Interrupt Descriptor Table...");
-
+    idt_init ();
+    
 	// 3) Disable Interrupts -- mpx/interrupts.h
 	// You'll be modifying how interrupts work, so disable them to avoid crashing.
 	klogv(COM1, "Disabling interrupts...");
+    cli ();
 
 	// 4) Interrupt Vector -- mpx/interrupts.h
 	// Initialize and install Interrupt Service Routines for the first 32 IRQs
 	// (bare minimum for a functioning x86 system).
 	klogv(COM1, "Initializing Interrupt Vectors...");
+    irq_init (); // install initial (default) basic exception or trap handlers
 
 	// 5) Programmable Interrupt Controller -- mpx/interrupts.h
 	// Initialize the PIC so that the ISRs installed in the previous step are connected
 	// correctly.
 	klogv(COM1, "Initializing Programmble Interrupt Controller...");
+    pic_init ();
 
 	// 6) Reenable interrupts -- mpx/interrupts.h
 	// Now that interrupt routines are set up, allow interrupts to happen again.
 	klogv(COM1, "Enabling Interrupts...");
+    sti ();
 
 	// 7) Virtual Memory -- mpx/vm.h
 	// Initialize the Memory Management Unit's Page Tables and enable virtual memory. This
 	// will also enable the kernel's (basic) heap manager, allowing the use of sys_alloc_mem()
 	// (which has a maximum of 64kiB until you implement a full memory manager).
 	klogv(COM1, "Initializing virtual memory...");
+    vm_init ();
 
 	// 8) MPX Modules -- *headers vary*
 	// Module specific initialization -- not all modules require this
