@@ -6,7 +6,9 @@ KERNEL_OBJECTS =\
 kernel/irq.o\
 kernel/core.o\
 kernel/kmain.o\
-kernel/serial.o
+kernel/serial.o\
+kernel/comhand.o\
+kernel/time.o\
 
 LIB_OBJECTS =\
 lib/ctype.o\
