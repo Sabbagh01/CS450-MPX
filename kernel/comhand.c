@@ -16,11 +16,10 @@ void comhand(void ){
     while(1){
 
         //menu display
-        int bufferSize = 50;
+        int bufferSize = 100;
         sys_req(WRITE, COM1,"Welocme to 5x5 MPX. Please select an option by choosing a number.", bufferSize);
-        sys_req(WRITE, COM1,"1) Help.", bufferSize);
-        sys_req(WRITE, COM1,"2) Set Time.", bufferSize);
-        sys_req(WRITE, COM1,"3) Get Time.", bufferSize);
+        sys_req(WRITE, COM1,"1) Help.        2) Set Time.    3) Get Time.    4) Set Date ", bufferSize);
+        sys_req(WRITE, COM1,"5) Get Date.    6) Version.     7) ShutDown.", bufferSize);
         sys_req(WRITE, COM1,"Enter choice: ", bufferSize);
 
         //read the choice from the user.
