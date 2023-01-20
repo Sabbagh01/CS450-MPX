@@ -1,6 +1,7 @@
 #include <mpx/io.h>
 #include <mpx/serial.h>
 #include <sys_req.h>
+#include <ctype.h>
 
 enum uart_registers {
 	RBR = 0,	// Receive Buffer
@@ -62,15 +63,83 @@ int serial_out(device dev, const char *buffer, size_t len)
 
 int serial_poll(device dev, char *buffer, size_t len)
 {
-	// insert your code to gather keyboard input via the technique of polling.
-	// You must validate each key and handle special keys such as delete, back space, and
-	// arrow keys
-
-	// REMOVE THIS -- IT ONLY EXISTS TO AVOID UNUSED PARAMETER WARNINGS
-	// Failure to remove this comment and the following line *will* result in
-	// losing points for inattention to detail
-	(void)dev; (void)buffer;
-
-	// THIS MUST BE CHANGED TO RETURN THE CORRECT VALUE
-	return (int)len;
+    int dno = serial_devno(dev);
+	if (dno == -1 || initialized[dno] == 0)
+    {
+		return -1;
+	}
+    
+    // TODO: Finish Backspace key handling (serial echo) and add Delete key handling
+    unsigned int b; // general purpose iterator
+    unsigned int currsz = 0; // tracked buffer size
+    unsigned int i = 0; // position to put next byte
+    --len;
+    buffer[len] = '\0'; // ensure buffer has null terminator
+	while ( currsz < len )
+    {
+        if ( inb (dev + LSR) & 0x01 )
+        {
+            char c = inb (dev + RBR);
+            // check for special buffer/position manipulation keys
+            if ( (c == 0x7F) && (i > 0) ) // backspace key
+            {
+                --i;
+                for (b = 0; b < currsz - i; ++b)
+                {
+                    buffer[i + b] = buffer[(i + 1) + b];
+                }
+                buffer[currsz - 1] = '\0';
+                outb (dev + RBR, '\b');
+                outb (dev + RBR, buffer[i]);
+                --currsz;
+            }
+            else if ( c == 0x1B ) // escape sequence
+            {
+                c = inb (dev + RBR);
+                if ( c == '[' ) // cursor sequence
+                {
+                    c = inb (dev + RBR);
+                    switch (c)
+                    {
+                        case 'D': // cursor to left
+                            if (i > 0) // prevent cursor underflowing
+                            {
+                                --i;
+                                outb (dev + RBR, 0x1B);
+                                outb (dev + RBR, '[');
+                                outb (dev + RBR, 'D');
+                            }
+                            break;
+                        case 'C': // cursor to right
+                            if (i < currsz) // prevent cursor going over the current text
+                            {
+                                ++i;
+                                outb (dev + RBR, 0x1B);
+                                outb (dev + RBR, '[');
+                                outb (dev + RBR, 'C');
+                            }
+                            break;
+                    }
+                }
+            }
+            else if ( (c >= '!' && c <= '~') || isspace (c) ) // handle insertion of symbolic characters (includes alphanum)
+            {
+                for (b = currsz - i; b > 0; --b)
+                {
+                    buffer[b + 1] = buffer[b];
+                }
+                buffer[i] = c;
+                ++i;
+                ++currsz;
+                if ( (c == '\n') || (c == '\r') )
+                {
+                    break; // poll breakpoint (ENTER recieved)
+                }
+                else {
+                    outb (dev + RBR, c);
+                }
+            }
+        }
+    }
+    return currsz;
 }
