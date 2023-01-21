@@ -73,8 +73,6 @@ int serial_poll(device dev, char *buffer, size_t len)
     unsigned int b; // general purpose iterator
     unsigned int currsz = 0; // tracked buffer size
     unsigned int i = 0; // position to put next byte
-    --len;
-    buffer[len] = '\0'; // ensure buffer has null terminator
 	while ( currsz < len )
     {
         if ( inb (dev + LSR) & 0x01 )
@@ -83,15 +81,28 @@ int serial_poll(device dev, char *buffer, size_t len)
             // check for special buffer/position manipulation keys
             if ( (c == 0x7F) && (i > 0) ) // backspace key
             {
-                --i;
+                // manip buffer
+                // shift bytes on and after cursor to left to overwrite char i-1
                 for (b = 0; b < currsz - i; ++b)
                 {
-                    buffer[i + b] = buffer[(i + 1) + b];
+                    buffer[i - 1 + b] = buffer[i + b];
+                    outb(dev, buffer[i - 1 + b]);
                 }
-                buffer[currsz - 1] = '\0';
-                outb (dev + RBR, '\b');
-                outb (dev + RBR, buffer[i]);
-                --currsz;
+                buffer[currsz - 1] = '\0'; // clear last character after shift
+                --i;
+               --currsz;
+                outb (dev + RBR, '\r');
+                for (b = 0; b < currsz; ++b)
+                {
+                    outb (dev + RBR, buffer[b]);
+                }
+                outb (dev + RBR, ' ');
+                for (b = 0; b < currsz - i + 1; ++b)
+                {
+                    outb (dev + RBR, 0x1B);
+                    outb (dev + RBR, '[');
+                    outb (dev + RBR, 'D');
+                }
             }
             else if ( c == 0x1B ) // escape sequence
             {
@@ -124,19 +135,27 @@ int serial_poll(device dev, char *buffer, size_t len)
             }
             else if ( (c >= '!' && c <= '~') || isspace (c) ) // handle insertion of symbolic characters (includes alphanum)
             {
-                for (b = currsz - i; b > 0; --b)
-                {
-                    buffer[b + 1] = buffer[b];
-                }
-                buffer[i] = c;
-                ++i;
-                ++currsz;
                 if ( (c == '\n') || (c == '\r') )
                 {
                     break; // poll breakpoint (ENTER recieved)
                 }
-                else {
-                    outb (dev + RBR, c);
+                for (b = currsz - i; b > 0; --b)
+                {
+                    buffer[i + b] = buffer[i + b - 1];
+                }
+                buffer[i] = c;
+                ++i;
+                ++currsz;
+                outb (dev + RBR, '\r');
+                for (b = 0; b < currsz; ++b)
+                {
+                    outb(dev + RBR, buffer[b]);
+                }
+                for (b = 0; b < currsz - i; ++b)
+                {
+                    outb (dev + RBR, 0x1B);
+                    outb (dev + RBR, '[');
+                    outb (dev + RBR, 'D');
                 }
             }
         }
