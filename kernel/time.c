@@ -32,39 +32,38 @@ int binToDec(int binNum){
         }
         return bin;
     }
-void setTime(int hours, int minute, int seconds){
+// void setTime(int hours, int minute){
     
-    cli();
-    // convert to UTC
-    hours = hours + 4;
+//     //();
+//     // convert to UTC
+//     hours = hours + 4;
 
-    // if hours > 24
-    if(hours >= 24){
-        hours = hours - 24;
+//     // if hours > 24
+//     if(hours >= 24){
+//         hours = hours - 24;
         
-        // increment date by 1
-        // int day = BintoDec(outb(0x70, 0x70));
-        // int month = BintoDec(outb(0x70,0x08));
-        // int year = BintoDec(outb(0x70,0x09));
+//         // increment date by 1
+//         // int day = BintoDec(outb(0x70, 0x70));
+//         // int month = BintoDec(outb(0x70,0x08));
+//         // int year = BintoDec(outb(0x70,0x09));
         
-        //setDate(day, month, year);
-    }
+//         //setDate(day, month, year);
+//     }
 
-    // convert to binary
-    outb(0x70, 0x00);
-    outb(0x71,dectoBin(seconds));
+//     // convert to binary
+//     outb(0x70, 0x00);
+//     //outb(0x71,dectoBin(seconds));
     
-    outb(0x70, 0x02);
-    outb(0x71, dectoBin(minute));
+//     outb(0x70, 0x02);
+//     //outb(0x71, dectoBin(minute));
     
-    outb(0x70, 0x04);
-    outb(0x71, dectoBin(hours));
+//     outb(0x70, 0x04);
+//    // outb(0x71, dectoBin(hours));
      
-    sti();
-}
-void getTime(){
-
-}
+//     //sti();
+// }
+//void getTime(){
+//}
 void setDate( int day, int month, int year) {
         
         
