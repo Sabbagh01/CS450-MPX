@@ -3,20 +3,19 @@
 #include <sys_req.h>
 #include <comhand.h>
 #include <string.h>
+#include <time.h>
+#include <stdlib.h>
 
 
-// int splitter(int number){
-//      while(number > 0){
-//             int mod = number % 10;
-//             number = number / 100;
-//         }
-//         return number;
-// }
+
 
 void version();
+void setDate1();
+void help();
 
 void comhand(){
     int x = 1;
+    
     while(x==1){
 
         //menu display Write all messages
@@ -32,7 +31,7 @@ void comhand(){
         size_t lenMes3 = strlen(Message3);
         sys_req(WRITE, COM1, Message3, lenMes3);
 
-        const char *Message4 = "Enter number of choice:";
+        const char *Message4 = "Enter number of choice:\n";
         size_t lenMes4 = strlen(Message4);
         sys_req(WRITE, COM1, Message4, lenMes4);
 
@@ -40,12 +39,39 @@ void comhand(){
 
         char mainChoice[100];
         sys_req(READ, COM1, mainChoice, 100);
-        if (strcmp(mainChoice, "1") == 1){
-            version();
-        }
 
+        if (strcmp(mainChoice, "1") == 0){
+            help();
+        }
+        
+        if (strcmp(mainChoice, "4") == 0){
+            setDate1();
+        }
         x = 0;
     }
+}
+
+void setDate1(){
+    const char *dayMsg = "\nEnter the day as TWO numbers only: \n";
+    size_t lengthMsg1 = strlen(dayMsg);
+    sys_req(WRITE, COM1, dayMsg, lengthMsg1);
+    char dayGet[100];
+    sys_req(READ, COM1, dayGet, 100);
+
+    const char *monthMsg = "Enter the month as TWO numbers only: \n";
+    size_t lengthMsg2 = strlen(dayMsg);
+    sys_req(WRITE, COM1, monthMsg, lengthMsg2);
+    char monthGet[100];
+    sys_req(READ, COM1, monthGet, 100);
+
+    const char *yearMsg = "Enter the year as FOUR numbers only: \n";
+    size_t lengthMsg3 = strlen(yearMsg);
+    sys_req(WRITE, COM1, yearMsg, lengthMsg3);
+    char yearGet[100];
+    sys_req(READ, COM1, yearGet, 100);
+
+    setDate(atoi(dayGet), atoi(monthGet), atoi(yearGet));
+
 }
 
 void version(){

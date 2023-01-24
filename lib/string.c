@@ -92,3 +92,26 @@ char *strtok(char * restrict s1, const char * restrict s2)
 	tok_tmp = NULL;
 	return s1;
 }
+void itoa(char string[], int integer){
+	int i;
+	int remainder;
+	int size = 0;
+	int temp;
+	if(integer == 0){
+		string[0] = '0';
+		size++;
+	}
+	else{
+	temp = integer;
+	while(temp != 0) {
+		++size;
+		temp= temp /10;
+	}
+	for(i=0; i < size; i++){
+		remainder = integer % 10;
+		integer /=10;
+		string[size - (i+1)] = remainder + '0';
+	}
+	}
+	string[size] = '\0';
+}

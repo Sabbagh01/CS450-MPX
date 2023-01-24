@@ -1,6 +1,10 @@
 #include <mpx/io.h>
 #include <mpx/serial.h>
 #include <sys_req.h>
+#include <comhand.h>
+#include <mpx/interrupts.h>
+
+
 
 int binToDec(int binNum){
         int dec = 0;
@@ -32,6 +36,19 @@ int binToDec(int binNum){
         }
         return bin;
     }
+    int year1(int number){
+        while(number > 0){
+            number = number / 100;
+        }
+        return number;
+}
+    int year2(int number){
+         while(number > 0){
+            number = number % 100;
+        }
+        return number;
+    }
+
 // void setTime(int hours, int minute){
     
 //     //();
@@ -166,32 +183,64 @@ void setDate( int day, int month, int year) {
             }
         }
 
+        int half1Year = year1(year);
+        int half2Year = year2(year);
        
         
 
-        // int binYearHalf1 = decToBin();
-        // int binYearHalf2 = decToBin();
-        // int binMonth = decToBin(month);
-        // int binDay = decToBin(day);
+        int binYearHalf1 = decToBin(half1Year);
+        int binYearHalf2 = decToBin(half2Year);
+        int binMonth = decToBin(month);
+        int binDay = decToBin(day);
 
-        //cli();
+        cli();
 
         //first half of years setup
-        // outb(0x70, 0x09);
-        // outb(0x71, binYearHalf1);
+        outb(0x70, 0x09);
+        outb(0x71, binYearHalf1);
 
-        // //first half of years setup
-        // outb(0x70, 0x32);
-        // outb(0x71, binYearHalf2);
+        //first half of years setup
+        outb(0x70, 0x32);
+        outb(0x71, binYearHalf2);
 
-        // //months setup 
-        // outb(0x70, 0x08);
-        // outb(0x71, binMonth);
+        //months setup 
+        outb(0x70, 0x08);
+        outb(0x71, binMonth);
 
-        // //Days setup
-        // outb(0x70, 0x07);
-        // outb(0x71, binMonth);
+        //Days setup
+        outb(0x70, 0x07);
+        outb(0x71, binDay);
 
-        //sti();
+        sti();
 
     }
+    // void getDate( int day, int month, int year) {
+
+    //     //getting the day
+    //     outb(0x70, 0x07);
+    //     int binDay = inb(0x71);
+
+    //     //getting the month
+    //     outb(0x70, 0x08);
+    //     int binMonth = inb(0x71);
+
+    //     //getting first half of year
+    //     outb(0x70, 0x09);
+    //     int binYear1 = inb(0x71);
+
+    //     //getting second half of the year
+    //     outb(0x70, 0x32);
+    //     int binYear2 = inb(0x71);
+
+    //     //convert the date to decimal
+    //     // int decDay = binToDec(binDay);
+    //     // int decMonth = binToDec(binMonth);
+    //     // int decYear1 = binToDec(binYear1);
+    //     // int decYear2 = binToDec(binYear2);
+
+    //     //itoa
+
+    // }
+
+
+ 
