@@ -73,11 +73,12 @@ int serial_poll(device dev, char *buffer, size_t len)
     unsigned int b; // general purpose iterator
     unsigned int currsz = 0; // tracked buffer size
     unsigned int i = 0; // position to put next byte
+    unsigned char c;
 	while ( currsz < len )
     {
         if ( inb (dev + LSR) & 0x01 )
         {
-            char c = inb (dev + RBR);
+            c = inb (dev + RBR);
             // check for special buffer/position manipulation keys
             if ( (c == 0x7F) && (i > 0) ) // backspace key
             {
@@ -86,11 +87,10 @@ int serial_poll(device dev, char *buffer, size_t len)
                 for (b = 0; b < currsz - i; ++b)
                 {
                     buffer[i - 1 + b] = buffer[i + b];
-                    outb(dev, buffer[i - 1 + b]);
                 }
-                buffer[currsz - 1] = '\0'; // clear last character after shift
                 --i;
-               --currsz;
+                --currsz;
+                buffer[currsz] = '\0'; // clear last character after shift
                 outb (dev + RBR, '\r');
                 for (b = 0; b < currsz; ++b)
                 {
@@ -102,6 +102,32 @@ int serial_poll(device dev, char *buffer, size_t len)
                     outb (dev + RBR, 0x1B);
                     outb (dev + RBR, '[');
                     outb (dev + RBR, 'D');
+                }
+            }
+            else if ( c == '~' ) // delete key - mapped to send '~' for some reason
+            {
+                if (i < currsz)
+                {
+                    // manip buffer
+                    // shift bytes on and after cursor to the left to overwrite char i
+                    for (b = 0; b < currsz - i; ++b)
+                    {
+                        buffer[i + b] = buffer[(i + 1) + b];
+                    }
+                    --currsz;
+                    buffer[currsz] = '\0'; // clear last character after shift
+                    outb (dev + RBR, '\r');
+                    for (b = 0; b < currsz; ++b)
+                    {
+                        outb (dev + RBR, buffer[b]);
+                    }
+                    outb (dev + RBR, ' ');
+                    for (b = 0; b < currsz - i + 1; ++b)
+                    {
+                        outb (dev + RBR, 0x1B);
+                        outb (dev + RBR, '[');
+                        outb (dev + RBR, 'D');
+                    }
                 }
             }
             else if ( c == 0x1B ) // escape sequence
