@@ -68,8 +68,8 @@ int serial_poll(device dev, char *buffer, size_t len)
     {
 		return -1;
 	}
-    
-    // TODO: Finish Backspace key handling (serial echo) and add Delete key handling
+    --len; // leave a NUL terminator on the end.
+    buffer[len] = '\0';
     unsigned int b; // general purpose iterator
     unsigned int currsz = 0; // tracked buffer size
     unsigned int i = 0; // position to put next byte

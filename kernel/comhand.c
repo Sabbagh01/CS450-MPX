@@ -7,111 +7,78 @@
 #include <stdlib.h>
 
 
+void setDateCommand() {
+    size_t input_len;
+    char input_buffer[30] = { 0 };
+    
+    const char day_msg[] = "\r\nEnter the day as TWO numbers only:\r\n";
+    sys_req(WRITE, COM1, day_msg, sizeof (day_msg));
+    input_len = sys_req(READ, COM1, input_buffer, sizeof (input_buffer));
+    int day = atoi (input_buffer);
+    memset (input_buffer, 0, input_len);
+    
+    const char month_msg[] = "\r\nEnter the month as TWO numbers only:\r\n";
+    sys_req(WRITE, COM1, month_msg, sizeof (month_msg));
+    input_len = sys_req(READ, COM1, input_buffer, sizeof (input_buffer));
+    int month = atoi (input_buffer);
+    memset (input_buffer, 0, input_len);
+    
+    const char year_msg[] = "\r\nEnter the year as FOUR numbers only:\r\n";
+    sys_req(WRITE, COM1, year_msg, sizeof (year_msg));
+    input_len = sys_req(READ, COM1, input_buffer, sizeof (input_buffer));
+    int year = atoi (input_buffer);
+    sys_req (WRITE, COM1, "\r\n", 2);
+    
+    setDate (day, month, year);
+}
 
+void getDateCommand() {
+    const char day_msg[] = "\r\nThe date is:\r\n";
+    sys_req(WRITE, COM1, day_msg, sizeof (day_msg));
+    
+    getDate();
+}
 
-void version();
-void setDate1();
-void help();
-void getDate1();
+void versionCommand() {
+    const char ver_msg[] = "\r\nMPX vR1.\r\nDate:\r\n";
+    sys_req(WRITE, COM1, ver_msg, sizeof (ver_msg));
+    // print compilation date, will probably require some scripting and
+    // the passing of a preprocessor define to the compiler in the makefile
+}
+
+void helpCommand() {
+    const char help_msg[] = "\r\n"
+                            "1) Help - Provides usage instructions for all commands\r\n"
+                            "2) Set Time - Sets the time\r\n"
+                            "3) Get Time - Returns the current time\r\n";
+    sys_req(WRITE, COM1, help_msg, sizeof (help_msg));
+}
 
 void comhand(){
-
+    const char menu_welcome_msg[] = "Welcome to 5x5 MPX.\r\n";
+    const char menu_options[] = "Please select an option by choosing a number.\r\n"
+                                "1) Help.        2) Set Time.    3) Get Time.    4) Set Date.\r\n"
+                                "5) Get Date.    6) Version.     7) Shut Down.\r\n"
+                                "Enter number of choice:\r\n";
     
-    while(1){
-
-        //menu display Write all messages
-        const char *Message1 = "Welcome to 5x5 MPX. Please select an option by choosing a number.\n";
-        size_t lenMes1 = strlen(Message1);
-        sys_req(WRITE, COM1, Message1, lenMes1);
-
-        const char *Message2 = "1) Help.        2) Set Time.    3) Get Time.    4) Set Date \n";
-        size_t lenMes2 = strlen(Message2);
-        sys_req(WRITE, COM1,Message2, lenMes2);
-
-        const char *Message3 = "5) Get Date.    6) Version.     7) ShutDown.\n";
-        size_t lenMes3 = strlen(Message3);
-        sys_req(WRITE, COM1, Message3, lenMes3);
-
-        const char *Message4 = "Enter number of choice:\n";
-        size_t lenMes4 = strlen(Message4);
-        sys_req(WRITE, COM1, Message4, lenMes4);
-
-        // Get the input and call corresponding function
-
-        char mainChoice[100];
-        sys_req(READ, COM1, mainChoice, 100);
-
-        if (strcmp(mainChoice, "1") == 0){
-            help();
-        }
+    sys_req(WRITE, COM1, menu_welcome_msg, sizeof (menu_welcome_msg));
+    while (1) {
+        // display the menu
+        sys_req(WRITE, COM1, menu_options, sizeof (menu_options));
         
-        if (strcmp(mainChoice, "4") == 0){
-       setDate1();
-        }
-        if (strcmp(mainChoice, "5") == 0){
-            getDate1();
+        // Get the input and call corresponding function
+        char user_input_buffer[100];
+        sys_req(READ, COM1, user_input_buffer, sizeof (user_input_buffer));
+
+        if (user_input_buffer[0] == '1') {
+            helpCommand();
+        } else if (user_input_buffer[0] == '4') {
+            setDateCommand();
+        } else if (user_input_buffer[0] == '5') {
+            getDateCommand();
+        } else if (user_input_buffer[0] == '6') {
+            versionCommand();
         }
     }
 }
 
-void setDate1(){
-
-
-    const char *dayMsg = "\nEnter the day as TWO numbers only: \n";
-    size_t lengthMsg1 = strlen(dayMsg);
-    sys_req(WRITE, COM1, dayMsg, lengthMsg1);
-    sys_req(WRITE, COM1, "\n", 2);
-    char dayGet[100];
-    sys_req(READ, COM1, dayGet, 100);
-    
-
-    const char *monthMsg = "\nEnter the month as TWO numbers only: \n";
-    size_t lengthMsg2 = strlen(dayMsg);
-    sys_req(WRITE, COM1, monthMsg, lengthMsg2);
-    sys_req(WRITE, COM1, "\n", 2);
-    char monthGet[100];
-    sys_req(READ, COM1, monthGet, 100);
-    
-
-    const char *yearMsg = "\nEnter the year as FOUR numbers only: \n";
-    size_t lengthMsg3 = strlen(yearMsg);
-    sys_req(WRITE, COM1, yearMsg, lengthMsg3);
-    char yearGet[100];
-    sys_req(READ, COM1, yearGet, 100);
-
-    int day = atoi(dayGet);
-    int month = atoi(monthGet);
-    int year = atoi(yearGet);
-
-    setDate(day,month,year);
-
-}
-void getDate1(){
-
-     const char *dayMsg = "\nThe date is: \n";
-    size_t lengthMsg1 = strlen(dayMsg);
-    sys_req(WRITE, COM1, dayMsg, lengthMsg1);
-   getDate();
-
-}
-
-void version(){
-    const char* Version1 = "Version Data\n";
-    size_t lenVer1 = strlen(Version1);
-    sys_req(WRITE, COM1, Version1 ,lenVer1);
-
-    const char* Version2 = "The current version of MPX is R1.\nDate: \n";
-    size_t lenVer2 = strlen(Version2);
-    sys_req(WRITE, COM1, Version2, lenVer2);
-    // GET DATE!
-
-}
-
-void help(){
-    sys_req(WRITE, COM1, "1) Help - Provides usage instructions for all commands\n", 100);
-    sys_req(WRITE, COM1, "2) Set Time - Sets the time\n", 100);
-    sys_req(WRITE, COM1, "3) Get Time - Returns the time\n",100);
-    sys_req(WRITE, COM1, "2) Set Time - Sets the time\n",100);
-    sys_req(WRITE, COM1, "2) Set Time - Sets the time\n",100);
-    sys_req(WRITE, COM1, "2) Set Time - Sets the time\n",100);
-}
