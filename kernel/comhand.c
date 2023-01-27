@@ -12,11 +12,12 @@
 void version();
 void setDate1();
 void help();
+void getDate1();
 
 void comhand(){
-    int x = 1;
+
     
-    while(x==1){
+    while(1){
 
         //menu display Write all messages
         const char *Message1 = "Welcome to 5x5 MPX. Please select an option by choosing a number.\n";
@@ -45,32 +46,52 @@ void comhand(){
         }
         
         if (strcmp(mainChoice, "4") == 0){
-            setDate1();
+       setDate1();
         }
-        x = 0;
+        if (strcmp(mainChoice, "5") == 0){
+            getDate1();
+        }
     }
 }
 
 void setDate1(){
+
+
     const char *dayMsg = "\nEnter the day as TWO numbers only: \n";
     size_t lengthMsg1 = strlen(dayMsg);
     sys_req(WRITE, COM1, dayMsg, lengthMsg1);
+    sys_req(WRITE, COM1, "\n", 2);
     char dayGet[100];
     sys_req(READ, COM1, dayGet, 100);
+    
 
-    const char *monthMsg = "Enter the month as TWO numbers only: \n";
+    const char *monthMsg = "\nEnter the month as TWO numbers only: \n";
     size_t lengthMsg2 = strlen(dayMsg);
     sys_req(WRITE, COM1, monthMsg, lengthMsg2);
+    sys_req(WRITE, COM1, "\n", 2);
     char monthGet[100];
     sys_req(READ, COM1, monthGet, 100);
+    
 
-    const char *yearMsg = "Enter the year as FOUR numbers only: \n";
+    const char *yearMsg = "\nEnter the year as FOUR numbers only: \n";
     size_t lengthMsg3 = strlen(yearMsg);
     sys_req(WRITE, COM1, yearMsg, lengthMsg3);
     char yearGet[100];
     sys_req(READ, COM1, yearGet, 100);
 
-    setDate(atoi(dayGet), atoi(monthGet), atoi(yearGet));
+    int day = atoi(dayGet);
+    int month = atoi(monthGet);
+    int year = atoi(yearGet);
+
+    setDate(day,month,year);
+
+}
+void getDate1(){
+
+     const char *dayMsg = "\nThe date is: \n";
+    size_t lengthMsg1 = strlen(dayMsg);
+    sys_req(WRITE, COM1, dayMsg, lengthMsg1);
+   getDate();
 
 }
 

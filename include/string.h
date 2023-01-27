@@ -47,4 +47,6 @@ size_t strlen(const char *s);
 */
 char* strtok(char * restrict s1, const char * restrict s2);
 
+void itoa(char string[], int integer);
+
 #endif
