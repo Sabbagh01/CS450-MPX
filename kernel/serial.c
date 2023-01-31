@@ -142,9 +142,10 @@ int serial_poll(device dev, char *buffer, size_t len)
                             if (i > 0) // prevent cursor underflowing
                             {
                                 --i;
-                                outb (dev + RBR, 0x1B);
-                                outb (dev + RBR, '[');
-                                outb (dev + RBR, 'D');
+                                // outb (dev + RBR, 0x1B);
+                                // outb (dev + RBR, '[');
+                                // outb (dev + RBR, 'D');
+                                outb(dev, '\b');
                             }
                             break;
                         case 'C': // cursor to right

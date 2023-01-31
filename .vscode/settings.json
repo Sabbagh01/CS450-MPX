@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "comhand.h": "c"
+        "comhand.h": "c",
+        "io.h": "c"
     }
 }

@@ -15,43 +15,55 @@ int BCDtoDecimal(unsigned char bcd) {
     return (int)(bcd & 0x0F) + (((int)(bcd >> 4)) * 10);
 }
 
-void setTime(int hours, int minute) {
-    hours += minute;
-    minute += hours;
-    return;
-//     //();
-//     // convert to UTC
-//     hours = hours + 4;
-
-//     // if hours > 24
-//     if(hours >= 24){
-//         hours = hours - 24;
-        
-//         // increment date by 1
-//         // int day = BintoDec(outb(0x70, 0x70));
-//         // int month = BintoDec(outb(0x70,0x08));
-//         // int year = BintoDec(outb(0x70,0x09));
-        
-//         //setDate(day, month, year);
-//     }
-
-//     // convert to binary
-//     outb(0x70, 0x00);
-//     //outb(0x71,dectoBin(seconds));
+void setTime(int hours, int minute, int seconds){
+    // convert to UTC
+    hours = hours + 5;
     
-//     outb(0x70, 0x02);
-//     //outb(0x71, dectoBin(minute));
+    // if hours > 24
+    if(hours >= 24) {
+        hours = hours - 24;
+    }
+    cli ();
+    // convert to binary
+    outb(0x70, 0x00);
+    outb(0x71, decimalToBCD(seconds));
     
-//     outb(0x70, 0x04);
-//    // outb(0x71, dectoBin(hours));
-     
-//     //sti();
+    outb(0x70, 0x02);
+    outb(0x71, decimalToBCD(minute));
+    
+    outb(0x70, 0x04);
+    outb(0x71, decimalToBCD(hours));
+    
+    sti ();
+} 
+
+void getTime(){
+    outb(0x70, 0x00);
+    int sec = BCDtoDecimal(inb(0x71));
+    char seco[100];
+
+    outb(0x70, 0x02);
+    int m = binToDec(inb(0x71));
+    char min[100];
+    outb(0x70, 0x04);
+    int h = binToDec(inb(0x71));
+    h -= 5;
+    if (h<0) {
+        h+=24;
+    }
+    char hour[100];
+    itoa(seco, sec);
+    itoa(min, m);
+    itoa(hour, h);
+    
+    sys_req(WRITE, COM1, "\n", 1);
+    sys_req(WRITE,COM1,hour,strlen(hour));
+    sys_req(WRITE,COM1,":",1);
+    sys_req(WRITE, COM1, min, strlen(min));
+    sys_req(WRITE,COM1,":",1);
+    sys_req(WRITE, COM1, seco, strlen(seco));
 
 }
-
-void getTime() {
-}
-
 const struct month_info {
     char* name;
     int lastday;

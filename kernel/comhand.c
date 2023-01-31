@@ -78,6 +78,46 @@ void comhand(){
             getDateCommand();
         } else if (user_input_buffer[0] == '6') {
             versionCommand();
+        } else if (user_input_buffer[0]  == '3') {
+            getTimeCommand();
+        } else if (user_input_buffer[0] == '2') {
+            char hourGet[100];
+            char minGet[100];
+            char secGet[100];
+            int flag = 0;
+            
+            while(1) {
+                if (flag == 1) {
+                    const char *errorMsg = "\nERROR re-enter time \n";
+                    sys_req(WRITE, COM1, errorMsg, strlen(errorMsg));
+                }
+                const char *hourMsg = "\nEnter the hour (0-24): \n";
+                size_t lengthMsg1 = strlen(hourMsg);
+                sys_req(WRITE, COM1, hourMsg, lengthMsg1);
+                
+                sys_req(READ, COM1, hourGet, 100);
+                
+                const char *minMsg = "\nEnter the minutes (0-60): \n";
+                size_t lengthMsg2 = strlen(minMsg);
+                sys_req(WRITE, COM1, minMsg, lengthMsg2);
+                
+                sys_req(READ, COM1, minGet, 100);
+                
+                const char *secMsg = "\nEnter the seconds (0-60): \n";
+                size_t lengthMsg3 = strlen(secMsg);
+                sys_req(WRITE, COM1, secMsg, lengthMsg3);
+                
+                sys_req(READ, COM1, secGet, 100);
+                if (atoi(hourGet) > 24 || atoi(minGet) > 60 || atoi(secGet) > 60) {
+                        flag = 1;
+                } else {
+                    break;
+                }
+            }
+            setTime(atoi(hourGet), atoi(minGet), atoi(secGet));
+        }
+        else if (user_input_buffer[0] == '4') {
+            setDateCommand();
         }
     }
 }
