@@ -15,7 +15,7 @@ int BCDtoDecimal(unsigned char bcd) {
     return (int)(bcd & 0x0F) + (((int)(bcd >> 4)) * 10);
 }
 
-void setTime(int hours, int minute, int seconds){
+void setTime(int hours, int minute, int seconds) {
     // convert to UTC
     hours = hours + 5;
     
@@ -37,16 +37,16 @@ void setTime(int hours, int minute, int seconds){
     sti ();
 } 
 
-void getTime(){
+void getTime() {
     outb(0x70, 0x00);
     int sec = BCDtoDecimal(inb(0x71));
     char seco[100];
 
     outb(0x70, 0x02);
-    int m = binToDec(inb(0x71));
+    int m = BCDtoDecimal(inb(0x71));
     char min[100];
     outb(0x70, 0x04);
-    int h = binToDec(inb(0x71));
+    int h = BCDtoDecimal(inb(0x71));
     h -= 5;
     if (h<0) {
         h+=24;
@@ -54,16 +54,23 @@ void getTime(){
     char hour[100];
     itoa(seco, sec);
     itoa(min, m);
-    itoa(hour, h);
+    itoa(hour, h);     
     
     sys_req(WRITE, COM1, "\n", 1);
     sys_req(WRITE,COM1,hour,strlen(hour));
     sys_req(WRITE,COM1,":",1);
+    if(strlen(min) <= 1) {
+        sys_req(WRITE, COM1, "0", 1);
+    }
     sys_req(WRITE, COM1, min, strlen(min));
     sys_req(WRITE,COM1,":",1);
+    if(strlen(seco) <= 1){
+        sys_req(WRITE, COM1, "0", 1);
+    }
     sys_req(WRITE, COM1, seco, strlen(seco));
-
+    sys_req(WRITE, COM1, "\n", 1);
 }
+
 const struct month_info {
     char* name;
     int lastday;

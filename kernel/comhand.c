@@ -79,7 +79,7 @@ void comhand(){
         } else if (user_input_buffer[0] == '6') {
             versionCommand();
         } else if (user_input_buffer[0]  == '3') {
-            getTimeCommand();
+            getTime();
         } else if (user_input_buffer[0] == '2') {
             char hourGet[100];
             char minGet[100];
