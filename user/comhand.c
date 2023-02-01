@@ -245,6 +245,16 @@ void getDateCommand() {
     getDate();
 }
 
+void versionCommand() {
+    const char ver_msg[] = "\r\nMPX vR1.\r\nDate:\r\n";
+     sys_req(WRITE, COM1, ver_msg, sizeof (ver_msg));
+   
+    sys_req(WRITE, COM1, __DATE__, sizeof (__DATE__));
+     sys_req(WRITE, COM1, "\n", sizeof ("\n"));
+    // print compilation date, will probably require some scripting and
+    // the passing of a preprocessor define to the compiler in the makefile
+}
+
 void helpCommand() {
     const char help_msg[] = "\r\n"
                             "1) Help - Provides usage instructions for all commands\r\n"

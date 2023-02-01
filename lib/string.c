@@ -97,11 +97,24 @@ void itoa(char string[], int integer){
 	int remainder;
 	int size = 0;
 	int temp;
+	long n = integer;
+  int count = 0;
+  do {
+    n /= 10;
+    ++count;
+  } while (n != 0);
+
 	if(integer == 0){
+		string[0] = '0';
+		string[1] = '0';
+		size+=2;
+	}
+	
+	else{
+		if(count <=1 ){
 		string[0] = '0';
 		size++;
 	}
-	else{
 	temp = integer;
 	while(temp != 0) {
 		++size;

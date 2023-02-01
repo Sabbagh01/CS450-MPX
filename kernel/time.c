@@ -103,15 +103,19 @@ void getTime() {
 
 void setDate(int day, int month, int year) {
     cli ();
+
+    outb (0x70, (0x09 & ~0x80) | 0x80); // year
+    outb (0x71, decimalToBCD (year));
+
+    outb (0x70, (0x08 & ~0x80) | 0x80); // month
+    outb (0x71, decimalToBCD (month));
     
     outb (0x70, (0x07 & ~0x80) | 0x80); // access day
     outb (0x71, decimalToBCD (day));
 
-    outb (0x70, (0x08 & ~0x80) | 0x80); // month
-    outb (0x71, decimalToBCD (month));
+  
 
-    outb (0x70, (0x09 & ~0x80) | 0x80); // year
-    outb (0x71, decimalToBCD (year));
+  
     
     sti ();
     
@@ -121,12 +125,16 @@ void setDate(int day, int month, int year) {
 void getDate() {
     cli ();
 
-    outb (0x70, (0x07 & ~0x80) | 0x80); // access day
-    int day = BCDtoDecimal (inb (0x71));
-    outb (0x70, (0x08 & ~0x80) | 0x80); // month
-    int month = BCDtoDecimal (inb (0x71));
     outb (0x70, (0x09 & ~0x80) | 0x80); // year
     int year = BCDtoDecimal (inb (0x71));
+
+    outb (0x70, (0x08 & ~0x80) | 0x80); // month
+    int month = BCDtoDecimal (inb (0x71));
+
+    outb (0x70, (0x07 & ~0x80) | 0x80); // access day
+    int day = BCDtoDecimal (inb (0x71));
+
+
     
     sti ();
     
