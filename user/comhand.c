@@ -31,9 +31,12 @@ void setTimeCommand() {
 
         input_len = sys_req(READ, COM1, input_buffer, sizeof(input_buffer));
         hour = atoi(input_buffer);
+        if (strcmp(input_buffer,"0") == 0){
+            break;
+        }
         memset(input_buffer, 0, input_len);
         
-        if ( (hour < 24) && (hour >= 0) ) {
+        if ( (hour < 24) && (hour > 0) ) {
             break;
         }
         //red color
@@ -61,9 +64,12 @@ void setTimeCommand() {
 
         input_len = sys_req(READ, COM1, input_buffer, sizeof(input_buffer));
         minute = atoi(input_buffer);
+        if (strcmp(input_buffer,"0") == 0){
+            break;
+        }
         memset(input_buffer, 0, input_len);
         
-        if ( (minute < 60) && (minute >= 0) ) {
+        if ( (minute < 60) && (minute > 0) ) {
             break;
         }
         //red color
@@ -89,7 +95,9 @@ void setTimeCommand() {
 
         input_len = sys_req(READ, COM1, input_buffer, sizeof(input_buffer));
         second = atoi(input_buffer);
-        
+        if (strcmp(input_buffer,"0") == 0){
+            break;
+        }
         if ( (second < 60) && (second >= 0) ) {
             break;
         }
