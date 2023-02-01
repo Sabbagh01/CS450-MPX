@@ -1,80 +1,13 @@
+#include "time.h"
+
 #include <mpx/io.h>
 #include <mpx/serial.h>
 #include <sys_req.h>
-#include <comhand.h>
 #include <mpx/interrupts.h>
 #include <string.h>
-#include <time.h>
 
 
-unsigned char decimalToBCD(int integer) {
-    return ((integer / 10) << 4) | ((integer) % 10);
-}
-
-int BCDtoDecimal(unsigned char bcd) {
-    return (int)(bcd & 0x0F) + (((int)(bcd >> 4)) * 10);
-}
-
-void setTime(int hours, int minute, int seconds) {
-    // convert to UTC
-    hours = hours + 5;
-    
-    // if hours > 24
-    if(hours >= 24) {
-        hours = hours - 24;
-    }
-    cli ();
-    // convert to binary
-    outb(0x70, 0x00);
-    outb(0x71, decimalToBCD(seconds));
-    
-    outb(0x70, 0x02);
-    outb(0x71, decimalToBCD(minute));
-    
-    outb(0x70, 0x04);
-    outb(0x71, decimalToBCD(hours));
-    
-    sti ();
-} 
-
-void getTime() {
-    outb(0x70, 0x00);
-    int sec = BCDtoDecimal(inb(0x71));
-    char seco[100];
-
-    outb(0x70, 0x02);
-    int m = BCDtoDecimal(inb(0x71));
-    char min[100];
-    outb(0x70, 0x04);
-    int h = BCDtoDecimal(inb(0x71));
-    h -= 5;
-    if (h<0) {
-        h+=24;
-    }
-    char hour[100];
-    itoa(seco, sec);
-    itoa(min, m);
-    itoa(hour, h);     
-    
-    sys_req(WRITE, COM1, "\n", 1);
-    sys_req(WRITE,COM1,hour,strlen(hour));
-    sys_req(WRITE,COM1,":",1);
-    if(strlen(min) <= 1) {
-        sys_req(WRITE, COM1, "0", 1);
-    }
-    sys_req(WRITE, COM1, min, strlen(min));
-    sys_req(WRITE,COM1,":",1);
-    if(strlen(seco) <= 1){
-        sys_req(WRITE, COM1, "0", 1);
-    }
-    sys_req(WRITE, COM1, seco, strlen(seco));
-    sys_req(WRITE, COM1, "\n", 1);
-}
-
-const struct month_info {
-    char* name;
-    int lastday;
-} month_info[] = {
+const struct month_info month_info[] = {
     {"January", 31},
     {"February", 28},
     {"March", 31},
@@ -89,32 +22,96 @@ const struct month_info {
     {"December", 31}
 };
 
+unsigned char decimalToBCD(int integer) {
+    return ((integer / 10) << 4) | ((integer) % 10);
+}
+
+int BCDtoDecimal(unsigned char bcd) {
+    return (int)(bcd & 0x0F) + (((int)(bcd >> 4)) * 10);
+}
+
+void setTime(int hours, int minute, int seconds) {
+    cli ();
+    
+    outb(0x70, 0x00);
+    outb(0x71, decimalToBCD(seconds));
+    
+    outb(0x70, 0x02);
+    outb(0x71, decimalToBCD(minute));
+    
+    outb(0x70, 0x04);
+    outb(0x71, decimalToBCD(hours));
+    
+    sti ();
+
+    return;
+} 
+
+void getTime() {
+    cli();
+    
+    outb(0x70, 0x00); // access seconds
+    int seconds = BCDtoDecimal(inb(0x71));
+    outb(0x70, 0x02); // access minutes
+    int minutes = BCDtoDecimal(inb(0x71));
+    outb(0x70, 0x04); // access hours
+    int hours = BCDtoDecimal(inb(0x71));
+    
+    sti();
+
+    // print time
+    char timebuffer[100];
+    char fmt[] = "\0:\0:\0"; // format string template for interim formatting
+    int fmtp = 0; // format index
+    int bufsz = 0; // current buffer progression/size
+    // convert seconds, minutes, hours to strings
+    char seconds_str[3];
+    itoa (seconds_str, seconds);
+    char minutes_str[3];
+    itoa (minutes_str, minutes);
+    char hours_str[3];
+    itoa (hours_str, hours);
+    // going to [unsafely] assume we will not overrun datebuffer
+    // print hours
+    for (int i = 0; hours_str[i] != '\0'; ++i, ++bufsz) {
+        timebuffer[bufsz] = hours_str[i];
+    }
+    ++fmtp;
+    // format
+    for (; fmt[fmtp] != '\0'; ++fmtp, ++bufsz) {
+        timebuffer[bufsz] = fmt[fmtp];
+    }
+    // print minutes
+    for (int i = 0; minutes_str[i] != '\0'; ++i, ++bufsz) {
+        timebuffer[bufsz] = minutes_str[i];
+    }
+    ++fmtp;
+    // format
+    for (; fmt[fmtp] != '\0'; ++fmtp, ++bufsz) {
+        timebuffer[bufsz] = fmt[fmtp];
+    }
+    // print seconds
+    for (int i = 0; seconds_str[i] != '\0'; ++i, ++bufsz) {
+        timebuffer[bufsz] = seconds_str[i];
+    }
+    timebuffer[bufsz++] = '\r';
+    timebuffer[bufsz++] = '\n';
+    sys_req(WRITE, COM1, timebuffer, bufsz);
+
+    return;
+}
+
 void setDate(int day, int month, int year) {
-    // preconditions
-    if ((month > 12) || (month < 0)) {
-        return;
-    }
-    if ((day > month_info[month - 1].lastday) || (day < 0)) {
-        if (!(month == 2 && day == 29)) {
-            return;
-        }
-    }
-    if (year < 0) {
-        return;
-    }
-    
-    unsigned char bcdday = decimalToBCD (day);
-    unsigned char bcdmonth = decimalToBCD (month);
-    unsigned char bcdyear = decimalToBCD (year);
-    
     cli ();
     
     outb (0x70, (0x07 & ~0x80) | 0x80); // access day
-    outb (0x71, bcdday);
+    outb (0x71, decimalToBCD (day));
+
     outb (0x70, (0x08 & ~0x80) | 0x80); // month
-    outb (0x71, bcdmonth);
+    outb (0x71, decimalToBCD (month));
+
     outb (0x70, (0x09 & ~0x80) | 0x80); // year
-    outb (0x71, bcdyear);
+    outb (0x71, decimalToBCD (year));
     
     sti ();
     
@@ -138,7 +135,7 @@ void getDate() {
     char fmt[] = "\0 \0, 20\0"; // format string template for interim formatting
     int fmtp = 0; // format index
     int bufsz = 0; // current buffer progression/size
-    // convert day, year to string
+    // convert day, year to strings
     char daystr[3];
     itoa (daystr, day);
     char yearstr[3];
@@ -166,7 +163,10 @@ void getDate() {
     for (int i = 0; yearstr[i] != '\0'; ++i, ++bufsz) {
         datebuffer[bufsz] = yearstr[i];
     }
+    datebuffer[bufsz++] = '\r';
     datebuffer[bufsz++] = '\n';
     sys_req(WRITE, COM1, datebuffer, bufsz);
+
+    return;
 }
 

@@ -17,7 +17,8 @@
 #include <sys_req.h>
 #include <string.h>
 #include <memory.h>
-#include <comhand.h>
+
+#include "comhand.h"
 
 
 static void klogv(device dev, const char *msg)
