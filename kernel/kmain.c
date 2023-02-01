@@ -94,10 +94,7 @@ void kmain(void)
 	klogv(COM1, "Transferring control to commhand...");
 	comhand();
 	// R4: __asm__ volatile ("int $0x60" :: "a"(IDLE));
-	comhand();
-char tbuf[101];
-serial_poll(COM1,tbuf,sizeof(tbuf)-1); 
-klogv(COM1,tbuf);
+
 	// 10) System Shutdown -- *headers to be determined by your design*
 	// After your command handler returns, take care of any clean up that is necessary.
 	klogv(COM1, "Starting system shutdown procedure...");
