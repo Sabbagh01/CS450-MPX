@@ -36,7 +36,7 @@ void setTimeCommand() {
         }
         memset(input_buffer, 0, input_len);
         
-        if ( (hour < 24) && (hour > 0) ) {
+        if ( (hour <= 24) && (hour > 0) ) {
             break;
         }
         //red color
@@ -69,7 +69,7 @@ void setTimeCommand() {
         }
         memset(input_buffer, 0, input_len);
         
-        if ( (minute < 60) && (minute > 0) ) {
+        if ( (minute <= 60) && (minute > 0) ) {
             break;
         }
         //red color
@@ -98,7 +98,7 @@ void setTimeCommand() {
         if (strcmp(input_buffer,"0") == 0 || strcmp(input_buffer,"00") == 0){
             break;
         }
-        if ( (second < 60) && (second >= 0) ) {
+        if ( (second <= 60) && (second > 0) ) {
             break;
         }
         //red color
@@ -145,6 +145,36 @@ void setDateCommand() {
     // white color
     const char whiteColor[] = "\033[0;37m";
     sys_req(WRITE, COM1, whiteColor, sizeof(whiteColor));
+
+        while(1) {
+
+        //yellow color
+        const char yellowColor[] = "\033[0;33m";
+        sys_req(WRITE, COM1, yellowColor, sizeof(yellowColor));
+
+        const char year_msg[] = "\r\nEnter the year of 21st century (0-99):\r\n";
+        sys_req(WRITE, COM1, year_msg, sizeof (year_msg));
+
+        // white color
+        const char whiteColor[] = "\033[0;37m";
+        sys_req(WRITE, COM1, whiteColor, sizeof(whiteColor));
+
+        input_len = sys_req(READ, COM1, input_buffer, sizeof (input_buffer));
+        year = atoi (input_buffer);
+        memset (input_buffer, 0, input_len);
+        
+        if ( (year < 100) && (year >= 0) ) {
+            break;
+        }
+        //red color
+        const char redColor[] = "\033[0;31m";
+        sys_req(WRITE, COM1, redColor, sizeof(redColor));
+
+        sys_req(WRITE, COM1, error_msg, sizeof(error_msg));
+
+        //white color
+        sys_req(WRITE, COM1, whiteColor, sizeof(whiteColor));
+    }
     
     while(1) {
 
@@ -190,7 +220,10 @@ void setDateCommand() {
         input_len = sys_req(READ, COM1, input_buffer, sizeof (input_buffer));
         day = atoi (input_buffer);
         memset (input_buffer, 0, input_len);
-        
+        sys_req(WRITE, COM1, "\r\n",2 );
+         if((((year % 4 ==0 )&& (year % 100 != 0)) || (year % 400 == 0)) && day == 29 && month == 2){
+            break;
+        }
         if ( (day <= month_info[month - 1].lastday) && (day >= 1) ) {
             break;
         }
@@ -204,35 +237,7 @@ void setDateCommand() {
         //white color
         sys_req(WRITE, COM1, whiteColor, sizeof(whiteColor));
     }
-    while(1) {
 
-        //yellow color
-        const char yellowColor[] = "\033[0;33m";
-        sys_req(WRITE, COM1, yellowColor, sizeof(yellowColor));
-
-        const char year_msg[] = "\r\nEnter the last two digits of the year (1-99):\r\n";
-        sys_req(WRITE, COM1, year_msg, sizeof (year_msg));
-
-        // white color
-        const char whiteColor[] = "\033[0;37m";
-        sys_req(WRITE, COM1, whiteColor, sizeof(whiteColor));
-
-        input_len = sys_req(READ, COM1, input_buffer, sizeof (input_buffer));
-        year = atoi (input_buffer);
-        sys_req (WRITE, COM1, "\r\n", 2);
-
-        if ( (year < 2100) && (year >= 0) ) {
-            break;
-        }
-        //red color
-        const char redColor[] = "\033[0;31m";
-        sys_req(WRITE, COM1, redColor, sizeof(redColor));
-
-        sys_req(WRITE, COM1, error_msg, sizeof(error_msg));
-
-        //white color
-        sys_req(WRITE, COM1, whiteColor, sizeof(whiteColor));
-    }
 
     setDate (day, month, year);
 }
