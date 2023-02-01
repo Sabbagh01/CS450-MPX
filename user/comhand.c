@@ -7,11 +7,12 @@
 #include "time.h"
 #include "comhand.h"
 
-
+int in_comhand = 1;
 void setTimeCommand() {
     size_t input_len;
     char input_buffer[30] = { 0 };
     int hour, minute, second;
+
 
     const char error_msg[] = "\r\nCould not parse, please re-enter time:";
     
@@ -244,19 +245,42 @@ void getDateCommand() {
     getDate();
 }
 
-void versionCommand() {
-    const char ver_msg[] = "\r\nMPX vR1.\r\nDate:\r\n";
-    sys_req(WRITE, COM1, ver_msg, sizeof (ver_msg));
-    // print compilation date, will probably require some scripting and
-    // the passing of a preprocessor define to the compiler in the makefile
-}
-
 void helpCommand() {
     const char help_msg[] = "\r\n"
                             "1) Help - Provides usage instructions for all commands\r\n"
                             "2) Set Time - Sets the time\r\n"
                             "3) Get Time - Returns the current time\r\n";
     sys_req(WRITE, COM1, help_msg, sizeof (help_msg));
+}
+
+void versionCommand(){
+    const char versionmsg[] = "\nThe current version of 5x5 is v1.0\nCompilation date: ";
+    sys_req(WRITE,COM1, versionmsg, sizeof(versionmsg));
+    getDate();
+}
+
+int shutdownCommand(){
+    const char redColor[] = "\033[0;31m";
+    sys_req(WRITE, COM1, redColor, sizeof(redColor));
+    const char shutdownmsg[] = "\nAre you sure you would like to shut down? Enter 1 to confirm, anything else to go back to menu: \n";
+    sys_req(WRITE,COM1, shutdownmsg, sizeof(shutdownmsg));
+
+    const char shutdownRead[100] = "";
+    sys_req(READ, COM1, shutdownRead, sizeof(shutdownRead));
+
+    if (strcmp(shutdownRead, "1") == 0){
+        const char shuttingdown[] = "\nShutting Down\n";
+        sys_req(WRITE, COM1, shuttingdown, sizeof(shuttingdown));
+        const char whiteColor[] = "\033[0;37m";
+        sys_req(WRITE, COM1, whiteColor, sizeof(whiteColor));
+        return 0;
+    } else {
+        const char whiteColor[] = "\033[0;37m";
+        sys_req(WRITE, COM1, whiteColor, sizeof(whiteColor));
+        const char sdcancel[] = "\nShut down cancelled\n";
+        sys_req(WRITE, COM1, sdcancel, sizeof(sdcancel));
+        return 1;
+    }
 }
 
 void comhand(){
@@ -276,7 +300,8 @@ void comhand(){
     const char whiteColor[] = "\033[0;37m";
     sys_req(WRITE, COM1, whiteColor, sizeof(whiteColor));
 
-    while (1) {
+    
+    while (in_comhand == 1) {
 
         //purple color
         const char purpleColor[] = "\033[0;36m";
@@ -290,23 +315,28 @@ void comhand(){
         sys_req(WRITE, COM1, whiteColor, sizeof(whiteColor));
         
         // Get the input and call corresponding function
-        char user_input_buffer[100];
+        char user_input_buffer[100] = "";
         sys_req(READ, COM1, user_input_buffer, sizeof (user_input_buffer));
 
-        if (user_input_buffer[0] == '1') {
+        if (strcmp(user_input_buffer,"1") == 0) {
             helpCommand();
-        } else if (user_input_buffer[0] == '4') {
-            setDateCommand();
-        } else if (user_input_buffer[0] == '5') {
-            getDateCommand();
-        } else if (user_input_buffer[0] == '6') {
-            versionCommand();
-        } else if (user_input_buffer[0]  == '3') {
-            getTimeCommand();
-        } else if (user_input_buffer[0] == '2') {
+        } else if (strcmp(user_input_buffer,"2") == 0) {
             setTimeCommand();
-        } else if (user_input_buffer[0] == '4') {
+        } else if (strcmp(user_input_buffer,"3") == 0) {
+            getTimeCommand();
+        } else if (strcmp(user_input_buffer,"4") == 0) {
             setDateCommand();
+        } else if (strcmp(user_input_buffer,"5") == 0) {
+            getDateCommand();
+        } else if (strcmp(user_input_buffer,"6") == 0) {
+            versionCommand();
+        } else if (strcmp(user_input_buffer,"7") == 0) {
+            in_comhand = shutdownCommand();
+        } else {
+            const char redColor[] = "\033[0;31m";
+            sys_req(WRITE, COM1, redColor, sizeof(redColor));
+            const char invalidOption[] = "\nPlease select a valid option, 1-7\n";
+            sys_req(WRITE, COM1, invalidOption, sizeof(invalidOption));
         }
     }
 }
