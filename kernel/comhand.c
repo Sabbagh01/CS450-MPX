@@ -20,9 +20,12 @@ void setTimeCommand() {
         sys_req(WRITE, COM1, hour_msg, sizeof(hour_msg));
         input_len = sys_req(READ, COM1, input_buffer, sizeof(input_buffer));
         hour = atoi(input_buffer);
+        if( strcmp (input_buffer,"0") == 0){
+            break;
+        }
         memset(input_buffer, 0, input_len);
         
-        if ( (hour < 24) && (hour >= 0) ) {
+        if ( (hour < 24) && (hour > 0) ) {
             break;
         }
         sys_req(WRITE, COM1, error_msg, sizeof(error_msg));
@@ -31,10 +34,14 @@ void setTimeCommand() {
         const char minute_msg[] = "\r\nEnter the minute (0-60):\r\n";
         sys_req(WRITE, COM1, minute_msg, sizeof(minute_msg));
         input_len = sys_req(READ, COM1, input_buffer, sizeof(input_buffer));
+        
         minute = atoi(input_buffer);
+        if( strcmp (input_buffer,"0") == 0){
+            break;
+        }
         memset(input_buffer, 0, input_len);
         
-        if ( (minute < 60) && (minute >= 0) ) {
+        if ( (minute < 60) && (minute > 0 )) {
             break;
         }
         sys_req(WRITE, COM1, error_msg, sizeof(error_msg));
@@ -44,8 +51,10 @@ void setTimeCommand() {
         sys_req(WRITE, COM1, second_msg, sizeof(second_msg));
         input_len = sys_req(READ, COM1, input_buffer, sizeof(input_buffer));
         second = atoi(input_buffer);
-        
-        if ( (second < 60) && (second >= 0) ) {
+        if(strcmp (input_buffer,"0") == 0){
+            break;
+        }
+        if ( (second < 60) && (second > 0) ) {
             break;
         }
         sys_req(WRITE, COM1, error_msg, sizeof(error_msg));
@@ -100,7 +109,7 @@ void setDateCommand() {
         year = atoi (input_buffer);
         sys_req (WRITE, COM1, "\r\n", 2);
 
-        if ( (year < 2100) && (year >= 0) ) {
+        if ( (year < 100) && (year >= 0) ) {
             break;
         }
         sys_req(WRITE, COM1, error_msg, sizeof(error_msg));
