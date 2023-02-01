@@ -31,7 +31,7 @@ void setTimeCommand() {
 
         input_len = sys_req(READ, COM1, input_buffer, sizeof(input_buffer));
         hour = atoi(input_buffer);
-        if (strcmp(input_buffer,"0") == 0){
+        if (strcmp(input_buffer,"0") == 0 || strcmp(input_buffer,"00") == 0){
             break;
         }
         memset(input_buffer, 0, input_len);
@@ -64,7 +64,7 @@ void setTimeCommand() {
 
         input_len = sys_req(READ, COM1, input_buffer, sizeof(input_buffer));
         minute = atoi(input_buffer);
-        if (strcmp(input_buffer,"0") == 0){
+        if (strcmp(input_buffer,"0") == 0 || strcmp(input_buffer,"00") == 0){
             break;
         }
         memset(input_buffer, 0, input_len);
@@ -95,7 +95,7 @@ void setTimeCommand() {
 
         input_len = sys_req(READ, COM1, input_buffer, sizeof(input_buffer));
         second = atoi(input_buffer);
-        if (strcmp(input_buffer,"0") == 0){
+        if (strcmp(input_buffer,"0") == 0 || strcmp(input_buffer,"00") == 0){
             break;
         }
         if ( (second < 60) && (second >= 0) ) {
@@ -269,12 +269,6 @@ void helpCommand() {
                             "2) Set Time - Sets the time\r\n"
                             "3) Get Time - Returns the current time\r\n";
     sys_req(WRITE, COM1, help_msg, sizeof (help_msg));
-}
-
-void versionCommand(){
-    const char versionmsg[] = "\nThe current version of 5x5 is v1.0\nCompilation date: ";
-    sys_req(WRITE,COM1, versionmsg, sizeof(versionmsg));
-    getDate();
 }
 
 int shutdownCommand(){
