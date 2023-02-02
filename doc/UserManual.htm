@@ -5,27 +5,64 @@
 </head>
 <body>
 
-<h1>Commands</h1>
-<p> Help - Provides information on each command. <br>
-<img src="Help.jpg" alt="Help Command">
+<font size="+4"><b>5x5 Operating System User's Manual</font></b><br>
+<p><i>User's Manual Version: R1</i></p><br>
+<br>
 
-<p> Set Time - Sets the time. It will ask for the hour, minute, then second. <br>
-<img src="SetTime.jpg" alt="Set Time Command">
+<font size= "+3"><b> What is in this manual?</b></font>
+<p> This manual goes over all commands that is available to use in 5x5 OS</p><br>
 
-<p> Get Time - Displays the current time.<br>
-<img src="GetTime.jpg" alt="Get Time Command">
 
-<p> Set Date - Sets the date. It will ask for the month, day, then the last two digits of the year.<br>
-<img src="SetDate.jpg" alt="Set Date Command">
+<font size= "+2"><b>Commands</b></font>
+<p> <font size= "+1"><i><b>Help</b></i></font> <br>
+ <i>Provides information on each command that you need help on.</i><br> 
+    When selected, it will ask for input from the user on which command they would like information on. The user can give a number input to output the command desired, string input, or input "all" to output all commands.<br>
+    
+<img src="Pictures/Help1.jpg" alt="Help Command Number"><br>
+<font size= "-1">Help Being Used With A Number</font> <br><br>
 
-<p> Get Date - Gets the date.<br>
-<img src="GetDate.jpg" alt="Get Date Command">
+<img src="Pictures/Help2.jpg" alt="Help Command String"><br>
+<font size= "-1">Help Being Used With A String</font><br><br>
 
-<p> Version - Gives the current version as well as the compilation date.<br>
-<img src="Version.jpg" alt="Version Command">
+<img src="Pictures/Help3.jpg" alt="Help Command All"><br>
+<font size= "-1">Help All</font><br><br>
 
-<p> Shut Down - Shuts down the system, enter 1 to confirm shutdown, anything else to cancel.<br>
-<img src="ShutDown.jpg" alt="Shut Down Command">
+<p> <font size= "+1"><i><b>Set Time</b></i></font> <br>
+<i>Sets the local time.</i> <br>
+When selected, it will ask for the hour, minute, then second. The hour input must be between 0-23. The hour input must be between 0-23. The second input must be between 0-59. There is no output unless an implausible time is entered, then the system will output "Could not parse, please re-enter time:" <br>
+<img src="Pictures/SetTime.jpg" alt="Set Time Command"><br>
+<font size= "-1">Set Time Command Example</font><br><br>
+
+
+<p> <font size= "+1"><i><b>Get Time</b></i></font> <br>
+<i>Gets the local time.</i> <br>
+This command has no inputs. When selected, it will output the local time in Hours:Minutes:Seconds format. Hours being between 00-23, minutes between 00-59, and seconds between 00-59.<br>
+<img src="Pictures/GetTime.jpg" alt="Get Time Command"> <br>
+<font size= "-1">Get Time Command Example</font><br><br>
+
+<p> <font size= "+1"><i><b>Set Date</b></i></font> <br>
+<i>Sets the local date.</i> <br>
+When selected, it will ask for the month, year, then day of the month. The month input must fall between 1-12. The year input must be two digits between 0 and 99. The day input must be an actual date of the chosen month. There is no output unless an implausible date is entered, then the system will output "Could not parse, please re-enter time:" <br>
+<img src="Pictures/SetDate.jpg" alt="Set Date Command"><br>
+<font size= "-1">Set Date Command Example</font><br><br>
+
+<p> <font size= "+1"><i><b>Get Date</b></i></font> <br>
+<i>Gets the local date.</i> <br>
+This command has no inputs. When selected, it will output the local date as "Month Date, Year" format. The month can be any of the 12 months. The date can be any valid date of the given month. The year can be between 2000-2099.<br>
+<img src="Pictures/GetDate.jpg" alt="Get Date Command"><br>
+<font size= "-1">Get Date Command Example</font><br><br>
+
+<p> <font size= "+1"><i><b>Version</b></i></font> <br>
+<i>Shows the current version and compilation date</i> <br>
+This command takes no inputs. It will only output the current version as well as the compilation date.<br>
+<img src="Pictures/Version.jpg" alt="Version Command"><br>
+<font size= "-1">Version Command Example</font><br><br>
+
+<p> <font size= "+1"><i><b>Shutdown</b></i></font> <br>
+<i>Shuts down the system</i> <br>
+When called, the system will output a confirmation question. If 1 is entered, the system will output "Shutting down now" and then shut down. If anything else is entered, the system will output "Shut down cancelled" and go back to the menu. <br>
+<img src="Pictures/ShutDown.jpg" alt="Shut Down Command"><br>
+<font size= "-1">Shut Down Command Example</font><br><br>
 </p>
 
 </body>

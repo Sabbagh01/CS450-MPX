@@ -101,6 +101,7 @@ void setTimeCommand() {
          if (strcmp(input_buffer,"0") == 0 || strcmp(input_buffer, "00") == 0){
             break;
         }
+        memset(input_buffer, 0, input_len);
         if ( (second < 60) && (second > 0) ) {
             break;
         }
@@ -327,7 +328,7 @@ void helpCommand() {
 }
 
 int shutdownCommand() {
-    setTerminalColor(White);
+    setTerminalColor(Red);
     static const char shutdownmsg[] = "\r\nAre you sure you would like to shut down?\r\n"
                                       "Enter 1 to confirm, enter another key to go back to menu:\r\n";
     sys_req(WRITE, COM1, shutdownmsg, sizeof(shutdownmsg));
