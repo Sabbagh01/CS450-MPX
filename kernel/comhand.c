@@ -146,6 +146,7 @@ void setDateCommand() {
         setTerminalColor(White);       
         input_len = sys_req(READ, COM1, input_buffer, sizeof (input_buffer));
         year = atoi (input_buffer);
+        memset (input_buffer, 0, input_len);
         
         if ( (year < 100) && (year >= 0) ) {
             break;
