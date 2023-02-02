@@ -1,4 +1,4 @@
-#include "time.h"
+#include <time.h>
 
 #include <mpx/io.h>
 #include <mpx/serial.h>
@@ -35,10 +35,8 @@ void setTime(int hours, int minute, int seconds) {
     
     outb(0x70, 0x00);
     outb(0x71, decimalToBCD(seconds));
-    
     outb(0x70, 0x02);
     outb(0x71, decimalToBCD(minute));
-    
     outb(0x70, 0x04);
     outb(0x71, decimalToBCD(hours));
     
@@ -106,16 +104,10 @@ void setDate(int day, int month, int year) {
 
     outb (0x70, (0x09 & ~0x80) | 0x80); // year
     outb (0x71, decimalToBCD (year));
-
     outb (0x70, (0x08 & ~0x80) | 0x80); // month
     outb (0x71, decimalToBCD (month));
-    
     outb (0x70, (0x07 & ~0x80) | 0x80); // access day
-    outb (0x71, decimalToBCD (day));
-
-  
-
-  
+    outb (0x71, decimalToBCD (day)); 
     
     sti ();
     
@@ -127,14 +119,10 @@ void getDate() {
 
     outb (0x70, (0x09 & ~0x80) | 0x80); // year
     int year = BCDtoDecimal (inb (0x71));
-
     outb (0x70, (0x08 & ~0x80) | 0x80); // month
     int month = BCDtoDecimal (inb (0x71));
-
     outb (0x70, (0x07 & ~0x80) | 0x80); // access day
     int day = BCDtoDecimal (inb (0x71));
-
-
     
     sti ();
     
@@ -148,6 +136,10 @@ void getDate() {
     itoa (daystr, day);
     char yearstr[3];
     itoa (yearstr, year);
+    if (year == 0) {
+        yearstr[1] = '0';
+        yearstr[2] = '\0';
+    }
     // going to [unsafely] assume we will not overrun datebuffer
     // print month
     for (int i = 0; month_info[month - 1].name[i] != '\0'; ++i, ++bufsz) {
