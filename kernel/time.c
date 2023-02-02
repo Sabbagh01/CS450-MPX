@@ -65,10 +65,25 @@ void getTime() {
     // convert seconds, minutes, hours to strings
     char seconds_str[3];
     itoa (seconds_str, seconds);
+    if (seconds < 10) {
+        seconds_str[1] = seconds_str[0];
+        seconds_str[0] = '0';
+        seconds_str[2] = '\0';
+    }
     char minutes_str[3];
     itoa (minutes_str, minutes);
+    if (minutes < 10) {
+        minutes_str[1] = minutes_str[0];
+        minutes_str[0] = '0';
+        minutes_str[2] = '\0';
+    }
     char hours_str[3];
     itoa (hours_str, hours);
+    if (hours < 10) {
+        hours_str[1] = hours_str[0];
+        hours_str[0] = '0';
+        hours_str[2] = '\0';
+    }
     // going to [unsafely] assume we will not overrun datebuffer
     // print hours
     for (int i = 0; hours_str[i] != '\0'; ++i, ++bufsz) {
@@ -136,8 +151,9 @@ void getDate() {
     itoa (daystr, day);
     char yearstr[3];
     itoa (yearstr, year);
-    if (year == 0) {
-        yearstr[1] = '0';
+    if (year < 10) {
+        yearstr[1] = yearstr[0];
+        yearstr[0] = '0';
         yearstr[2] = '\0';
     }
     // going to [unsafely] assume we will not overrun datebuffer
