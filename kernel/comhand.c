@@ -57,9 +57,11 @@ void setTimeCommand() {
         setTerminalColor(White);
         input_len = sys_req(READ, COM1, input_buffer, sizeof(input_buffer));
         hour = atoi(input_buffer);
+         if (strcmp(input_buffer,"0") == 0 || strcmp(input_buffer, "00") == 0){
+            break;
+        }
         memset(input_buffer, 0, input_len);
-        
-        if ( (hour < 24) && (hour >= 0) ) {
+        if ( (hour < 24) && (hour > 0) ) {
             break;
         }
         
@@ -75,9 +77,12 @@ void setTimeCommand() {
         setTerminalColor(White);
         input_len = sys_req(READ, COM1, input_buffer, sizeof(input_buffer));
         minute = atoi(input_buffer);
+        if (strcmp(input_buffer,"0") == 0 || strcmp(input_buffer, "00") == 0){
+            break;
+        }
         memset(input_buffer, 0, input_len);
-        
-        if ( (minute < 60) && (minute >= 0) ) {
+         
+        if ( (minute < 60) && (minute > 0) ) {
             break;
         }
         
@@ -93,8 +98,10 @@ void setTimeCommand() {
         setTerminalColor(White);
         input_len = sys_req(READ, COM1, input_buffer, sizeof(input_buffer));
         second = atoi(input_buffer);
-        
-        if ( (second < 60) && (second >= 0) ) {
+         if (strcmp(input_buffer,"0") == 0 || strcmp(input_buffer, "00") == 0){
+            break;
+        }
+        if ( (second < 60) && (second > 0) ) {
             break;
         }
         
@@ -237,7 +244,7 @@ void helpCommand() {
 	//id 1
 	//help command
 	if (strcmp("Help", command) == 0 || strcmp("1", command) == 0 || strcmp("all", command) == 0) {
-		log(COM1, "\r\nHelp\r\n\0");git
+		log(COM1, "\r\nHelp\r\n\0");
 		log(COM1, "\tInput:\r\n\0");
 		log(COM1, "\tcommand - the command name or its corrosponding number or all\r\n\0");
 		log(COM1, "\tOutput:\r\n\0");
@@ -268,7 +275,7 @@ void helpCommand() {
 		log(COM1, "\tOutput:\r\n\0");
 		log(COM1, "\toutputs the system date\r\n\0");
 		log(COM1, "\tDescription:\r\n\0");
-		log(COM1, "\toutputs the date stored on the system data registers in day, month, year\n\tformat\n\r\n\0");
+		log(COM1, "\toutputs the date stored on the system data registers in month, day, year\n\tformat\n\r\n\0");
 		recognized = 1;
 	}
 	//id 4
@@ -284,7 +291,7 @@ void helpCommand() {
 		log(COM1, "\tno output\r\n\0");
 		log(COM1, "\tDescription:\r\n\0");
 		log(COM1, "\tsets the system date by writing to the system data register\r\n\0");
-		log(COM1, "\tit will prompt the user to enter the month XX, year 20XX, then day 20XX\n\r\n\0");
+		log(COM1, "\tit will prompt the user to enter the month XX, then day XX, year 20XX\n\r\n\0");
 		recognized = 1;
 	}
 	//id 3
@@ -294,7 +301,7 @@ void helpCommand() {
 		log(COM1, "\tInput:\r\n\0");
 		log(COM1, "\tno inputs\r\n\0");
 		log(COM1, "\tOutput:\r\n\0");
-		log(COM1, "\toutputs the system time in day, month, year format\r\n\0");
+		log(COM1, "\toutputs the system time in month, day, year format\r\n\0");
 		log(COM1, "\tDescription:\r\n\0");
 		log(COM1, "\toutputs the time stored on the system data registers\n\r\n\0");
 		recognized = 1;
