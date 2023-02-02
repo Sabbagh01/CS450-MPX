@@ -195,16 +195,128 @@ void versionCommand() {
     sys_req(WRITE, COM1, "\r\n", 2);
 }
 
+//helper command to print messages onto the device
+static void log(device dev, const char *msg)
+{
+	sys_req(WRITE, dev, msg, strlen(msg));
+}
+
+/**
+* @ param char command - the string that is used to determine which command information to display
+* @ returns - none
+* @ brief - Displays information for a certain user command if the string given matches the number id of a command or the exact name of the command unless all is specified in which all commands are displayed. Otherwise will display that a command was not found.
+*
+*/
 void helpCommand() {
-    static const char help_msg[] = "\r\n"
-                            "1) Help - Provides usage instructions for all commands.\r\n"
-                            "2) Set Time  - Sets the time.\r\n"
-                            "3) Get Time  - Returns the current time.\r\n"
-                            "4) Set Date  - Sets the date.\r\n"
-                            "5) Get Date  - Returns the set date.\r\n"
-                            "6) Version   - Returns the MPX version.\r\n"
-                            "7) Shut down - Start sequence to confirm and initiate shut down.\r\n";
-    sys_req(WRITE, COM1, help_msg, sizeof (help_msg));
+	//gets a message from the user to use or not use if blank as command parameter
+	//yellow color
+	setTerminalColor(Yellow);
+        const char *helpMsg = "\r\nEnter the command name or id to display a specific command\r\nEnter [all] to display all commands\r\n";
+        size_t lenHelpMsg = strlen(helpMsg);
+	//enter optional parameter
+	sys_req(WRITE, COM1, helpMsg, lenHelpMsg);
+	//white color
+    	setTerminalColor(White);
+	char command[120] = "";
+	sys_req(READ, COM1, command, 120);
+	//flag to display error message or not
+	int recognized = 0;
+	//id 6
+	//version command
+	if (strcmp("version", command) == 0 || strcmp("6", command) == 0 || strcmp("all", command) == 0) {
+		//version command
+		log(COM1, "\nversion\r\n\0");
+		log(COM1, "\tInput:\r\n\0");
+		log(COM1, "\tno input parameters\r\n\0");
+		log(COM1, "\tOutput:\r\n\0");
+		log(COM1, "\tno output\r\n\0");
+		log(COM1, "\tDescription:\r\n\0");
+		log(COM1, "\tprints the current version of MPX and the compilation date\n\r\n\0");
+		recognized = 1;
+	}
+	//id 1
+	//help command
+	if (strcmp("Help", command) == 0 || strcmp("1", command) == 0 || strcmp("all", command) == 0) {
+		log(COM1, "\r\nHelp\r\n\0");git
+		log(COM1, "\tInput:\r\n\0");
+		log(COM1, "\tcommand - the command name or its corrosponding number or all\r\n\0");
+		log(COM1, "\tOutput:\r\n\0");
+		log(COM1, "\tno return value\r\n\0");
+		log(COM1, "\tDescription:\r\n\0");
+		log(COM1, "\tprints all available user commands as well as details about the commands if\n\tall is used as the parameter\r\n\tprints the user command with details if a command or its id is specified\n\r\n\0");
+		recognized = 1;
+	}
+	//id 7
+	//shutdown command
+	if (strcmp("Shut Down", command) == 0 || strcmp("7", command) == 0 || strcmp("all", command) == 0) {
+		log(COM1, "\r\nShut Down\r\n\0");
+		log(COM1, "\tInput:\r\n\0");
+		log(COM1, "\tno input parameters\r\n\0");
+		log(COM1, "\tOutput:\r\n\0");
+		log(COM1, "\tno output value\r\n\0");
+		log(COM1, "\tDescription:\r\n\0");
+		log(COM1, "\tshuts down the machine after confirmation is given by entering 1\n\r\n\0");
+		recognized = 1;
+	}
+	//id 5
+	//get date command
+	if (strcmp("Get Date", command) == 0 || strcmp("5", command) == 0 || strcmp("all", command) == 0) {
+		//get date command
+		log(COM1, "\r\nGet Date\r\n\0");
+		log(COM1, "\tInput:\r\n\0");
+		log(COM1, "\tno input parameters\r\n\0");
+		log(COM1, "\tOutput:\r\n\0");
+		log(COM1, "\toutputs the system date\r\n\0");
+		log(COM1, "\tDescription:\r\n\0");
+		log(COM1, "\toutputs the date stored on the system data registers in day, month, year\n\tformat\n\r\n\0");
+		recognized = 1;
+	}
+	//id 4
+	//set date command
+	if (strcmp("Set Date", command) == 0 || strcmp("4", command) == 0 || strcmp("all", command) == 0) {
+		log(COM1, "\r\nSet Date\r\n\0");
+		log(COM1, "\tInput:\r\n\0");
+		log(COM1, "\tday - the number to set the system day to\r\n\0");
+		log(COM1, "\tdate range depends on month 1 is always the minimum while the maximum could be 28, 29, 30, 31\r\n\0");
+		log(COM1, "\tmonth - the number to set the system month to (1-12)\r\n\0");
+		log(COM1, "\tyear - the number to set the system year to (2 digits)\r\n\0");
+		log(COM1, "\tOutput:\r\n\0");
+		log(COM1, "\tno output\r\n\0");
+		log(COM1, "\tDescription:\r\n\0");
+		log(COM1, "\tsets the system date by writing to the system data register\r\n\0");
+		log(COM1, "\tit will prompt the user to enter the month XX, year 20XX, then day 20XX\n\r\n\0");
+		recognized = 1;
+	}
+	//id 3
+	//get time command
+	if (strcmp("Get Time", command) == 0 || strcmp("3", command) == 0 || strcmp("all", command) == 0) {
+		log(COM1, "\r\nGet Time\r\n\0");
+		log(COM1, "\tInput:\r\n\0");
+		log(COM1, "\tno inputs\r\n\0");
+		log(COM1, "\tOutput:\r\n\0");
+		log(COM1, "\toutputs the system time in day, month, year format\r\n\0");
+		log(COM1, "\tDescription:\r\n\0");
+		log(COM1, "\toutputs the time stored on the system data registers\n\r\n\0");
+		recognized = 1;
+	}
+	//id 2
+	if (strcmp("Set Time", command) == 0 || strcmp("2", command) == 0 || strcmp("all", command) == 0) {
+		//set time command
+		log(COM1, "\r\nSet Time\r\n\0");
+		log(COM1, "\tInput:\r\n\0");
+		log(COM1, "\thour - the hour to be written into data (0-23)\r\n\0");
+		log(COM1, "\tminute - the minute to be written into data (0-59)\r\n\0");
+		log(COM1, "\tsecond - the second to be written into data (0-59)\r\n\0");
+		log(COM1, "\tOutput:\r\n\0");
+		log(COM1, "\tno output\r\n\0");
+		log(COM1, "\tDescription:\r\n\0");
+		log(COM1, "\tsets the system time by writing to the system data register,\n\tthe time is in UTC\r\n\0");
+		log(COM1, "\tit will prompt the user to enter the hour, minute, then second specifications\n\r\n\0");
+		recognized = 1;
+	}
+	if (recognized == 0) {
+		log(COM1, "\r\ncommand name or id not recognized\r\n\0");
+	}
 }
 
 int shutdownCommand() {
