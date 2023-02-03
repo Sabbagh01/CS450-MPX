@@ -55,6 +55,15 @@ char intParsable(const char* string, size_t size) {
     return 1;
 }
 
+char intParsable(const char* string, size_t size) {
+    for (size_t i = 0; i < size; ++i) {
+        if ( (string[i] > '9') || (string[i] < '0') ) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 void setTimeCommand() {
     size_t input_len;
     char input_buffer[30] = { 0 };
@@ -64,7 +73,6 @@ void setTimeCommand() {
     
     while(1) {
         setTerminalColor(Yellow);
-
         static const char hour_msg[] = "\r\nEnter the hour (0-23):\r\n";
         write(COM1, STR_BUF(hour_msg));
 
@@ -85,7 +93,6 @@ void setTimeCommand() {
     }
     while(1) {
         setTerminalColor(Yellow);
-
         static const char minute_msg[] = "\r\nEnter the minute (0-59):\r\n";
         write(COM1, STR_BUF(minute_msg));
 
@@ -106,7 +113,6 @@ void setTimeCommand() {
     }
     while (1) {
         setTerminalColor(Yellow);
-
         static const char second_msg[] = "\r\nEnter the second (0-59):\r\n";
         write(COM1, STR_BUF(second_msg));
 
@@ -150,7 +156,7 @@ void setDateCommand() {
         static const char month_msg[] = "\r\nEnter the month (1-12):\r\n";
         write(COM1, STR_BUF(month_msg));
         
-        setTerminalColor(White);       
+        setTerminalColor(White);
         input_len = read(COM1, BUF(input_buffer));
         if (intParsable(input_buffer, input_len)) {
             month = atoi (input_buffer);
@@ -170,7 +176,7 @@ void setDateCommand() {
         static const char year_msg[] = "\r\nEnter the last two digits of the year (0-99):\r\n";
         write(COM1, STR_BUF(year_msg));
         
-        setTerminalColor(White);       
+        setTerminalColor(White);
         input_len = read(COM1, BUF(input_buffer));
         if (intParsable(input_buffer, input_len)) {
             year = atoi (input_buffer);
