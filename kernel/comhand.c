@@ -41,6 +41,15 @@ void setTerminalColor(enum Color color) {
     sys_req (WRITE, COM1, serial_text_colors[color].colorbytes, serial_text_colors[color].sz);
 }
 
+char intParsable(const char* string, size_t size) {
+    for (size_t i = 0; i < size; ++i) {
+        if ( (string[i] > '9') || (string[i] < '0') ) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 void setTimeCommand() {
     size_t input_len;
     char input_buffer[30] = { 0 };
@@ -56,14 +65,14 @@ void setTimeCommand() {
 
         setTerminalColor(White);
         input_len = sys_req(READ, COM1, input_buffer, sizeof(input_buffer));
-        hour = atoi(input_buffer);
-         if (strcmp(input_buffer,"0") == 0 || strcmp(input_buffer, "00") == 0){
-            break;
+        if (intParsable(input_buffer, input_len)) {
+            hour = atoi(input_buffer);
+            if ( (hour < 24) && (hour > 0) ) {
+            memset(input_buffer, 0, input_len);
+                break;
+            }
         }
         memset(input_buffer, 0, input_len);
-        if ( (hour < 24) && (hour > 0) ) {
-            break;
-        }
         
         setTerminalColor(Red);
         sys_req(WRITE, COM1, error_msg, sizeof(error_msg));
@@ -76,15 +85,15 @@ void setTimeCommand() {
 
         setTerminalColor(White);
         input_len = sys_req(READ, COM1, input_buffer, sizeof(input_buffer));
-        minute = atoi(input_buffer);
-        if (strcmp(input_buffer,"0") == 0 || strcmp(input_buffer, "00") == 0){
-            break;
+        if (intParsable(input_buffer, input_len)) {
+            minute = atoi(input_buffer);
+             
+            if ( (minute < 60) && (minute > 0) ) {
+                memset(input_buffer, 0, input_len);
+                break;
+            }
         }
         memset(input_buffer, 0, input_len);
-         
-        if ( (minute < 60) && (minute > 0) ) {
-            break;
-        }
         
         setTerminalColor(Red);
         sys_req(WRITE, COM1, error_msg, sizeof(error_msg));
@@ -97,14 +106,15 @@ void setTimeCommand() {
 
         setTerminalColor(White);
         input_len = sys_req(READ, COM1, input_buffer, sizeof(input_buffer));
-        second = atoi(input_buffer);
-         if (strcmp(input_buffer,"0") == 0 || strcmp(input_buffer, "00") == 0){
-            break;
+        if (intParsable(input_buffer, input_len)) {
+            second = atoi(input_buffer);
+            
+            if ( (second < 60) && (second > 0) ) {
+                memset(input_buffer, 0, input_len);
+                break;
+            }
         }
         memset(input_buffer, 0, input_len);
-        if ( (second < 60) && (second > 0) ) {
-            break;
-        }
         
         setTerminalColor(Red);
         sys_req(WRITE, COM1, error_msg, sizeof(error_msg));
@@ -136,12 +146,15 @@ void setDateCommand() {
         
         setTerminalColor(White);       
         input_len = sys_req(READ, COM1, input_buffer, sizeof (input_buffer));
-        month = atoi (input_buffer);
-        memset (input_buffer, 0, input_len);
-        
-        if ( (month <= 12) && (month >= 1) ) {
-            break;
+        if (intParsable(input_buffer, input_len)) {
+            month = atoi (input_buffer);
+            
+            if ( (month <= 12) && (month >= 1) ) {
+                memset (input_buffer, 0, input_len);
+                break;
+            }
         }
+        memset (input_buffer, 0, input_len);
 
         setTerminalColor(Red);       
         sys_req(WRITE, COM1, error_msg, sizeof(error_msg));    
@@ -153,12 +166,15 @@ void setDateCommand() {
         
         setTerminalColor(White);       
         input_len = sys_req(READ, COM1, input_buffer, sizeof (input_buffer));
-        year = atoi (input_buffer);
-        memset (input_buffer, 0, input_len);
-        
-        if ( (year < 100) && (year >= 0) ) {
-            break;
+        if (intParsable(input_buffer, input_len)) {
+            year = atoi (input_buffer);
+            
+            if ( (year < 100) && (year >= 0) ) {
+                memset (input_buffer, 0, input_len);
+                break;
+            }
         }
+        memset (input_buffer, 0, input_len);
         
         setTerminalColor(Red);
         sys_req(WRITE, COM1, error_msg, sizeof(error_msg));
@@ -170,13 +186,21 @@ void setDateCommand() {
         
         setTerminalColor(White);
         input_len = sys_req(READ, COM1, input_buffer, sizeof (input_buffer));
-        day = atoi (input_buffer);
-        memset (input_buffer, 0, input_len);
-        
-        if ( ((day <= month_info[month - 1].lastday) || 
-             ((month == 2) && (year % 4 == 0) && (day <= 29))) && (day >= 1) ) {
-            break;
+        if (intParsable(input_buffer, input_len)) {
+            day = atoi (input_buffer);
+            
+            if (
+                 (
+                   (day <= month_info[month - 1].lastday) || 
+                   ((month == 2) && (year % 4 == 0) && (day <= 29))
+                 ) && 
+                 (day >= 1)
+               ) {
+                memset (input_buffer, 0, input_len);
+                break;
+            }
         }
+        memset (input_buffer, 0, input_len);
         
         setTerminalColor(Red); 
         sys_req(WRITE, COM1, error_msg, sizeof(error_msg));
