@@ -1,6 +1,6 @@
 #include <mpx/io.h>
 #include <mpx/serial.h>
-#include <sys_req.h>
+#include <mpx/sys_req.h>
 #include <ctype.h>
 
 enum uart_registers {

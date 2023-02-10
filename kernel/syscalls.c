@@ -1,6 +1,6 @@
-#include "syscalls.h"
+#include <mpx/syscalls.h>
 
-#include <sys_req.h>
+#include <mpx/sys_req.h>
 
 
 int write(device dev, const void* buffer_in, size_t buffer_in_sz) {

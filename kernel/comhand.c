@@ -1,14 +1,12 @@
-#include <comhand.h>
+#include <mpx/comhand.h>
 
 #include <mpx/io.h>
 #include <mpx/serial.h>
-#include <sys_req.h>
+#include <mpx/sys_req.h>
+#include <mpx/time.h>
+#include <mpx/syscalls.h>
 #include <string.h>
 #include <stdlib.h>
-
-#include <time.h>
-#include "syscalls.h"
-
 
 // colors, note that how a terminal represents colors will not be constant
 // i.e, terminals may be configured with different color palettes

@@ -14,11 +14,11 @@
 #include <mpx/interrupts.h>
 #include <mpx/serial.h>
 #include <mpx/vm.h>
-#include <sys_req.h>
+#include <mpx/sys_req.h>
 #include <string.h>
 #include <memory.h>
 
-#include "comhand.h"
+#include <mpx/comhand.h>
 
 
 static void klogv(device dev, const char *msg)
