@@ -16,19 +16,27 @@ enum ProcClass {
     USER        = 0x01,
 };
 
+#define DPATCH_SHIFT 7
+#define DPATCH_BITS (1 << 7)
+#define EXEC_BITS (~DPATCH_BITS)
+
+#define PSTATE_EXEC_STATE(ps)           (ps & EXEC_BITS)
+#define PSTATE_DPATCH_STATE(ps)         (ps & DPATCH_BITS)
+#define PSTATE_EXEC_STATE_TOVALUE(ps)   (ps & EXEC_BITS)
+#define PSTATE_DPATCH_STATE_TOVALUE(ps) ((ps & DPATCH_BITS) >> DPATCH_SHIFT)
+
 /**
 @brief Defines unique process state identifiers
 */
 enum ProcState {
-    READY       = 0x01,
-    RUNNING     = 0x02,
-    BLOCKED     = 0x03,
-    SUSPENDED   = 0x00,
-    ACTIVE      = 0x80,
+    // begin execution states
+    READY       = 1,
+    RUNNING     = 2,
+    BLOCKED     = 3,
+    // begin dispatch states
+    SUSPENDED   = 0 << DPATCH_SHIFT,
+    ACTIVE      = 1 << DPATCH_SHIFT,
 };
-
-#define ISACTIVE(ps)    (ps & ACTIVE)
-#define ISSUSPENDED(ps) (ps & SUSPENDED)
 
 /**
 @brief 

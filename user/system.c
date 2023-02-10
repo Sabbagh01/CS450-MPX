@@ -10,9 +10,9 @@
 #include <mpx/serial.h>
 #include <mpx/vm.h>
 
-#include <memory.h>
-#include <processes.h>
-#include <sys_req.h>
+#include <mpx/memory.h>
+#include <mpx/processes.h>
+#include <mpx/sys_req.h>
 
 /* For R3: How many times each process prints its message */
 #define RC_1 1
