@@ -55,15 +55,6 @@ char intParsable(const char* string, size_t size) {
     return 1;
 }
 
-char intParsable(const char* string, size_t size) {
-    for (size_t i = 0; i < size; ++i) {
-        if ( (string[i] > '9') || (string[i] < '0') ) {
-            return 0;
-        }
-    }
-    return 1;
-}
-
 void setTimeCommand() {
     size_t input_len;
     char input_buffer[30] = { 0 };
