@@ -1,5 +1,12 @@
 #include <memory.h>
-#include <pcb.h>
+#include <mpx/pcb.h>
+#include <comhand.h>
+#include <mpx/io.h>
+#include <mpx/serial.h>
+#include <sys_req.h>
+#include <string.h>
+#include <stdlib.h>
+
 
 /**
 @brief
@@ -9,6 +16,6 @@
         or initialization.
 */
 struct pcb* pcb_allocate(void){
-     pcb* allocate =  Sys_alloc_mem(sizeof(pcb));
+     struct pcb* allocate =  sys_alloc_mem(sizeof(struct pcb));
     return allocate;
 }

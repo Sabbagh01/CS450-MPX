@@ -10,6 +10,7 @@ kernel/serial.o\
 kernel/comhand.o\
 kernel/time.o\
 kernel/syscalls.o\
+kernel/pcb.o\
 
 LIB_OBJECTS =\
 lib/ctype.o\
