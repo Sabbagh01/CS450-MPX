@@ -1,10 +1,20 @@
 #include <mpx/pcb.h>
-
+#include <mpx/io.h>
+#include <mpx/serial.h>
+#include <string.h>
 #include <mpx/memory.h>
+#include <stdlib.h>
 
 
-struct pcb* pcb_allocate(void) {
-    struct pcb* allocate = sys_alloc_mem (sizeof(struct pcb));
+/**
+@brief
+    Allocate memory for a new PCB.
+@return
+    A non-NULL pointer to a newly allocated PCB on success. NULL on error during allocation\
+        or initialization.
+*/
+struct pcb* pcb_allocate(void){
+     struct pcb* allocate =  sys_alloc_mem(sizeof(struct pcb));
     return allocate;
 }
 
@@ -134,4 +144,47 @@ void pcb_insert(struct pcb* pcb_in)
     
     pcb_queue_enqueue(&pcb_queues[PSTATE_QUEUE_SELECTOR(pcb_state)], pcb_in);
 }
+
+/**
+@brief
+    Allocates a new PCB, initializes it with data provided, and sets state to active-ready.
+@param name
+    Name for the new process. Must be no larger than the size defined by MPX_PCB_PROCNAME_SZ.
+@param cls
+    Class of the new process.
+@param pri
+    Priority of the new process.
+@return
+    A non-NULL pointer to the created PCB on success, NULL on error during allocation,\
+        initialization, or invalid parameters.
+*/
+struct pcb* pcb_setup(const char* name, enum ProcClass cls, unsigned char pri){
+
+if (sizeof(name) <= MPX_PCB_PROCNAME_SZ){
+         struct pcb *PCB = pcb_allocate();
+         *PCB -> pname = *name;
+          PCB -> pcls = cls;
+          PCB -> ppri = pri;
+          PCB -> pstate = (ACTIVE & READY);
+          return PCB;
+} 
+    return NULL;
+
+}
+
+
+/**
+@brief
+    Frees all memory associated with a given PCB, including its stack.
+@param pcb
+    A pointer to the pcb to free.
+@return
+    0 on success or otherwise a negative value upon error.
+*/
+ int pcb_free(struct pcb* pcb){
+      if(sys_free_mem(pcb))
+          return 1;
+
+      else return -1 ; 
+ }
 
