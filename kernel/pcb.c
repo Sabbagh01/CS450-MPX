@@ -172,7 +172,6 @@ if (sizeof(name) <= MPX_PCB_PROCNAME_SZ){
 
 }
 
-
 /**
 @brief
     Frees all memory associated with a given PCB, including its stack.
@@ -188,3 +187,53 @@ if (sizeof(name) <= MPX_PCB_PROCNAME_SZ){
       else return -1 ; 
  }
 
+struct pcb* pcb_find(const char* name){
+  struct pcb_queue * q1 = &pcb_queues[0];
+    struct pcb_queue_node* pcb_temp = NULL;
+    if(q1 -> head  != NULL){
+        pcb_temp = q1 -> head;
+        do{
+            if(strcmp(pcb_temp -> pcb_elem -> pname, name)==0){
+                return pcb_temp ->pcb_elem;
+            }
+            pcb_temp = pcb_temp -> p_next;
+        } while (pcb_temp != NULL);
+    }
+
+    q1 = &pcb_queues[1];
+    if(q1 -> head  != NULL){
+        pcb_temp = q1 -> head;
+        do{
+            if(strcmp(pcb_temp -> pcb_elem -> pname, name)==0){
+                    return pcb_temp ->pcb_elem;
+            }
+            pcb_temp = pcb_temp -> p_next;
+        } while (pcb_temp != NULL);
+    }
+
+      q1 = &pcb_queues[2];
+    
+    if(q1 -> head  != NULL){
+        pcb_temp = q1 -> head;
+        do{
+            if(strcmp(pcb_temp -> pcb_elem -> pname, name)==0){
+                  return pcb_temp ->pcb_elem;
+            }
+            pcb_temp = pcb_temp -> p_next;
+        } while (pcb_temp != NULL);
+    }
+    
+    q1 = &pcb_queues[3];
+    //struct pcb_queue_node* pcb_temp = NULL;
+    if(q1 -> head  != NULL){
+        pcb_temp = q1 -> head;
+        do{
+            if(strcmp(pcb_temp -> pcb_elem -> pname, name)==0){
+                   return pcb_temp ->pcb_elem;
+            }
+            pcb_temp = pcb_temp -> p_next;
+        } while (pcb_temp != NULL);
+    }
+
+  return NULL;
+}
