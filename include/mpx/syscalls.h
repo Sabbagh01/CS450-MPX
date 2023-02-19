@@ -12,8 +12,28 @@
 #define BUF(buf) buf, (sizeof (buf))
 #define STR_BUF(str) str, STR_A_SZ(str)
 
+/**
+@brief
+    Alias for sys_req(WRITE).
+@param buffer_in
+    An input buffer.
+@param buffer_in_sz
+    Size of the `buffer_in` buffer.
+@return
+    A status code corresponding to the result of sys_req(WRITE).
+*/
 int write(device dev, const void* buffer_in, size_t buffer_in_sz);
 
+/**
+@brief
+    Alias for sys_req(READ)
+@param buffer_inout
+    A caller provided buffer to write to.
+@param buffer_in_sz
+    Size of the `buffer_inout` buffer.
+@return
+    A status code corresponding to the result of sys_req(WRITE).
+*/
 int read(device dev, const void* buffer_inout, size_t buffer_inout_sz);
 
 #endif // SYSCALLS_H

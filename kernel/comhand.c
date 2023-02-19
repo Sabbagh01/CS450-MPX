@@ -161,9 +161,28 @@ cmd_entries[] =
     },
 };
 
+char user_input[100];
+int user_input_len = 0;
+// functions to help manage the global input buffer and debug.
+void user_input_clear() {
+    memset(user_input, 0, user_input_len);
+#ifdef MPX_DEBUG
+    user_input_len = 0;
+#endif
+}
+
+void user_input_promptread() {
+#ifdef MPX_DEBUG
+    if (user_input_len != 0)
+    {
+        write(COM1, STR_BUF("DEBUG: Missed manual clear\r\n"))
+    }
+#endif
+    user_input_len = read(COM1, user_input, sizeof(user_input));
+    return;
+}
+
 int setTimeCommand() {
-    size_t input_len;
-    char input_buffer[30] = { 0 };
     int hour, minute, second;
 
     static const char error_msg[] = "\r\nCould not parse, please re-enter time:";
@@ -174,16 +193,16 @@ int setTimeCommand() {
         write(COM1, STR_BUF(hour_msg));
 
         setTerminalColor(White);
-        input_len = read(COM1, BUF(input_buffer));
-        if (intParsable(input_buffer, input_len)) {
-            hour = atoi(input_buffer);
+        user_input_promptread();
+        if (intParsable(user_input, user_input_len)) {
+            hour = atoi(user_input);
                     
             if ( (hour < 24) && (hour >= 0) ) {
-                memset(input_buffer, 0, input_len);
+                user_input_clear();
                 break;
             }
         }
-        memset(input_buffer, 0, input_len);
+        user_input_clear();
         
         setTerminalColor(Red);
         write(COM1, STR_BUF(error_msg));
@@ -194,16 +213,16 @@ int setTimeCommand() {
         write(COM1, STR_BUF(minute_msg));
 
         setTerminalColor(White);
-        input_len = read(COM1, BUF(input_buffer));
-        if (intParsable(input_buffer, input_len)) {
-            minute = atoi(input_buffer);
+        user_input_promptread();
+        if (intParsable(user_input, user_input_len)) {
+            minute = atoi(user_input);
              
             if ( (minute < 60) && (minute >= 0) ) {
-                memset(input_buffer, 0, input_len);
+                user_input_clear();
                 break;
             }
         }
-        memset(input_buffer, 0, input_len);
+        user_input_clear();
         
         setTerminalColor(Red);
         write(COM1, STR_BUF(error_msg));
@@ -214,16 +233,16 @@ int setTimeCommand() {
         write(COM1, STR_BUF(second_msg));
 
         setTerminalColor(White);
-        input_len = read(COM1, BUF(input_buffer));
-        if (intParsable(input_buffer, input_len)) {
-            second = atoi(input_buffer);
+        user_input_promptread();
+        if (intParsable(user_input, user_input_len)) {
+            second = atoi(user_input);
             
             if ( (second < 60) && (second >= 0) ) {
-                memset(input_buffer, 0, input_len);
+                user_input_clear();
                 break;
             }
         }
-        memset(input_buffer, 0, input_len);
+        user_input_clear();
         
         setTerminalColor(Red);
         write(COM1, STR_BUF(error_msg));
@@ -244,8 +263,6 @@ int getTimeCommand() {
 }
 
 int setDateCommand() {
-    size_t input_len;
-    char input_buffer[30] = { 0 };
     int day, month, year;
       
     static const char error_msg[] = "\r\nCould not parse, please re-enter time:";
@@ -256,16 +273,16 @@ int setDateCommand() {
         write(COM1, STR_BUF(month_msg));
         
         setTerminalColor(White);
-        input_len = read(COM1, BUF(input_buffer));
-        if (intParsable(input_buffer, input_len)) {
-            month = atoi (input_buffer);
+        user_input_promptread();
+        if (intParsable(user_input, user_input_len)) {
+            month = atoi (user_input);
             
             if ( (month <= 12) && (month >= 1) ) {
-                memset(input_buffer, 0, input_len);
+                user_input_clear();
                 break;
             }
         }
-        memset(input_buffer, 0, input_len);
+        user_input_clear();
 
         setTerminalColor(Red);       
         write(COM1, STR_BUF(error_msg));    
@@ -276,16 +293,16 @@ int setDateCommand() {
         write(COM1, STR_BUF(year_msg));
         
         setTerminalColor(White);
-        input_len = read(COM1, BUF(input_buffer));
-        if (intParsable(input_buffer, input_len)) {
-            year = atoi (input_buffer);
+        user_input_promptread();
+        if (intParsable(user_input, user_input_len)) {
+            year = atoi (user_input);
             
             if ( (year < 100) && (year >= 0) ) {
-                memset(input_buffer, 0, input_len);
+                user_input_clear();
                 break;
             }
         }
-        memset(input_buffer, 0, input_len);
+        user_input_clear();
         
         setTerminalColor(Red);
         write(COM1, STR_BUF(error_msg));
@@ -296,9 +313,9 @@ int setDateCommand() {
         write(COM1, STR_BUF(day_msg));
         
         setTerminalColor(White);
-        input_len = read(COM1, BUF(input_buffer));
-        if (intParsable(input_buffer, input_len)) {
-            day = atoi (input_buffer);
+        user_input_promptread();
+        if (intParsable(user_input, user_input_len)) {
+            day = atoi (user_input);
             
             if (
                  (
@@ -306,12 +323,12 @@ int setDateCommand() {
                     ((month == 2) && (year % 4 == 0) && (day <= 29))
                  ) && 
                  (day >= 1) 
-               ) {
-                memset(input_buffer, 0, input_len);
+            ) {
+                user_input_clear();
                 break;
             }
         }
-        memset(input_buffer, 0, input_len);
+        user_input_clear();
         
         setTerminalColor(Red); 
         write(COM1, STR_BUF(error_msg));
@@ -342,19 +359,19 @@ int versionCommand() {
 }
 
 int helpCommand() {
-    char user_input[100] = { 0 };
 	setTerminalColor(Yellow);
     static const char help_msg[] = "\r\nEnter the command name or id to display a specific command\r\n"
                                    "Enter [all] to display all commands\r\n";
 	write(COM1, STR_BUF(help_msg));
     setTerminalColor(White);
-	read(COM1, BUF(user_input));
+	user_input_promptread();
     
     if (strcmp("all", user_input) == 0) {
         for (size_t i = 0; i < sizeof(cmd_entries) / sizeof(struct cmd_entry); ++i)
         {
             write(COM1, cmd_entries[i].help_msg, cmd_entries[i].help_msg_len);
         }
+        user_input_clear();
         return 0;
     }
     else
@@ -367,11 +384,13 @@ int helpCommand() {
             )
             {
                 write(COM1, cmd_entries[i].help_msg, cmd_entries[i].help_msg_len);
+                user_input_clear();
                 return 0;
             }
         }
     }
 	write(COM1, STR_BUF("\r\nCommand name or id not recognized\r\n"));
+    user_input_clear();
     return 0;
 }
 
@@ -381,22 +400,22 @@ int shutdownCommand() {
                                       "Enter 1 to confirm, enter another key to go back to menu:\r\n";
     write(COM1, STR_BUF(shutdown_msg));
 
-    char shutdownRead[30] = { 0 };
-    read(COM1, BUF(shutdownRead));
+    user_input_promptread();
     
     setTerminalColor(White);
-    if (strcmp(shutdownRead, "1") == 0){
+    if (strcmp(user_input, "1") == 0){
         static const char sdexec_msg[] = "\r\nShutting down now.\r\n";
         write(COM1, STR_BUF(sdexec_msg));
+        user_input_clear();
         return 0;
     }
     static const char sdcancel_msg[] = "\r\nShut down cancelled.\r\n";
     write(COM1, STR_BUF(sdcancel_msg));
+    user_input_clear();
     return 1;
 }
 
 void comhand() {
-    char user_input[100];
     static const char menu_welcome_msg[] = "Welcome to 5x5 MPX.\r\n";
     static const char menu_options[] = "Please select an option by choosing a number.\r\n"
                                        "1) Help        2) Set Time    3) Get Time    4) Set Date\r\n"
@@ -408,18 +427,14 @@ void comhand() {
     
     while (1) {
         commandloop_begin:
-        memset(user_input, 0, sizeof(user_input));
         setTerminalColor(Purple);
         //display the menu
         write(COM1, STR_BUF(menu_options));
         
         setTerminalColor(White);
-        // Get the input and call the corresponding function
-        read(COM1, BUF(user_input));
+        // get the input and call the corresponding function
+        user_input_promptread();
         
-        // these could be substituted for a switch case block because comparisons
-        // for a single char is simple, but in case of further changes, strcmp
-        // works fine.
         int retcode;
         for (size_t i = 0; i < sizeof(cmd_entries) / sizeof(struct cmd_entry); ++i)
         {
@@ -428,6 +443,7 @@ void comhand() {
                 (strcmp(user_input, cmd_entries[i].key_alt) == 0)
             )
             {
+                user_input_clear();
                 retcode = cmd_entries[i].command_func();
                 if (
                     (cmd_entries[i].command_func == shutdownCommand) &&
@@ -439,6 +455,7 @@ void comhand() {
                 goto commandloop_begin;
             }
         }
+        user_input_clear();
         setTerminalColor(Red);
         static const char invalidOption[] = "\r\nPlease select a valid option.\r\n";
         write(COM1, STR_BUF(invalidOption));
