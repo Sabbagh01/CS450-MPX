@@ -22,6 +22,7 @@ struct pcb_queue_node
 {
     struct pcb* pcb_elem;
     struct pcb_queue_node* p_next;
+    struct pcb_queue_node* p_prev;
 };
 
 struct pcb_queue {
@@ -191,7 +192,7 @@ struct pcb* pcb_find(const char* name){
   struct pcb_queue * q1 = &pcb_queues[0];
     struct pcb_queue_node* pcb_temp = NULL;
     if(q1 -> head  != NULL){
-        pcb_temp = q1 -> head;
+        pcb_temp -> p_next = q1 -> head;
         do{
             if(strcmp(pcb_temp -> pcb_elem -> pname, name)==0){
                 return pcb_temp ->pcb_elem;
@@ -236,4 +237,33 @@ struct pcb* pcb_find(const char* name){
     }
 
   return NULL;
+}
+int pcb_remove(struct pcb* pcb){
+    if(pcb_find(pcb->pname) == NULL){
+        return -1;
+    }
+   struct pcb_queue * q1 =  &pcb_queues[PSTATE_QUEUE_SELECTOR(pcb->pstate)];
+   if(q1->head->pcb_elem == pcb){
+    //remove head
+     q1->head= q1->head->p_prev;
+    //return success
+    q1->size--;
+    return 0;
+    
+   }
+   else if(q1->tail->pcb_elem == pcb){
+    //remove tail
+    q1->tail= q1->tail->p_prev;
+    //return success
+    q1->size--;
+    return 0;
+   }
+   else{
+    struct pcb_queue_node* pcb_temp = NULL;
+    pcb_temp -> pcb_elem = pcb;
+    pcb_temp -> p_prev ->p_next = pcb_temp -> p_next;
+    pcb_temp -> p_next -> p_prev = pcb_temp -> p_prev;
+    q1->size--;
+    return 0;
+   }
 }
