@@ -163,7 +163,7 @@ int pcb_free(struct pcb* pcb) {
 
 struct pcb* pcb_find(const char* name) {
     // iterate through all queues in order
-    for (int i = 0; i < sizeof(pcb_queues); ++i)
+    for (size_t i = 0; i < sizeof(pcb_queues) / sizeof(struct pcb_queue); ++i)
     {
         struct pcb_queue* queue_curr = &pcb_queues[i];
         // check that the queue is not empty

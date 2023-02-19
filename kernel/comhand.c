@@ -53,7 +53,115 @@ char intParsable(const char* string, size_t size) {
     return 1;
 }
 
-void setTimeCommand() {
+int helpCommand();
+int setTimeCommand();
+int getTimeCommand();
+int setDateCommand();
+int getDateCommand();
+int versionCommand();
+int shutdownCommand();
+
+const struct cmd_entry {
+    const char* key;
+    const size_t key_len;
+    const char* key_alt;
+    const size_t key_alt_len;
+    int (*const command_func)();
+    const char* help_msg;
+    const size_t help_msg_len;
+}
+cmd_entries[] = 
+{
+    { STR_BUF("1"), STR_BUF("Help"), helpCommand,
+        STR_BUF(
+        "\r\nHelp\r\n"
+            "\tInput:\r\n"
+            "\tcommand - the command name or its corresponding number or all\r\n"
+            "\tOutput:\r\n"
+            "\tno return value\r\n"
+            "\tDescription:\r\n"
+            "\tprints all available user commands as well as details about the commands if\r\n"
+            "\tall is used as the parameter\r\n"
+            "\tprints the user command with details if a command or its id is specified\r\n"
+        )
+    },
+    { STR_BUF("2"), STR_BUF("Set Time"), setTimeCommand,
+        STR_BUF(
+        "\r\nSet Time\r\n"
+            "\tInput:\r\n"
+            "\thour - the hour to be written into data (0-23)\r\n"
+            "\tminute - the minute to be written into data (0-59)\r\n"
+            "\tsecond - the second to be written into data (0-59)\r\n"
+            "\tOutput:\r\n"
+            "\tno output\r\n"
+            "\tDescription:\r\n"
+            "\tSets the system time.\r\n"
+            "\tThe user will be prompted to enter the hour, minute, then second specifications\r\n"
+        )
+    },
+    { STR_BUF("3"), STR_BUF("Get Time"), getTimeCommand,
+        STR_BUF(
+        "\r\nGet Time\r\n"
+            "\tInput:\r\n"
+            "\tno inputs\r\n"
+            "\tOutput:\r\n"
+            "\toutputs the system time in month, day, year format\r\n"
+            "\tDescription:\r\n"
+            "\tOutputs the time stored on the system data registers\r\n"
+        )
+    },
+    { STR_BUF("4"), STR_BUF("Set Date"), setDateCommand,
+        STR_BUF(
+        "\r\nSet Date\r\n"
+            "\tInput:\r\n"
+            "\tday - the number to set the system day to\r\n"
+            "\tdate range depends on month 1 is always the minimum while the maximum could be 28, 29, 30, 31\r\n"
+            "\tmonth - the number to set the system month to (1-12)\r\n"
+            "\tyear - the number to set the system year to (2 digits)\r\n"
+            "\tOutput:\r\n"
+            "\tno output\r\n"
+            "\tDescription:\r\n"
+            "\tsets the system date by writing to the system data register\r\n"
+            "\tit will prompt the user to enter the month XX, then day XX, year 20XX\r\n"
+        )
+    },
+    { STR_BUF("5"), STR_BUF("Get Date"), getDateCommand,
+        STR_BUF(
+        "\r\nGet Date\r\n"
+		    "\tInput:\r\n"
+		    "\tno input parameters\r\n"
+		    "\tOutput:\r\n"
+		    "\toutputs the system date\r\n"
+		    "\tDescription:\r\n"
+		    "\toutputs the date stored on the system data registers in month, day, year\r\n"
+            "\tformat\r\n"
+        )
+    },
+    { STR_BUF("6"), STR_BUF("Version"), versionCommand,
+        STR_BUF(
+        "\r\nVersion\r\n"
+		    "\tInput:\r\n"
+		    "\tno input parameters\r\n"
+		    "\tOutput:\r\n"
+		    "\tno output\r\n"
+		    "\tDescription:\r\n"
+		    "\tprints the current version of MPX and the compilation date\r\n"
+        )
+    },
+    { STR_BUF("7"), STR_BUF("Shut Down"), shutdownCommand,
+        STR_BUF(
+        "\r\nShut Down\r\n"
+		    "\tInput:\r\n"
+		    "\tno input parameters\r\n"
+		    "\tOutput:\r\n"
+		    "\tno output value\r\n"
+		    "\tDescription:\r\n"
+		    "\tshuts down the machine after confirmation is given by entering 1\r\n"
+        )
+    },
+};
+
+int setTimeCommand() {
     size_t input_len;
     char input_buffer[30] = { 0 };
     int hour, minute, second;
@@ -123,17 +231,19 @@ void setTimeCommand() {
     write(COM1, STR_BUF("\r\n"));
 
     setTime(hour, minute, second);
+    return 0;
 }
 
-void getTimeCommand() {
+int getTimeCommand() {
     setTerminalColor(Yellow);
     static const char day_msg[] = "\r\nThe time is:\r\n";
     write(COM1, STR_BUF(day_msg));
     
     getTime();
+    return 0;
 }
 
-void setDateCommand() {
+int setDateCommand() {
     size_t input_len;
     char input_buffer[30] = { 0 };
     int day, month, year;
@@ -209,152 +319,60 @@ void setDateCommand() {
     write(COM1, STR_BUF("\r\n"));
     
     setDate (day, month, year);
+    return 0;
 }
 
-void getDateCommand() {
+int getDateCommand() {
     setTerminalColor(Yellow);
     static const char day_msg[] = "\r\nThe date is:\r\n";
     write(COM1, STR_BUF(day_msg));
     
     getDate();
+    return 0;
 }
 
-void versionCommand() {
+int versionCommand() {
     setTerminalColor(White);
     static const char ver_msg[] = "\r\nMPX vR1.\r\nCompiled ";
     write(COM1, STR_BUF(ver_msg));
    
     write(COM1, STR_BUF(__DATE__));
     write(COM1, STR_BUF("\r\n"));
+    return 0;
 }
 
-/**
-* @ param char command - the string that is used to determine which command information to display
-* @ returns - none
-* @ brief - Displays information for a certain user command if the string given matches the number id of a command or the exact name of the command unless all is specified in which all commands are displayed. Otherwise will display that a command was not found.
-*/
-void helpCommand() {
-	//gets a message from the user to use or not use if blank as command parameter
+int helpCommand() {
+    char user_input[100] = { 0 };
 	setTerminalColor(Yellow);
     static const char help_msg[] = "\r\nEnter the command name or id to display a specific command\r\n"
-                                  "Enter [all] to display all commands\r\n";
+                                   "Enter [all] to display all commands\r\n";
 	write(COM1, STR_BUF(help_msg));
     setTerminalColor(White);
-	char command[120] = { 0 };
-	read(COM1, BUF(command));
-	// flag to display error message or not: TODO: try to refactor to not use flag
-	char recognized = 0;
-    // cache 'all' comparison
-    char printall = (strcmp("all", command) == 0);
-	
-    //version command (ID 6)
-	if (strcmp("Version", command) == 0 || strcmp("6", command) == 0 || printall) {
-		//version command
-		write(COM1, STR_BUF(
-            "\r\nVersion\r\n"
-		    "\tInput:\r\n"
-		    "\tno input parameters\r\n"
-		    "\tOutput:\r\n"
-		    "\tno output\r\n"
-		    "\tDescription:\r\n"
-		    "\tprints the current version of MPX and the compilation date")
-        );
-		recognized = 1;
-	}
-	// help command (ID 1)
-	if (strcmp("Help", command) == 0 || strcmp("1", command) == 0 || printall) {
-		write(COM1, STR_BUF(
-            "\r\nHelp\r\n"
-		    "\tInput:\r\n"
-		    "\tcommand - the command name or its corrosponding number or all\r\n"
-		    "\tOutput:\r\n"
-		    "\tno return value\r\n"
-		    "\tDescription:\r\n"
-		    "\tprints all available user commands as well as details about the commands if\r\n"
-            "\tall is used as the parameter\r\n"
-            "\tprints the user command with details if a command or its id is specified")
-        );
-		recognized = 1;
-	}
-	//shutdown command (ID 7)
-	if (strcmp("Shut Down", command) == 0 || strcmp("7", command) == 0 || printall) {
-		write(COM1, STR_BUF(
-            "\r\nShut Down\r\n"
-		    "\tInput:\r\n"
-		    "\tno input parameters\r\n"
-		    "\tOutput:\r\n"
-		    "\tno output value\r\n"
-		    "\tDescription:\r\n"
-		    "\tshuts down the machine after confirmation is given by entering 1")
-        );
-		recognized = 1;
-	}
-	//get date command (ID 5)
-    else if (strcmp("Get Date", command) == 0 || strcmp("5", command) == 0 || printall) {
-		write(COM1, STR_BUF(
-            "\r\nGet Date\r\n"
-		    "\tInput:\r\n"
-		    "\tno input parameters\r\n"
-		    "\tOutput:\r\n"
-		    "\toutputs the system date\r\n"
-		    "\tDescription:\r\n"
-		    "\toutputs the date stored on the system data registers in month, day, year\r\n"
-            "\tformat")
-        );
-		recognized = 1;
-	}
-	//set date command (ID 4)
-	if (strcmp("Set Date", command) == 0 || strcmp("4", command) == 0 || printall) {
-		write(COM1, STR_BUF(
-            "\r\nSet Date\r\n"
-		    "\tInput:\r\n"
-		    "\tday - the number to set the system day to\r\n"
-		    "\tdate range depends on month 1 is always the minimum while the maximum could be 28, 29, 30, 31\r\n"
-		    "\tmonth - the number to set the system month to (1-12)\r\n"
-		    "\tyear - the number to set the system year to (2 digits)\r\n"
-		    "\tOutput:\r\n"
-		    "\tno output\r\n"
-	        "\tDescription:\r\n"
-		    "\tsets the system date by writing to the system data register\r\n"
-		    "\tit will prompt the user to enter the month XX, then day XX, year 20XX")
-        );
-		recognized = 1;
-	}
-	//get time command (ID 3)
-	if (strcmp("Get Time", command) == 0 || strcmp("3", command) == 0 || printall) {
-		write(COM1, STR_BUF(
-            "\r\nGet Time\r\n"
-		    "\tInput:\r\n"
-		    "\tno inputs\r\n"
-		    "\tOutput:\r\n"
-		    "\toutputs the system time in month, day, year format\r\n"
-		    "\tDescription:\r\n"
-		    "\tOutputs the time stored on the system data registers")
-        );
-		recognized = 1;
-	}
-	//set time command (ID 2)
-	if (strcmp("Set Time", command) == 0 || strcmp("2", command) == 0 || printall) {
-		write(COM1, STR_BUF(
-            "\r\nSet Time\r\n"
-		    "\tInput:\r\n"
-		    "\thour - the hour to be written into data (0-23)\r\n"
-	        "\tminute - the minute to be written into data (0-59)\r\n"
-		    "\tsecond - the second to be written into data (0-59)\r\n"
-		    "\tOutput:\r\n"
-		    "\tno output\r\n"
-		    "\tDescription:\r\n"
-		    "\tSets the system time.\r\n"
-		    "\tThe user will be prompted to enter the hour, minute, then second specifications")
-        );
-		recognized = 1;
-	}
-	if (recognized == 0) {
-		write(COM1, STR_BUF("\r\nCommand name or id not recognized"));
-	}
-    write(COM1, STR_BUF("\r\n"));
+	read(COM1, BUF(user_input));
     
-    return;
+    if (strcmp("all", user_input) == 0) {
+        for (size_t i = 0; i < sizeof(cmd_entries) / sizeof(struct cmd_entry); ++i)
+        {
+            write(COM1, cmd_entries[i].help_msg, cmd_entries[i].help_msg_len);
+        }
+        return 0;
+    }
+    else
+    {
+        for (size_t i = 0; i < sizeof(cmd_entries) / sizeof(struct cmd_entry); ++i)
+        {
+            if (
+                (strcmp(user_input, cmd_entries[i].key) == 0) || 
+                (strcmp(user_input, cmd_entries[i].key_alt) == 0)
+            )
+            {
+                write(COM1, cmd_entries[i].help_msg, cmd_entries[i].help_msg_len);
+                return 0;
+            }
+        }
+    }
+	write(COM1, STR_BUF("\r\nCommand name or id not recognized\r\n"));
+    return 0;
 }
 
 int shutdownCommand() {
@@ -377,7 +395,8 @@ int shutdownCommand() {
     return 1;
 }
 
-void comhand() { 
+void comhand() {
+    char user_input[100];
     static const char menu_welcome_msg[] = "Welcome to 5x5 MPX.\r\n";
     static const char menu_options[] = "Please select an option by choosing a number.\r\n"
                                        "1) Help        2) Set Time    3) Get Time    4) Set Date\r\n"
@@ -388,39 +407,41 @@ void comhand() {
     write(COM1, STR_BUF(menu_welcome_msg));
     
     while (1) {
+        commandloop_begin:
+        memset(user_input, 0, sizeof(user_input));
         setTerminalColor(Purple);
         //display the menu
         write(COM1, STR_BUF(menu_options));
         
         setTerminalColor(White);
         // Get the input and call the corresponding function
-        char user_input_buffer[100] = { 0 };
-        read(COM1, BUF(user_input_buffer));
+        read(COM1, BUF(user_input));
         
         // these could be substituted for a switch case block because comparisons
         // for a single char is simple, but in case of further changes, strcmp
         // works fine.
-        if (strcmp(user_input_buffer,"1") == 0) {
-            helpCommand();
-        } else if (strcmp(user_input_buffer,"2") == 0) {
-            setTimeCommand();
-        } else if (strcmp(user_input_buffer,"3") == 0) {
-            getTimeCommand();
-        } else if (strcmp(user_input_buffer,"4") == 0) {
-            setDateCommand();
-        } else if (strcmp(user_input_buffer,"5") == 0) {
-            getDateCommand();
-        } else if (strcmp(user_input_buffer,"6") == 0) {
-            versionCommand();
-        } else if (strcmp(user_input_buffer,"7") == 0) {
-            if (!shutdownCommand()) {
-                break;
+        int retcode;
+        for (size_t i = 0; i < sizeof(cmd_entries) / sizeof(struct cmd_entry); ++i)
+        {
+            if (
+                (strcmp(user_input, cmd_entries[i].key) == 0) || 
+                (strcmp(user_input, cmd_entries[i].key_alt) == 0)
+            )
+            {
+                retcode = cmd_entries[i].command_func();
+                if (
+                    (cmd_entries[i].command_func == shutdownCommand) &&
+                    (retcode == 0)
+                )
+                {
+                    return;
+                }
+                goto commandloop_begin;
             }
-        } else {
-            setTerminalColor(Red);
-            static const char invalidOption[] = "\r\nPlease select a valid option.\r\n";
-            write(COM1, STR_BUF(invalidOption));
         }
+        setTerminalColor(Red);
+        static const char invalidOption[] = "\r\nPlease select a valid option.\r\n";
+        write(COM1, STR_BUF(invalidOption));
     }
 }
 
