@@ -85,7 +85,8 @@ int pcb_free(struct pcb* pcb);
 @brief
     Allocates a new PCB, initializes it with data provided, and sets state to active-ready.
 @param name
-    Name for the new process. Must be no larger than the size defined by MPX_PCB_PROCNAME_SZ.
+    Name string for the new process. Must be a NUL-terminated string and no larger
+        than the size defined by MPX_PCB_PROCNAME_SZ.
 @param cls
     Class of the new process.
 @param pri
