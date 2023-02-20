@@ -31,7 +31,7 @@ struct pcb_queue pcb_queues[] = {
 #endif
 
 
-int pcb_queue_dequeue(struct pcb_queue* queue, struct pcb** pcb_out) {
+int pcb_dequeue(struct pcb_queue* queue, struct pcb** pcb_out) {
     if (queue->size == 0)
     {
         return 1;
@@ -125,9 +125,15 @@ void pcb_insert(struct pcb* pcb_in)
 }
 
 struct pcb* pcb_allocate(void) {
-    struct pcb* allocate = sys_alloc_mem(sizeof(struct pcb));
-    // stack init in the future?
-    return allocate;
+    struct pcb* pcb_new = sys_alloc_mem(sizeof(struct pcb));
+    pcb_new->pbp = sys_alloc_mem(MPX_PCB_STACK_SZ);
+    if (pcb_new->pbp == NULL)
+    {
+        return NULL;
+    }
+    memset(pcb_new->pbp, 0, MPX_PCB_STACK_SZ);
+    pcb_new->pbp += MPX_PCB_STACK_SZ - 1;
+    return pcb_new;
 }
 
 struct pcb* pcb_setup(const char* name, enum ProcClass cls, unsigned char pri) {
@@ -136,7 +142,7 @@ struct pcb* pcb_setup(const char* name, enum ProcClass cls, unsigned char pri) {
     if (namelen <= MPX_PCB_PROCNAME_SZ)
     {
         // initialize a pcb.
-        struct pcb *pcb_new = pcb_allocate();
+        struct pcb* pcb_new = pcb_allocate();
         if (pcb_new != NULL)
         {
             // initialize pcb fields
@@ -144,7 +150,6 @@ struct pcb* pcb_setup(const char* name, enum ProcClass cls, unsigned char pri) {
                 pcb_new->pcls = cls;
                 pcb_new->ppri = pri;
                 pcb_new->pstate = ACTIVE & READY;
-                pcb_new->psp = NULL;
             return pcb_new;
         }
     } 
@@ -152,6 +157,10 @@ struct pcb* pcb_setup(const char* name, enum ProcClass cls, unsigned char pri) {
 }
 
 int pcb_free(struct pcb* pcb) {
+    if(!sys_free_mem(pcb->pbp - (MPX_PCB_STACK_SZ - 1)))
+    {
+        return -1;
+    }
     // clear and free 
     memset(pcb, 0, sizeof(struct pcb));
     if(!sys_free_mem(pcb))

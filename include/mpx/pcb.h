@@ -6,7 +6,8 @@
 @brief Facilities for manipulating process control blocks
 */
 
-#define MPX_PCB_PROCNAME_SZ (128)
+#define MPX_PCB_PROCNAME_SZ (64)
+#define MPX_PCB_PROCNAME_MIN (8)
 
 /**
 @brief Defines unique process class identifiers
@@ -38,6 +39,8 @@ enum ProcState {
     ACTIVE      = 1 << DPATCH_SHIFT,
 };
 
+#define MPX_PCB_STACK_SZ (1024)
+
 /**
 @brief 
     Defines a process control block structure for maintaining process information\
@@ -59,7 +62,7 @@ struct pcb {
     enum ProcClass pcls;
     unsigned char ppri;
     enum ProcState pstate;
-    void* psp;
+    void* pbp;
 };
 
 /**

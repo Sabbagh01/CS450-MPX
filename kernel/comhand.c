@@ -5,6 +5,7 @@
 #include <mpx/sys_req.h>
 #include <mpx/time.h>
 #include <mpx/syscalls.h>
+#include <mpx/pcb.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -58,6 +59,8 @@ int setTimeCommand();
 int getTimeCommand();
 int setDateCommand();
 int getDateCommand();
+int createPcbCommand();
+int setPcbPriorityCommand();
 int versionCommand();
 int shutdownCommand();
 
@@ -74,7 +77,7 @@ cmd_entries[] =
 {
     { STR_BUF("1"), STR_BUF("Help"), helpCommand,
         STR_BUF(
-        "\r\nHelp\r\n"
+        "Help\r\n"
             "\tInput:\r\n"
             "\tcommand - the command name or its corresponding number or all\r\n"
             "\tOutput:\r\n"
@@ -87,7 +90,7 @@ cmd_entries[] =
     },
     { STR_BUF("2"), STR_BUF("Set Time"), setTimeCommand,
         STR_BUF(
-        "\r\nSet Time\r\n"
+        "Set Time\r\n"
             "\tInput:\r\n"
             "\thour - the hour to be written into data (0-23)\r\n"
             "\tminute - the minute to be written into data (0-59)\r\n"
@@ -101,7 +104,7 @@ cmd_entries[] =
     },
     { STR_BUF("3"), STR_BUF("Get Time"), getTimeCommand,
         STR_BUF(
-        "\r\nGet Time\r\n"
+        "Get Time\r\n"
             "\tInput:\r\n"
             "\tno inputs\r\n"
             "\tOutput:\r\n"
@@ -112,7 +115,7 @@ cmd_entries[] =
     },
     { STR_BUF("4"), STR_BUF("Set Date"), setDateCommand,
         STR_BUF(
-        "\r\nSet Date\r\n"
+        "Set Date\r\n"
             "\tInput:\r\n"
             "\tday - the number to set the system day to\r\n"
             "\tdate range depends on month 1 is always the minimum while the maximum could be 28, 29, 30, 31\r\n"
@@ -127,7 +130,7 @@ cmd_entries[] =
     },
     { STR_BUF("5"), STR_BUF("Get Date"), getDateCommand,
         STR_BUF(
-        "\r\nGet Date\r\n"
+        "Get Date\r\n"
 		    "\tInput:\r\n"
 		    "\tno input parameters\r\n"
 		    "\tOutput:\r\n"
@@ -137,9 +140,34 @@ cmd_entries[] =
             "\tformat\r\n"
         )
     },
-    { STR_BUF("6"), STR_BUF("Version"), versionCommand,
+    { STR_BUF("6"), STR_BUF("Create PCB"), createPcbCommand,
         STR_BUF(
-        "\r\nVersion\r\n"
+        "Create PCB\r\n"
+		    "\tInput:\r\n"
+		    "\tprocess name - name to provide to the new process\r\n"
+            "\tprocess class - class of the new process\r\n"
+            "\tprocess priority - base priority of the new process\r\n"
+		    "\tOutput:\r\n"
+		    "\tno output if successful, error if a pcb could not be created\r\n"
+		    "\tDescription:\r\n"
+		    "\tCreates a new process pcb to insert it into an active ready queue\r\n"
+        )
+    },
+    { STR_BUF("7"), STR_BUF("Set PCB Priority"), setPcbPriorityCommand,
+        STR_BUF(
+        "Set PCB Priority\r\n"
+		    "\tInput:\r\n"
+            "\tprocess name - corresponding name of the new process\r\n"
+            "\tprocess priority - base priority of the new process\r\n"
+		    "\tOutput:\r\n"
+		    "\tno output\r\n"
+		    "\tDescription:\r\n"
+		    "\tLocates a process pcb and changes its base priority\r\n"
+        )
+    },
+    { STR_BUF("8"), STR_BUF("Version"), versionCommand,
+        STR_BUF(
+        "Version\r\n"
 		    "\tInput:\r\n"
 		    "\tno input parameters\r\n"
 		    "\tOutput:\r\n"
@@ -148,9 +176,9 @@ cmd_entries[] =
 		    "\tprints the current version of MPX and the compilation date\r\n"
         )
     },
-    { STR_BUF("7"), STR_BUF("Shut Down"), shutdownCommand,
+    { STR_BUF("9"), STR_BUF("Shut Down"), shutdownCommand,
         STR_BUF(
-        "\r\nShut Down\r\n"
+        "Shut Down\r\n"
 		    "\tInput:\r\n"
 		    "\tno input parameters\r\n"
 		    "\tOutput:\r\n"
@@ -179,17 +207,18 @@ void user_input_promptread() {
     }
 #endif
     user_input_len = read(COM1, user_input, sizeof(user_input));
+    write(COM1, STR_BUF("\r\n"));
     return;
 }
 
 int setTimeCommand() {
     int hour, minute, second;
 
-    static const char error_msg[] = "\r\nCould not parse, please re-enter time:";
+    static const char error_msg[] = "Could not parse, please re-enter time:\r\n";
     
     while(1) {
         setTerminalColor(Yellow);
-        static const char hour_msg[] = "\r\nEnter the hour (0-23):\r\n";
+        static const char hour_msg[] = "Enter the hour (0-23):\r\n";
         write(COM1, STR_BUF(hour_msg));
 
         setTerminalColor(White);
@@ -209,7 +238,7 @@ int setTimeCommand() {
     }
     while(1) {
         setTerminalColor(Yellow);
-        static const char minute_msg[] = "\r\nEnter the minute (0-59):\r\n";
+        static const char minute_msg[] = "Enter the minute (0-59):\r\n";
         write(COM1, STR_BUF(minute_msg));
 
         setTerminalColor(White);
@@ -229,7 +258,7 @@ int setTimeCommand() {
     }
     while (1) {
         setTerminalColor(Yellow);
-        static const char second_msg[] = "\r\nEnter the second (0-59):\r\n";
+        static const char second_msg[] = "Enter the second (0-59):\r\n";
         write(COM1, STR_BUF(second_msg));
 
         setTerminalColor(White);
@@ -247,7 +276,6 @@ int setTimeCommand() {
         setTerminalColor(Red);
         write(COM1, STR_BUF(error_msg));
     }
-    write(COM1, STR_BUF("\r\n"));
 
     setTime(hour, minute, second);
     return 0;
@@ -255,7 +283,7 @@ int setTimeCommand() {
 
 int getTimeCommand() {
     setTerminalColor(Yellow);
-    static const char day_msg[] = "\r\nThe time is:\r\n";
+    static const char day_msg[] = "The time is:\r\n";
     write(COM1, STR_BUF(day_msg));
     
     getTime();
@@ -265,11 +293,11 @@ int getTimeCommand() {
 int setDateCommand() {
     int day, month, year;
       
-    static const char error_msg[] = "\r\nCould not parse, please re-enter time:";
+    static const char error_msg[] = "Could not parse, please re-enter time:\r\n";
     
     while(1) {
         setTerminalColor(Yellow);
-        static const char month_msg[] = "\r\nEnter the month (1-12):\r\n";
+        static const char month_msg[] = "Enter the month (1-12):\r\n";
         write(COM1, STR_BUF(month_msg));
         
         setTerminalColor(White);
@@ -289,7 +317,7 @@ int setDateCommand() {
     }
     while(1) {
         setTerminalColor(Yellow);
-        static const char year_msg[] = "\r\nEnter the last two digits of the year (0-99):\r\n";
+        static const char year_msg[] = "Enter the last two digits of the year (0-99):\r\n";
         write(COM1, STR_BUF(year_msg));
         
         setTerminalColor(White);
@@ -309,7 +337,7 @@ int setDateCommand() {
     }
     while(1) {
         setTerminalColor(Yellow);
-        static const char day_msg[] = "\r\nEnter the day of the month:\r\n";
+        static const char day_msg[] = "Enter the day of the month:\r\n";
         write(COM1, STR_BUF(day_msg));
         
         setTerminalColor(White);
@@ -341,7 +369,7 @@ int setDateCommand() {
 
 int getDateCommand() {
     setTerminalColor(Yellow);
-    static const char day_msg[] = "\r\nThe date is:\r\n";
+    static const char day_msg[] = "The date is:\r\n";
     write(COM1, STR_BUF(day_msg));
     
     getDate();
@@ -350,7 +378,7 @@ int getDateCommand() {
 
 int versionCommand() {
     setTerminalColor(White);
-    static const char ver_msg[] = "\r\nMPX vR1.\r\nCompiled ";
+    static const char ver_msg[] = "MPX vR1.\r\nCompiled ";
     write(COM1, STR_BUF(ver_msg));
    
     write(COM1, STR_BUF(__DATE__));
@@ -358,9 +386,104 @@ int versionCommand() {
     return 0;
 }
 
+const struct str_pcbclass_map {
+    const char* str;
+    const enum ProcClass class;
+} avail_pcb_class[] = {
+    { "user", USER },
+    { "kernel", KERNEL }
+};
+
+int createPcbCommand() {
+    char proc_name[MPX_PCB_PROCNAME_SZ];
+    enum ProcClass proc_class;
+    unsigned char proc_pri;
+    
+    while(1) {
+        static const char name_msg[] = "Enter the name for the new process,\r\n"
+                                       "it must be at least 8 and up to 64 characters long.\r\n";
+        setTerminalColor(Yellow);
+        write(COM1, STR_BUF(name_msg));
+        
+        setTerminalColor(White);
+        user_input_promptread();
+        if ((user_input_len <= MPX_PCB_PROCNAME_SZ) && (user_input_len >= MPX_PCB_PROCNAME_MIN))
+        {
+            memcpy(proc_name, user_input, user_input_len);
+            user_input_clear();
+            break;
+        }
+        user_input_clear();
+        
+        setTerminalColor(Red);
+        static const char name_error_msg[] = "Name falls out of the range of 8 and 64\r\n";
+        write(COM1, STR_BUF(name_error_msg));
+    }
+    while(1) {
+        static const char class_msg[] = "Enter the class for the new process <user | kernel>:\r\n";
+        setTerminalColor(Yellow);
+        write(COM1, STR_BUF(class_msg));
+        
+        setTerminalColor(White);
+        user_input_promptread();
+        for (size_t i = 0; i < sizeof(avail_pcb_class) / sizeof(struct str_pcbclass_map); ++i)
+        {
+            if (strcmp(user_input, avail_pcb_class[i].str) == 0)
+            {
+                proc_class = avail_pcb_class[i].class;
+                user_input_clear();
+                goto procbreak;
+            }
+        }
+        user_input_clear();
+        
+        setTerminalColor(Red);
+        static const char class_error_msg[] = "Invalid class provided.\r\n";
+        write(COM1, STR_BUF(class_error_msg));
+    }
+    procbreak:
+    while(1) {
+        static const char pri_msg[] = "Enter the base priority for the new process (0-9):\r\n";
+        setTerminalColor(Yellow);
+        write(COM1, STR_BUF(pri_msg));
+        
+        setTerminalColor(White);
+        user_input_promptread();
+        if (user_input_len == 1)
+        {
+            if (intParsable(user_input, user_input_len))
+            {
+                proc_pri = atoi(user_input);
+                if ((proc_pri >= 0) && (proc_pri <= 9))
+                {
+                    user_input_clear();
+                    break;
+                }
+            }
+        }
+        user_input_clear();
+        
+        setTerminalColor(Red);
+        static const char pri_error_msg[] = "Priority is not in the accepted range.\r\n";
+        write(COM1, STR_BUF(pri_error_msg));
+    }
+
+    struct pcb* pcb_new = pcb_setup(proc_name, proc_class, proc_pri);
+    if (pcb_new == NULL)
+    {
+        return -1;
+    }
+    pcb_insert(pcb_new);
+    return 0;
+}
+
+int setPcbPriorityCommand() {
+    return 0;
+}
+
 int helpCommand() {
 	setTerminalColor(Yellow);
-    static const char help_msg[] = "\r\nEnter the command name or id to display a specific command\r\n"
+    static const char help_msg[] = "Enter the command name or id to display a specific command\r\n"
                                    "Enter [all] to display all commands\r\n";
 	write(COM1, STR_BUF(help_msg));
     setTerminalColor(White);
@@ -389,27 +512,27 @@ int helpCommand() {
             }
         }
     }
-	write(COM1, STR_BUF("\r\nCommand name or id not recognized\r\n"));
+	write(COM1, STR_BUF("Command name not recognized\r\n"));
     user_input_clear();
     return 0;
 }
 
 int shutdownCommand() {
     setTerminalColor(Red);
-    static const char shutdown_msg[] = "\r\nAre you sure you would like to shut down?\r\n"
-                                      "Enter 1 to confirm, enter another key to go back to menu:\r\n";
+    static const char shutdown_msg[] = "Are you sure you would like to shut down?\r\n"
+                                       "Enter 1 to confirm, enter another key to go back to menu:\r\n";
     write(COM1, STR_BUF(shutdown_msg));
 
     user_input_promptread();
     
     setTerminalColor(White);
     if (strcmp(user_input, "1") == 0){
-        static const char sdexec_msg[] = "\r\nShutting down now.\r\n";
+        static const char sdexec_msg[] = "Shutting down now.\r\n";
         write(COM1, STR_BUF(sdexec_msg));
         user_input_clear();
         return 0;
     }
-    static const char sdcancel_msg[] = "\r\nShut down cancelled.\r\n";
+    static const char sdcancel_msg[] = "Shut down cancelled.\r\n";
     write(COM1, STR_BUF(sdcancel_msg));
     user_input_clear();
     return 1;
@@ -457,7 +580,7 @@ void comhand() {
         }
         user_input_clear();
         setTerminalColor(Red);
-        static const char invalidOption[] = "\r\nPlease select a valid option.\r\n";
+        static const char invalidOption[] = "Please select a valid option.\r\n";
         write(COM1, STR_BUF(invalidOption));
     }
 }
