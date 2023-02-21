@@ -189,7 +189,7 @@ cmd_entries[] =
     },
 };
 
-char user_input[100];
+char user_input[128];
 int user_input_len = 0;
 // functions to help manage the global input buffer and debug.
 void user_input_clear() {
@@ -407,9 +407,9 @@ int createPcbCommand() {
         
         setTerminalColor(White);
         user_input_promptread();
-        if ((user_input_len <= MPX_PCB_PROCNAME_SZ) && (user_input_len >= MPX_PCB_PROCNAME_MIN))
+        if ((user_input_len < MPX_PCB_PROCNAME_SZ) && (user_input_len >= MPX_PCB_PROCNAME_MIN))
         {
-            memcpy(proc_name, user_input, user_input_len);
+            memcpy(proc_name, user_input, user_input_len + 1);
             user_input_clear();
             break;
         }
@@ -454,7 +454,7 @@ int createPcbCommand() {
             if (intParsable(user_input, user_input_len))
             {
                 proc_pri = atoi(user_input);
-                if ((proc_pri >= 0) && (proc_pri <= 9))
+                if ((proc_pri >= 0) && (proc_pri <= MPX_PCB_PROCPRI_MAX))
                 {
                     user_input_clear();
                     break;
@@ -478,6 +478,66 @@ int createPcbCommand() {
 }
 
 int setPcbPriorityCommand() {
+    char proc_name[MPX_PCB_PROCNAME_SZ];
+    unsigned char proc_pri;
+
+    struct pcb* pcb_findres;
+    while(1) {
+        static const char name_msg[] = "Enter the name of an existing process,\r\n"
+                                       "it must be at least 8 and up to 64 characters long.\r\n";
+        setTerminalColor(Yellow);
+        write(COM1, STR_BUF(name_msg));
+        
+        setTerminalColor(White);
+        user_input_promptread();
+        if ((user_input_len < MPX_PCB_PROCNAME_SZ) && (user_input_len >= MPX_PCB_PROCNAME_MIN))
+        {
+            memcpy(proc_name, user_input, user_input_len + 1);
+            pcb_findres = pcb_find(proc_name);
+            user_input_clear();
+            if (pcb_findres == NULL)
+            {
+                setTerminalColor(Red);
+                static const char find_error_msg[] = "Could not find a pcb with that name.\r\n";
+                write(COM1, STR_BUF(find_error_msg));
+                continue;
+            }
+            break;
+        }
+        user_input_clear();
+        
+        setTerminalColor(Red);
+        static const char name_error_msg[] = "Name falls out of the range of 8 and 64\r\n";
+        write(COM1, STR_BUF(name_error_msg));
+    }
+    while(1) {
+        static const char pri_msg[] = "Enter the base priority to set for the selected process (0-9):\r\n";
+        setTerminalColor(Yellow);
+        write(COM1, STR_BUF(pri_msg));
+        
+        setTerminalColor(White);
+        user_input_promptread();
+        if (user_input_len == 1)
+        {
+            if (intParsable(user_input, user_input_len))
+            {
+                proc_pri = atoi(user_input);
+                if ((proc_pri >= 0) && (proc_pri <= MPX_PCB_PROCPRI_MAX))
+                {
+                    pcb_remove(pcb_findres);
+                    pcb_findres->ppri = proc_pri;
+                    pcb_insert(pcb_findres);
+                    user_input_clear();
+                    break;
+                }
+            }
+        }
+        user_input_clear();
+        
+        setTerminalColor(Red);
+        static const char pri_error_msg[] = "Priority is not in the accepted range.\r\n";
+        write(COM1, STR_BUF(pri_error_msg));
+    }
     return 0;
 }
 

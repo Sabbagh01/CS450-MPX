@@ -4,6 +4,11 @@
 #include <mpx/device.h>
 #include <stddef.h>
 
+/**
+@file syscalls.h
+@brief Aliases to sysreq and convenience macros for passing buffers to the syscalls.
+*/
+
 // macro that gives the determination of the size for constant or literal string arrays
 // use only with strings backed by arrays or in conjunction with literals
 // good for sys_req to passes the span of a string w/o the automatic null terminator

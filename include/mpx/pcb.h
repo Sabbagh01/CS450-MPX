@@ -17,8 +17,10 @@ enum ProcClass {
     USER        = 0x01,
 };
 
+#define MPX_PCB_PROCPRI_MAX (9)
+
 #define DPATCH_SHIFT 7
-#define DPATCH_BITS (1 << 7)
+#define DPATCH_BITS (1 << DPATCH_SHIFT)
 #define EXEC_BITS (~DPATCH_BITS)
 
 #define PSTATE_EXEC_STATE(ps)           (ps & EXEC_BITS)
@@ -31,9 +33,9 @@ enum ProcClass {
 */
 enum ProcState {
     // begin execution states
+    BLOCKED     = 0,
     READY       = 1,
     RUNNING     = 2,
-    BLOCKED     = 3,
     // begin dispatch states
     SUSPENDED   = 0 << DPATCH_SHIFT,
     ACTIVE      = 1 << DPATCH_SHIFT,
