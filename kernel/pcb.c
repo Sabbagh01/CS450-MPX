@@ -6,19 +6,6 @@
 #include <stdlib.h>
 
 
-struct pcb_queue_node
-{
-    struct pcb* pcb_elem;
-    struct pcb_queue_node* p_next;
-};
-
-struct pcb_queue {
-    struct pcb_queue_node* head;
-    struct pcb_queue_node* tail;
-    const unsigned char type_pri;
-};
-
-
 #ifndef MPX_PROC_USE_ALT_QUEUES
 #define PSTATE_QUEUE_SELECTOR(ps) (PSTATE_EXEC_STATE_TOVALUE(~ps & READY) + 2 * PSTATE_DPATCH_STATE_TOVALUE(~ps))
 struct pcb_queue pcb_queues[] = {
@@ -28,6 +15,7 @@ struct pcb_queue pcb_queues[] = {
     { NULL, NULL, 0 }, // SUSPENDED BLOCKED
 };
 #endif
+
 
 
 int pcb_dequeue(struct pcb_queue* queue, struct pcb** pcb_out) {

@@ -8,6 +8,7 @@
 #include <mpx/pcb.h>
 #include <string.h>
 #include <stdlib.h>
+#include <memory.h>
 
 // colors, note that how a terminal represents colors will not be constant
 // i.e, terminals may be configured with different color palettes
@@ -63,6 +64,20 @@ int createPcbCommand();
 int setPcbPriorityCommand();
 int versionCommand();
 int shutdownCommand();
+char* classToChar(enum ProcClass cls);
+char* stateToChar(enum ProcState state);
+char* statusToChar(enum ProcState state);
+int showPCB();
+int delPCB();
+int resumePCB();
+int suspendPCB();
+int unblockPCB();
+int blockPCB();
+int showReady();
+int showBlocked();
+int showAll();
+
+extern struct pcb_queue pcb_queues[];
 
 const struct cmd_entry {
     const char* key;
@@ -165,7 +180,106 @@ cmd_entries[] =
 		    "\tLocates a process pcb and changes its base priority\r\n"
         )
     },
-    { STR_BUF("8"), STR_BUF("Version"), versionCommand,
+    { STR_BUF("8"), STR_BUF("Show PCB"), showPCB,
+        STR_BUF(
+        "Show PCB \r\n"
+            "\tInput: \r\n"
+            "\tName of Process\r\n"
+            "\tOutput: \r\n"
+            "\tInformation on found process\r\n"
+            "\tDescription: \r\n"
+            "\tPrints the name, class, state, suspended status, and priority of the given process\r\n"
+        )
+    },
+    { STR_BUF("9"), STR_BUF("Show Ready PCBs"), showReady,
+        STR_BUF(
+        "Show Ready PCBs \r\n"
+            "\tInput: \r\n"
+            "\tNoner\n"
+            "\tOutput: \r\n"
+            "\tInformation on all ready PCBs\r\n"
+            "\tDescription: \r\n"
+            "\tPrints the name, class, state, suspended status, and priority of all ready PCBs\r\n"
+        )
+    },
+    { STR_BUF("10"), STR_BUF("Show Blocked PCBs"), showBlocked,
+        STR_BUF(
+        "Show Blocked PCBs \r\n"
+            "\tInput: \r\n"
+            "\tNone\r\n"
+            "\tOutput: \r\n"
+            "\tInformation on all Blocked PCBs\r\n"
+            "\tDescription: \r\n"
+            "\tPrints the name, class, state, suspended status, and priority of all blocked PCBs\r\n"
+        )
+    },
+    { STR_BUF("11"), STR_BUF("Show All PCBs"), showAll,
+        STR_BUF(
+        "Show All PCBs \r\n"
+            "\tInput: \r\n"
+            "\tNone\r\n"
+            "\tOutput: \r\n"
+            "\tInformation on all PCBs\r\n"
+            "\tDescription: \r\n"
+            "\tPrints the name, class, state, suspended status, and priority of all PCBs\r\n"
+        )
+    },
+    { STR_BUF("12"), STR_BUF("Delete PCB"), delPCB,
+        STR_BUF(
+        "Delete PCB \r\n"
+            "\tInput: \r\n"
+            "\tName of Process \r\n"
+            "\tOutput: \r\n"
+            "\tNo output\r\n"
+            "\tDescription: \r\n"
+            "\tDeletes the PCB and frees associated memory of given PCB name if found\r\n"
+        )
+    },
+    { STR_BUF("13"), STR_BUF("Block PCB"), blockPCB,
+        STR_BUF(
+        "Block PCB \r\n"
+            "\tInput: \r\n"
+            "\tName of Process \r\n"
+            "\tOutput: \r\n"
+            "\tNo output\r\n"
+            "\tDescription: \r\n"
+            "\tSets the state of PCB to blocked if found\r\n"
+        )
+    },
+    { STR_BUF("14"), STR_BUF("Unblock PCB"), unblockPCB,
+        STR_BUF(
+        "Unblock PCB \r\n"
+            "\tInput: \r\n"
+            "\tName of Process \r\n"
+            "\tOutput: \r\n"
+            "\tNo output\r\n"
+            "\tDescription: \r\n"
+            "\tSets the state of PCB to unblocked if found\r\n"
+        )
+    },
+    { STR_BUF("15"), STR_BUF("Suspend PCB"), suspendPCB,
+        STR_BUF(
+        "Suspend PCB \r\n"
+            "\tInput: \r\n"
+            "\tName of Process \r\n"
+            "\tOutput: \r\n"
+            "\tNo output\r\n"
+            "\tDescription: \r\n"
+            "\tSuspends the PCB if found\r\n"
+        )
+    },
+    { STR_BUF("16"), STR_BUF("Resume PCB"), resumePCB,
+        STR_BUF(
+        "Resume PCB \r\n"
+            "\tInput: \r\n"
+            "\tName of Process \r\n"
+            "\tOutput: \r\n"
+            "\tNo output\r\n"
+            "\tDescription: \r\n"
+            "\tUnsuspends the PCB if found\r\n"
+        )
+    },
+    { STR_BUF("17"), STR_BUF("Version"), versionCommand,
         STR_BUF(
         "Version\r\n"
 		    "\tInput:\r\n"
@@ -176,7 +290,7 @@ cmd_entries[] =
 		    "\tprints the current version of MPX and the compilation date\r\n"
         )
     },
-    { STR_BUF("9"), STR_BUF("Shut Down"), shutdownCommand,
+    { STR_BUF("18"), STR_BUF("Shut Down"), shutdownCommand,
         STR_BUF(
         "Shut Down\r\n"
 		    "\tInput:\r\n"
@@ -378,7 +492,7 @@ int getDateCommand() {
 
 int versionCommand() {
     setTerminalColor(White);
-    static const char ver_msg[] = "MPX vR1.\r\nCompiled ";
+    static const char ver_msg[] = "MPX vR2.\r\nCompiled ";
     write(COM1, STR_BUF(ver_msg));
    
     write(COM1, STR_BUF(__DATE__));
@@ -577,6 +691,362 @@ int helpCommand() {
     return 0;
 }
 
+
+int showPCB(){
+    const char msg[] = "\nPlease enter the name of the process: \n";
+    write(COM1, STR_BUF(msg));
+    user_input_promptread();
+    
+    struct pcb* found = pcb_find(user_input);
+    user_input_clear();
+    if (found == NULL){
+        const char msgNotFound[] = "Specified process was not found\n";
+        write(COM1, STR_BUF(msgNotFound));
+        return 1;
+    }
+    char* proName = found->pname;
+    enum ProcClass proclass = found->pcls;
+    unsigned char propri = found->ppri;
+    enum ProcState prostate = found->pstate;
+
+    const char msgName[] = "\n The name of the process is: ";
+    const char msgClass[] = "\n The class of the process is: ";
+    const char msgPri[] = "\n The priority of the process is: ";
+    const char msgState[] = "\n The state of the process is: ";
+    const char msgStatus[] = "\n The status of the process is: ";
+
+    char* charClass = classToChar(proclass);
+    char* charState = stateToChar(prostate);
+    char* charStatus = statusToChar(prostate);
+    int intPri = (int) propri;
+    char* charPri = NULL;
+    itoa(charPri, intPri);
+
+    write(COM1, STR_BUF(msgName));
+    write(COM1, proName, strlen(proName));
+    write(COM1, STR_BUF(msgClass));
+    write(COM1, charClass, strlen(charClass));
+    write(COM1, STR_BUF(msgPri));
+    write(COM1, charPri, strlen(charPri));
+    write(COM1, STR_BUF(msgState));
+    write(COM1, charState, strlen(charState));
+    write(COM1, STR_BUF(msgStatus));
+    write(COM1, charStatus, strlen(charStatus));
+    write(COM1, STR_BUF("\r\n"));
+    return 0;
+
+}
+
+
+
+char* classToChar(enum ProcClass cls){
+    if (cls == KERNEL){
+        return "Kernel";
+    } else if (cls == USER){
+        return "User";
+    }
+    return "Error";
+}
+
+char* stateToChar(enum ProcState state){
+    if (state == (READY | ACTIVE)){
+        return "Ready";
+    } else if (state == (RUNNING | ACTIVE)){
+        return "Running";
+    } else if (state == (BLOCKED | ACTIVE)){
+        return "Blocked";
+    } else if (state == ( READY | SUSPENDED)){
+        return "Ready";
+    } else if (state == (RUNNING | SUSPENDED)){
+        return "Running";
+    } else if (state == (BLOCKED | SUSPENDED)){
+        return "Blocked";
+    }
+    return "Error";
+}
+
+char* statusToChar(enum ProcState state){
+    if (state == (READY | ACTIVE)){
+        return "Active";
+    } else if (state == (RUNNING | ACTIVE)){
+        return "Active";
+    } else if (state == (BLOCKED | ACTIVE)){
+        return "Active";
+    } else if (state == ( READY | SUSPENDED)){
+        return "Suspended";
+    } else if (state == (RUNNING | SUSPENDED)){
+        return "Suspended";
+    } else if (state == (BLOCKED | SUSPENDED)){
+        return "Suspended";
+    }
+    return "Error";
+}
+
+
+int delPCB() {
+    const char msg[] = "Please enter the name of the process you want removed: \n";
+    write(COM1, STR_BUF(msg));
+    user_input_promptread();
+
+
+    struct pcb* found = pcb_find(user_input);
+    user_input_clear();
+    if (found == NULL){
+        const char msgNotFound[] = "Process with given name not found\n";
+        write(COM1, STR_BUF(msgNotFound));
+        return 1;
+    }
+
+    pcb_remove(found);
+    pcb_free(found);
+    return 0;
+
+}
+
+int blockPCB() {
+    const char msg[] = "Please enter the name of the process you want to block: \n";
+    write(COM1, STR_BUF(msg));
+    user_input_promptread();
+
+
+    struct pcb* found = pcb_find(user_input);
+    user_input_clear();
+    if (found == NULL){
+        const char msgNotFound[] = "Process with given name not found\n";
+        write(COM1, STR_BUF(msgNotFound));
+        return 1;
+    }
+
+    pcb_remove(found);
+
+    found->pstate = found->pstate & ~READY;
+    pcb_insert(found);
+    return 0;
+}
+
+int unblockPCB() {
+    const char msg[] = "Please enter the name of the process you want to unblock: \n";
+    write(COM1, STR_BUF(msg));
+    user_input_promptread();
+
+
+    struct pcb* found = pcb_find(user_input);
+    user_input_clear();
+    if (found == NULL){
+        const char msgNotFound[] = "Process with given name not found\n";
+        write(COM1, STR_BUF(msgNotFound));
+        return 1;
+    }
+
+    pcb_remove(found);
+
+    found->pstate = found->pstate | READY;
+    pcb_insert(found);
+    return 0;  
+}
+
+int suspendPCB() {
+    const char msg[] = "Please enter the name of the process you want to suspend: \n";
+    write(COM1, STR_BUF(msg));
+    user_input_promptread();
+
+
+    struct pcb* found = pcb_find(user_input);
+    user_input_clear();
+    if (found == NULL){
+        const char msgNotFound[] = "Process with given name not found\n";
+        write(COM1, STR_BUF(msgNotFound));
+        return 1;
+    }
+
+    pcb_remove(found);
+
+    found->pstate = (found->pstate & ~ACTIVE);
+    pcb_insert(found);
+    return 0;  
+}
+
+int resumePCB() {
+    const char msg[] = "Please enter the name of the process you want to resume: \n";
+    write(COM1, STR_BUF(msg));
+    user_input_promptread();
+
+
+    struct pcb* found = pcb_find(user_input);
+    user_input_clear();
+    if (found == NULL){
+        const char msgNotFound[] = "Process with given name not found\n";
+        write(COM1, STR_BUF(msgNotFound));
+        return 1;
+    }
+
+    pcb_remove(found);
+
+    found->pstate = (found->pstate | ACTIVE);
+    pcb_insert(found);
+    return 0;     
+}
+
+int showReady(){
+    const char msgName[] = "\n The name of the process is: ";
+    const char msgClass[] = "\n The class of the process is: ";
+    const char msgPri[] = "\n The priority of the process is: ";
+    const char msgState[] = "\n The state of the process is: ";
+    const char msgStatus[] = "\n The status of the process is: ";
+
+    for (int i = 0; i <=3 ; i +=2)
+    {
+        struct pcb_queue* queue_curr = &pcb_queues[i];
+        // check that the queue is not empty (size > 0)
+        if (queue_curr->head != NULL)
+        {
+            struct pcb_queue_node* node_temp = queue_curr->head;
+            while(1)
+            {
+                //Get process info
+                char* proName = node_temp->pcb_elem->pname;
+                enum ProcClass proclass = node_temp->pcb_elem->pcls;
+                unsigned char propri = node_temp->pcb_elem->ppri;
+                enum ProcState prostate = node_temp->pcb_elem->pstate;
+
+                //Display information on process
+                char* charClass = classToChar(proclass);
+                char* charState = stateToChar(prostate);
+                char* charStatus = statusToChar(prostate);
+                int intPri = (int) propri;
+                char* charPri = NULL;
+                itoa(charPri, intPri);
+
+                write(COM1, STR_BUF(msgName));
+                write(COM1, proName, strlen(proName));
+                write(COM1, STR_BUF(msgClass));
+                write(COM1, charClass, strlen(charClass));
+                write(COM1, STR_BUF(msgPri));
+                write(COM1, charPri, strlen(charPri));
+                write(COM1, STR_BUF(msgState));
+                write(COM1, charState, strlen(charState));
+                write(COM1, STR_BUF(msgStatus));
+                write(COM1, charStatus, strlen(charStatus));
+                write(COM1, STR_BUF("\r\n"));
+                if (node_temp->p_next == NULL)
+                {
+                    break;
+                }
+                node_temp = node_temp->p_next;
+            }
+        }
+   
+    }
+    return 0;
+}
+
+int showBlocked() {
+    const char msgName[] = "\n The name of the process is: ";
+    const char msgClass[] = "\n The class of the process is: ";
+    const char msgPri[] = "\n The priority of the process is: ";
+    const char msgState[] = "\n The state of the process is: ";
+    const char msgStatus[] = "\n The status of the process is: ";
+
+    for (int i = 1; i <=3 ; i +=2)
+    {
+        struct pcb_queue* queue_curr = &pcb_queues[i];
+        // check that the queue is not empty (size > 0)
+        if (queue_curr->head != NULL)
+        {
+            struct pcb_queue_node* node_temp = queue_curr->head;
+            while(1)
+            {
+                //Get process info
+                char* proName = node_temp->pcb_elem->pname;
+                enum ProcClass proclass = node_temp->pcb_elem->pcls;
+                unsigned char propri = node_temp->pcb_elem->ppri;
+                enum ProcState prostate = node_temp->pcb_elem->pstate;
+
+                //Display information on process
+                char* charClass = classToChar(proclass);
+                char* charState = stateToChar(prostate);
+                char* charStatus = statusToChar(prostate);
+                int intPri = (int) propri;
+                char* charPri = NULL;
+                itoa(charPri, intPri);
+
+                write(COM1, STR_BUF(msgName));
+                write(COM1, proName, strlen(proName));
+                write(COM1, STR_BUF(msgClass));
+                write(COM1, charClass, strlen(charClass));
+                write(COM1, STR_BUF(msgPri));
+                write(COM1, charPri, strlen(charPri));
+                write(COM1, STR_BUF(msgState));
+                write(COM1, charState, strlen(charState));
+                write(COM1, STR_BUF(msgStatus));
+                write(COM1, charStatus, strlen(charStatus));
+                write(COM1, STR_BUF("\r\n"));
+                if (node_temp->p_next == NULL)
+                {
+                    break;
+                }
+                node_temp = node_temp->p_next;
+            }
+        }
+   
+    }
+    return 0;
+}
+
+int showAll() {
+    const char msgName[] = "\n The name of the process is: ";
+    const char msgClass[] = "\n The class of the process is: ";
+    const char msgPri[] = "\n The priority of the process is: ";
+    const char msgState[] = "\n The state of the process is: ";
+    const char msgStatus[] = "\n The status of the process is: ";
+
+    for (int i = 0; i <=3 ; i++)
+    {
+        struct pcb_queue* queue_curr = &pcb_queues[i];
+        // check that the queue is not empty (size > 0)
+        if (queue_curr->head != NULL)
+        {
+            struct pcb_queue_node* node_temp = queue_curr->head;
+            while(1)
+            {
+                //Get process info
+                char* proName = node_temp->pcb_elem->pname;
+                enum ProcClass proclass = node_temp->pcb_elem->pcls;
+                unsigned char propri = node_temp->pcb_elem->ppri;
+                enum ProcState prostate = node_temp->pcb_elem->pstate;
+
+                //Display information on process
+                char* charClass = classToChar(proclass);
+                char* charState = stateToChar(prostate);
+                char* charStatus = statusToChar(prostate);
+                int intPri = (int) propri;
+                char* charPri = NULL;
+                itoa(charPri, intPri);
+
+                write(COM1, STR_BUF(msgName));
+                write(COM1, proName, strlen(proName));
+                write(COM1, STR_BUF(msgClass));
+                write(COM1, charClass, strlen(charClass));
+                write(COM1, STR_BUF(msgPri));
+                write(COM1, charPri, strlen(charPri));
+                write(COM1, STR_BUF(msgState));
+                write(COM1, charState, strlen(charState));
+                write(COM1, STR_BUF(msgStatus));
+                write(COM1, charStatus, strlen(charStatus));
+                write(COM1, STR_BUF("\r\n"));
+                if (node_temp->p_next == NULL)
+                {
+                    break;
+                }
+                node_temp = node_temp->p_next;
+            }
+        }
+   
+    }
+    return 0;
+}
+
+
 int shutdownCommand() {
     setTerminalColor(Red);
     static const char shutdown_msg[] = "Are you sure you would like to shut down?\r\n"
@@ -601,8 +1071,11 @@ int shutdownCommand() {
 void comhand() {
     static const char menu_welcome_msg[] = "Welcome to 5x5 MPX.\r\n";
     static const char menu_options[] = "Please select an option by choosing a number.\r\n"
-                                       "1) Help        2) Set Time    3) Get Time    4) Set Date\r\n"
-                                       "5) Get Date    6) Version     7) Shut Down\r\n"
+                                       "1) Help              2) Set Time          3) Get Time          4) Set Date\r\n"
+                                       "5) Get Date          6) Create PCB        7) Change PCB Prio   8) Show PCB\r\n"
+                                       "9) Show Ready PCB   10) Show Blocked PCB  11) Show All PCB     12) Delete PCB \r\n"
+                                       "13) Block PCB       14) Unblock PCB       15) Suspend PCB      16) Resume PCB\r\n"
+                                       "17) Version         18) Shutdown\r\n"
                                        "Enter number of choice:\r\n";
     
     setTerminalColor(Blue);

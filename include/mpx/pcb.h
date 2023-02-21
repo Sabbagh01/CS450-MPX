@@ -1,3 +1,4 @@
+
 #ifndef MPX_PCB_H
 #define MPX_PCB_H
 
@@ -16,6 +17,21 @@ enum ProcClass {
     KERNEL      = 0x00,
     USER        = 0x01,
 };
+
+
+struct pcb_queue_node
+{
+    struct pcb* pcb_elem;
+    struct pcb_queue_node* p_next;
+};
+struct pcb_queue {
+    struct pcb_queue_node* head;
+    struct pcb_queue_node* tail;
+    const unsigned char type_pri;
+};
+
+extern struct pcb_queue pcb_queues[];
+
 
 #define MPX_PCB_PROCPRI_MAX (9)
 
