@@ -515,13 +515,13 @@ int createPcbCommand() {
     
     while(1) {
         static const char name_msg[] = "Enter the name for the new process,\r\n"
-                                       "it must be at least 8 and up to 64 characters long.\r\n";
+                                       "it must be at most 64 characters long.\r\n";
         setTerminalColor(Yellow);
         write(COM1, STR_BUF(name_msg));
         
         setTerminalColor(White);
         user_input_promptread();
-        if ((user_input_len < MPX_PCB_PROCNAME_SZ) && (user_input_len >= MPX_PCB_PROCNAME_MIN))
+        if ((user_input_len < MPX_PCB_PROCNAME_SZ))
         {
             memcpy(proc_name, user_input, user_input_len + 1);
             user_input_clear();
@@ -693,13 +693,17 @@ int helpCommand() {
 
 
 int showPCB(){
+    setTerminalColor(Yellow);
     const char msg[] = "\nPlease enter the name of the process: \n";
     write(COM1, STR_BUF(msg));
+
+    setTerminalColor(White);
     user_input_promptread();
     
     struct pcb* found = pcb_find(user_input);
     user_input_clear();
     if (found == NULL){
+        setTerminalColor(Red);
         const char msgNotFound[] = "Specified process was not found\n";
         write(COM1, STR_BUF(msgNotFound));
         return 1;
@@ -722,6 +726,7 @@ int showPCB(){
     char* charPri = NULL;
     itoa(charPri, intPri);
 
+    setTerminalColor(Yellow);
     write(COM1, STR_BUF(msgName));
     write(COM1, proName, strlen(proName));
     write(COM1, STR_BUF(msgClass));
@@ -784,14 +789,25 @@ char* statusToChar(enum ProcState state){
 
 
 int delPCB() {
+    setTerminalColor(Yellow);
     const char msg[] = "Please enter the name of the process you want removed: \n";
     write(COM1, STR_BUF(msg));
+
+    setTerminalColor(White);
     user_input_promptread();
 
 
     struct pcb* found = pcb_find(user_input);
     user_input_clear();
+    if (found->pcls == KERNEL){
+        setTerminalColor(Red);
+        const char msgKernel[] = "Process is a kernel process, can not be removed\n";
+        write(COM1, STR_BUF(msgKernel));
+        return 1;
+    }
+    
     if (found == NULL){
+        setTerminalColor(Red);
         const char msgNotFound[] = "Process with given name not found\n";
         write(COM1, STR_BUF(msgNotFound));
         return 1;
@@ -804,14 +820,17 @@ int delPCB() {
 }
 
 int blockPCB() {
+    setTerminalColor(Yellow);
     const char msg[] = "Please enter the name of the process you want to block: \n";
     write(COM1, STR_BUF(msg));
+    setTerminalColor(White);
     user_input_promptread();
 
 
     struct pcb* found = pcb_find(user_input);
     user_input_clear();
     if (found == NULL){
+        setTerminalColor(Red);
         const char msgNotFound[] = "Process with given name not found\n";
         write(COM1, STR_BUF(msgNotFound));
         return 1;
@@ -825,14 +844,17 @@ int blockPCB() {
 }
 
 int unblockPCB() {
+    setTerminalColor(Yellow);
     const char msg[] = "Please enter the name of the process you want to unblock: \n";
     write(COM1, STR_BUF(msg));
+    setTerminalColor(White);
     user_input_promptread();
 
 
     struct pcb* found = pcb_find(user_input);
     user_input_clear();
     if (found == NULL){
+        setTerminalColor(Red);
         const char msgNotFound[] = "Process with given name not found\n";
         write(COM1, STR_BUF(msgNotFound));
         return 1;
@@ -846,14 +868,24 @@ int unblockPCB() {
 }
 
 int suspendPCB() {
+    setTerminalColor(Yellow);
     const char msg[] = "Please enter the name of the process you want to suspend: \n";
     write(COM1, STR_BUF(msg));
+    setTerminalColor(White);
     user_input_promptread();
 
 
     struct pcb* found = pcb_find(user_input);
     user_input_clear();
+    if (found->pcls == KERNEL){
+        setTerminalColor(Red);
+        const char msgKernel[] = "Process is a kernel process, can not be suspended\n";
+        write(COM1, STR_BUF(msgKernel));
+        return 1;
+    }
+
     if (found == NULL){
+        setTerminalColor(Red);
         const char msgNotFound[] = "Process with given name not found\n";
         write(COM1, STR_BUF(msgNotFound));
         return 1;
@@ -867,14 +899,17 @@ int suspendPCB() {
 }
 
 int resumePCB() {
+    setTerminalColor(Yellow);
     const char msg[] = "Please enter the name of the process you want to resume: \n";
     write(COM1, STR_BUF(msg));
+    setTerminalColor(White);
     user_input_promptread();
 
 
     struct pcb* found = pcb_find(user_input);
     user_input_clear();
     if (found == NULL){
+        setTerminalColor(Red);
         const char msgNotFound[] = "Process with given name not found\n";
         write(COM1, STR_BUF(msgNotFound));
         return 1;
@@ -888,6 +923,7 @@ int resumePCB() {
 }
 
 int showReady(){
+    setTerminalColor(Yellow);
     const char msgName[] = "\n The name of the process is: ";
     const char msgClass[] = "\n The class of the process is: ";
     const char msgPri[] = "\n The priority of the process is: ";
@@ -941,6 +977,7 @@ int showReady(){
 }
 
 int showBlocked() {
+    setTerminalColor(Yellow);
     const char msgName[] = "\n The name of the process is: ";
     const char msgClass[] = "\n The class of the process is: ";
     const char msgPri[] = "\n The priority of the process is: ";
@@ -994,6 +1031,7 @@ int showBlocked() {
 }
 
 int showAll() {
+    setTerminalColor(Yellow);
     const char msgName[] = "\n The name of the process is: ";
     const char msgClass[] = "\n The class of the process is: ";
     const char msgPri[] = "\n The priority of the process is: ";
@@ -1073,9 +1111,9 @@ void comhand() {
     static const char menu_options[] = "Please select an option by choosing a number.\r\n"
                                        "1) Help              2) Set Time          3) Get Time          4) Set Date\r\n"
                                        "5) Get Date          6) Create PCB        7) Change PCB Prio   8) Show PCB\r\n"
-                                       "9) Show Ready PCB   10) Show Blocked PCB  11) Show All PCB     12) Delete PCB \r\n"
-                                       "13) Block PCB       14) Unblock PCB       15) Suspend PCB      16) Resume PCB\r\n"
-                                       "17) Version         18) Shutdown\r\n"
+                                       "9) Show Ready PCB    10) Show Blocked PCB 11) Show All PCB     12) Delete PCB \r\n"
+                                       "13) Block PCB        14) Unblock PCB      15) Suspend PCB      16) Resume PCB\r\n"
+                                       "17) Version          18) Shutdown\r\n"
                                        "Enter number of choice:\r\n";
     
     setTerminalColor(Blue);
