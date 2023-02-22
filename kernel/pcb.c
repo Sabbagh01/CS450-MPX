@@ -16,8 +16,6 @@ struct pcb_queue pcb_queues[] = {
 };
 #endif
 
-
-
 int pcb_dequeue(struct pcb_queue* queue, struct pcb** pcb_out) {
     if (queue->head == NULL)
     {

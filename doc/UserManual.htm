@@ -13,7 +13,8 @@
 <p> This manual goes over all commands that is available to use in 5x5 OS</p><br>
 
 
-<font size= "+2"><b>Commands</b></font>
+<font size= "+2"><b>Commands</b></font><br>
+<font size = "+2" <b>R1</b></font>
 <p> <font size= "+1"><i><b>Help</b></i></font> <br>
  <i>Provides information on each command that you need help on.</i><br> 
     When selected, it will ask for input from the user on which command they would like information on. The user can give a number input to output the command desired, string input, or input "all" to output all commands.<br>
@@ -65,5 +66,91 @@ When called, the system will output a confirmation question. If 1 is entered, th
 <font size= "-1">Shut Down Command Example</font><br><br>
 </p>
 
+<font size = "+2" <b>R2</b></font>
+<p> <font size= "+1"><i><b>Create PCB</b></i></font> <br>
+<i>Creats a PCB</i> <br>
+When called, it will ask the user for the desired name of the PCB, the class of the PCB, and its priority. The PCB will automatically be set as Active & Ready. There is no output. Erorrs will pop up if the name is not within 64 characters, the class is neither "user" or "kernel", or the priority is not within 0-9. <br>
+<img src="Pictures/CreatePCB.jpg" alt="Create PCB Command"><br>
+<font size= "-1">Create PCB Example</font><br><br>
+</p>
+
+<p> <font size= "+1"><i><b>Change PCB Priority</b></i></font> <br>
+<i>Changes the Priority of a PCB</i> <br>
+When called, it will ask the user for the name of the PCB whose priority wants to be changed, then it will ask what priority to set the PCB to. Errors will pop up if the name of the process is invalid or the priority is not within 0-9. The command has no output.<br>
+<img src="Pictures/Prio.jpg" alt="Change Priority"><br>
+<font size= "-1">Change PCB Priority Example</font><br><br>
+</p>
+
+
+<p> <font size= "+1"><i><b>Show PCB</b></i></font> <br>
+<i>Shows a given PCB</i> <br>
+When called, the system will ask the user for the name of the PCB to show. If the name is invalid, it will give an error saying there is no PCB. If found, it will output the PCB's name, class, priority, state, and suspended status.  <br>
+<img src="Pictures/ShowPCB.jpg" alt="Show PCB Command"><br>
+<font size= "-1">Show PCB Command Example</font><br><br>
+</p>
+
+<p> <font size= "+1"><i><b>Show Ready PCB</b></i></font> <br>
+<i>Shows all ready PCBs</i> <br>
+When called, the system will output all ready PCBs that can be found. If none are found, nothing will be outputted. <br>
+<img src="Pictures/Ready.jpg" alt="Show Ready PCB Command"><br>
+<font size= "-1">Show Ready PCB Command Example</font><br><br>
+</p>
+<p> <font size= "+1"><i><b>Show Blocked PCB</b></i></font> <br>
+<i>Shows all blocked PCBs</i> <br>
+When called, the system will output all blocked PCBs that can be found. If none are found, nothing will be outputted. <br>
+<img src="Pictures/Blocked.jpg" alt="Show Blocked PCB Command"><br>
+<font size= "-1">Show Blocked PCB Command Example</font><br><br>
+
+<p> <font size= "+1"><i><b>Show All PCB</b></i></font> <br>
+<i>Shows all PCBs</i> <br>
+When called, the system will output all PCBs that can be found. If none are found, nothing will be outputted. <br>
+<img src="Pictures/AllPCB.jpg" alt="Show All PCB Command"><br>
+<font size= "-1">Show All PCBs Command Example</font><br><br>
+
+<p> <font size= "+1"><i><b>Delete PCB</b></i></font><br>
+<i>Deletes a PCB</i> <br>
+When called, the system will ask for the name of the process to delete. If found, it will delete the PCB. Else, it will output an error saying the PCB can not be found. If the given process was found and is a kernel process, it will not delete the PCB and output a message saying it can not.<br>
+<img src="Pictures/Delete.jpg" alt="Delete PCB Command"><br>
+<font size= "-1">Delete PCB Command Example</font><br><br>
+</p>
+<img src="Pictures/Delete2.jpg" alt="Kernel Delete PCB Command"><br>
+<font size= "-1">Kernel Delete PCB Command Example</font><br><br>
+</p>
+
+
+<p> <font size= "+1"><i><b>Block PCB</b></i></font> <br>
+<i>Blocks a PCB</i> <br>
+When called, the system will ask for the name of the process to block. If found, it will block the PCB. Else, it will output an error saying the PCB can not be found. <br>
+<img src="Pictures/BlockPCB.jpg" alt="Block PCB Command"><br>
+<font size= "-1">Block PCB Command Example</font><br><br>
+</p>
+
+
+<p> <font size= "+1"><i><b>Unblock PCB</b></i></font> <br>
+<i>Unblocks a PCB</i> <br>
+When called, the system will ask for the name of the process to unblock. If found, it will unblock the PCB. Else, it will output an error saying the PCB can not be found. <br>
+<img src="Pictures/UnblockPCB.jpg" alt="Unblock PCB Command"><br>
+<font size= "-1">Unblock PCB Command Example</font><br><br>
+</p>
+
+
+<p> <font size= "+1"><i><b>Suspend PCB</b></i></font> <br>
+<i>Suspends a PCB</i> <br>
+When called, the system will ask for the name of the process to suspend. If found, it will suspend the PCB. Else, it will output an error saying the PCB can not be found. If the given process was found and is a kernel process, it will not suspend the PCB and output a message saying it can not.<br>
+<img src="Pictures/Suspend.jpg" alt="Suspend PCB Command"><br>
+<font size= "-1">Suspend PCB Command Example</font><br>
+</p>
+<img src="Pictures/Suspend2.jpg" alt="Kernel Suspend PCB Command"><br>
+<font size= "-1">Kernel Suspend PCB Command Example</font><br><br>
+</p>
+
+
+<p> <font size= "+1"><i><b>Resume PCB</b></i></font> <br>
+<i>Resumes a PCB</i> <br>
+When called, the system will ask for the name of the process to resume. If found, it will resume the PCB. Else, it will output an error saying the PCB can not be found.<br>
+<img src="Pictures/Resume.jpg" alt="Resume PCB Command"><br>
+<font size= "-1">Resume PCB Command Example</font><br>
+</p>
+</p>
 </body>
 </html>
