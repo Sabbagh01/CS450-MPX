@@ -90,11 +90,13 @@ void pcb_insert(struct pcb* pcb_in)
                 {
                     node->p_next = queue->head;
                     queue->head = node;
+                    return;
                 }
                 else  // between nodes
                 {
                     prevcmpnode->p_next = node;
                     node->p_next = cmpnode;
+                    return;
                 }
             }
             // insert at tail

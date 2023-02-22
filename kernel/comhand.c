@@ -604,7 +604,7 @@ int setPcbPriorityCommand() {
         
         setTerminalColor(White);
         user_input_promptread();
-        if ((user_input_len < MPX_PCB_PROCNAME_SZ) && (user_input_len >= MPX_PCB_PROCNAME_MIN))
+        if (user_input_len < MPX_PCB_PROCNAME_SZ)
         {
             memcpy(proc_name, user_input, user_input_len + 1);
             pcb_findres = pcb_find(proc_name);
