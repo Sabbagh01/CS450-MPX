@@ -536,7 +536,7 @@ int createPcbCommand() {
     
     while(1) {
         static const char name_msg[] = "Enter the name for the new process,\r\n"
-                                       "it must be 8 to 64 characters long.\r\n";
+                                       "it must be no more than 64 characters long.\r\n";
         setTerminalColor(Yellow);
         write(COM1, STR_BUF(name_msg));
         
@@ -619,13 +619,13 @@ int setPcbPriorityCommand() {
     struct pcb* pcb_findres;
     while(1) {
         static const char name_msg[] = "Enter the name of an existing process,\r\n"
-                                       "it must be at least 8 and up to 64 characters long.\r\n";
+                                       "it must be no more than 64 characters long.\r\n";
         setTerminalColor(Yellow);
         write(COM1, STR_BUF(name_msg));
         
         setTerminalColor(White);
         user_input_promptread();
-        if (user_input_len < MPX_PCB_PROCNAME_SZ)
+        if ((user_input_len < MPX_PCB_PROCNAME_SZ) && (user_input_len > 1))
         {
             memcpy(proc_name, user_input, user_input_len + 1);
             pcb_findres = pcb_find(proc_name);
