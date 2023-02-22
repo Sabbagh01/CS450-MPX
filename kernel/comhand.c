@@ -1112,7 +1112,7 @@ void comhand() {
                                        "1 ) Help            2 ) Set Time          3 ) Get Time         4 ) Set Date\r\n"
                                        "5 ) Get Date        6 ) Create PCB        7 ) Change PCB Pri   8 ) Show PCB\r\n"
                                        "9 ) Show Ready PCB  10) Show Blocked PCB  11) Show All PCB     12) Delete PCB\r\n"
-                                       "13) Block PCB       14) Unblock PCB      15) Suspend PCB      16) Resume PCB\r\n"
+                                       "13) Block PCB       14) Unblock PCB       15) Suspend PCB      16) Resume PCB\r\n"
                                        "17) Version         18) Shutdown\r\n"
                                        "Enter number of choice:\r\n";
     
