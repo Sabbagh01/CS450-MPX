@@ -734,10 +734,10 @@ int showPcbCommand(){
     enum ProcState procstate = found->pstate;
 
     const char msgName[] = "The name of the process is:\r\n";
-    const char msgClass[] = "The class of the process is:\r\n";
-    const char msgPri[] = "The priority of the process is:\r\n";
-    const char msgState[] = "The state of the process is:\r\n";
-    const char msgStatus[] = "The status of the process is:\r\n";
+    const char msgClass[] = "\r\nThe class of the process is:\r\n";
+    const char msgPri[] = "\r\nThe priority of the process is:\r\n";
+    const char msgState[] = "\r\nThe state of the process is:\r\n";
+    const char msgStatus[] = "\r\nThe status of the process is:\r\n";
 
     const char* charClass = class_str(procclass);
     const char* charState = execstate_str(procstate);

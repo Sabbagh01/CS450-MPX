@@ -20,6 +20,8 @@
 /**
 @brief
     Alias for sys_req(WRITE).
+@param dev
+    Device to read from.
 @param buffer_in
     An input buffer.
 @param buffer_in_sz
@@ -32,6 +34,8 @@ int write(device dev, const void* buffer_in, size_t buffer_in_sz);
 /**
 @brief
     Alias for sys_req(READ)
+@param dev
+    Device to write to.
 @param buffer_inout
     A caller provided buffer to write to.
 @param buffer_in_sz

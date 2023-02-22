@@ -80,11 +80,15 @@ void pcb_insert(struct pcb* pcb_in)
                 {
                     prevcmpnode = cmpnode;
                     cmpnode = cmpnode->p_next;
+                    // check if forward node is past the tail
                     if (cmpnode == NULL)
                     {
+                        // go to the tail insertion case
                         goto pri_iterend;
                     }
                 }
+                // loop exits normally if the priority of pcb in reaches the
+                //   front of pcbs with it's priority queue
                 // insert between nodes or at head
                 if (cmpnode == queue->head) // at head
                 {

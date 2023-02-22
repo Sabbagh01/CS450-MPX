@@ -2,3 +2,4 @@
 kernel.bin
 **/.vscode/
 **/.lvimrc
+**/doxygen/

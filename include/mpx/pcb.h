@@ -1,4 +1,3 @@
-
 #ifndef MPX_PCB_H
 #define MPX_PCB_H
 
@@ -8,7 +7,6 @@
 */
 
 #define MPX_PCB_PROCNAME_SZ (64)
-#define MPX_PCB_PROCNAME_MIN (8)
 
 /**
 @brief Defines unique process class identifiers
@@ -17,21 +15,6 @@ enum ProcClass {
     KERNEL      = 0x00,
     USER        = 0x01,
 };
-
-
-struct pcb_queue_node
-{
-    struct pcb* pcb_elem;
-    struct pcb_queue_node* p_next;
-};
-struct pcb_queue {
-    struct pcb_queue_node* head;
-    struct pcb_queue_node* tail;
-    const unsigned char type_pri;
-};
-
-extern struct pcb_queue pcb_queues[];
-
 
 #define MPX_PCB_PROCPRI_MAX (9)
 
@@ -60,19 +43,20 @@ enum ProcState {
 #define MPX_PCB_STACK_SZ (1024)
 
 /**
+@struct pcb
 @brief 
-    Defines a process control block structure for maintaining process information\
+    Defines a process control block (PCB) structure for maintaining process information
         for a process.
-@var pname
+@var pcb::pname
     The current name of a process
-@var pcls
+@var pcb::pcls
     The current class of a process
-@var ppri
-    The current scheduling priority of a process. The value must be in [0-9]\
+@var pcb::ppri
+    The current scheduling priority of a process. The value must be in [0-9]
         where 0 is the highest priority and increasing values indicate decreasing priority.
-@var pstate
+@var pcb::pstate
     The current execution state of a process.
-@var psp
+@var pcb::psp
     A pointer to the top of the stack for a process.
 */
 struct pcb {
@@ -84,10 +68,50 @@ struct pcb {
 };
 
 /**
+@struct pcb_queue_node
+@brief
+    A node to hold queued PCB handles for a `pcb_queue`.
+@var pcb_queue_node::pcb_elem
+    A pointer to an existing PCB.
+@var pcb_queue_node::p_next
+    A pointer to a next entry in a queue. NULL if there is no next entry.
+*/
+struct pcb_queue_node
+{
+    struct pcb* pcb_elem;
+    struct pcb_queue_node* p_next;
+};
+
+/**
+@struct pcb_queue
+@brief
+    A queue to hold queued PCB handles, linked list implementation.
+@var pcb_queue::head
+    If the queue is not empty, points to head/front of the queue which can be dequeued. NULL otherwise.
+@var pcb_queue::tail
+    If the queue is not empty, points to the tail/back of the queue to help enqueue an element.
+        NULL otherwise.
+@var pcb_queue::type_pri
+    Identifies whether the queue is a priority queue. If so, inserting via `pcb_insert()`
+        might not insert nodes at the tail and will insert based on first priority.
+*/
+struct pcb_queue {
+    struct pcb_queue_node* head;
+    struct pcb_queue_node* tail;
+    const unsigned char type_pri;
+};
+
+/**
+@var pcb_queues
+@brief An array of queues corresponding to process states.
+*/
+extern struct pcb_queue pcb_queues[];
+
+/**
 @brief
     Allocate memory for a new PCB.
 @return
-    A non-NULL pointer to a newly allocated PCB on success. NULL on error during allocation\
+    A non-NULL pointer to a newly allocated PCB on success. NULL on error during allocation
         or initialization.
 */
 struct pcb* pcb_allocate(void);
@@ -113,7 +137,7 @@ int pcb_free(struct pcb* pcb);
 @param pri
     Priority of the new process.
 @return
-    A non-NULL pointer to the created PCB on success, NULL on error during allocation,\
+    A non-NULL pointer to the created PCB on success, NULL on error during allocation,
         initialization, or invalid parameters.
 */
 struct pcb* pcb_setup(const char* name, enum ProcClass cls, unsigned char pri);
