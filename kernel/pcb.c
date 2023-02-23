@@ -2,7 +2,7 @@
 #include <mpx/io.h>
 #include <mpx/serial.h>
 #include <string.h>
-#include <mpx/memory.h>
+#include <memory.h>
 #include <stdlib.h>
 
 

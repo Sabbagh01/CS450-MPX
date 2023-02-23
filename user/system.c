@@ -10,7 +10,7 @@
 #include <mpx/serial.h>
 #include <mpx/vm.h>
 
-#include <mpx/memory.h>
+#include <memory.h>
 #include <mpx/processes.h>
 #include <mpx/sys_req.h>
 
