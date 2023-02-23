@@ -6,7 +6,7 @@
 @brief Functions to get and set time and date
 */
 
-extern const struct {
+extern const struct month_info {
     /** @brief The name of a month. */
     const char* name;
     /** @brief The last day of a month. */
