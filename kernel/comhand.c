@@ -536,14 +536,14 @@ int createPcbCommand() {
     unsigned char proc_pri;
     
     while(1) {
-        static const char name_msg[] = "Enter the name for the new process,\r\n"
-                                       "it must be no more than 64 characters long and unique.\r\n";
+        static const char name_msg[] = "Enter process name (1-64) characters: \r\n";
+                                       
         setTerminalColor(Yellow);
         write(COM1, STR_BUF(name_msg));
         
         setTerminalColor(White);
         user_input_promptread();
-        if ((user_input_len < MPX_PCB_PROCNAME_SZ) && (pcb_find(user_input) == NULL))
+        if ((user_input_len <= MPX_PCB_PROCNAME_SZ) && (pcb_find(user_input) == NULL))
         {
             memcpy(proc_name, user_input, user_input_len + 1);
             user_input_clear();
@@ -552,11 +552,11 @@ int createPcbCommand() {
         user_input_clear();
         
         setTerminalColor(Red);
-        static const char name_error_msg[] = "Name falls out of the range of 64 characters or process with given name already exists\r\n";
+        static const char name_error_msg[] = "Name out of range or name already exist.\r\n";
         write(COM1, STR_BUF(name_error_msg));
     }
     while(1) {
-        static const char class_msg[] = "Enter the class for the new process <user | kernel>:\r\n";
+        static const char class_msg[] = "Enter process class (user or kernel):\r\n";
         setTerminalColor(Yellow);
         write(COM1, STR_BUF(class_msg));
         
@@ -574,12 +574,12 @@ int createPcbCommand() {
         user_input_clear();
         
         setTerminalColor(Red);
-        static const char class_error_msg[] = "Invalid class provided.\r\n";
+        static const char class_error_msg[] = "Invalid class provided. Please enter user or kernel in lower case.\r\n";
         write(COM1, STR_BUF(class_error_msg));
     }
     procbreak:
     while(1) {
-        static const char pri_msg[] = "Enter the base priority for the new process (0-9):\r\n";
+        static const char pri_msg[] = "Enter process priority (0-9):\r\n";
         setTerminalColor(Yellow);
         write(COM1, STR_BUF(pri_msg));
         
@@ -619,14 +619,14 @@ int setPcbPriorityCommand() {
 
     struct pcb* pcb_findres;
     while(1) {
-        static const char name_msg[] = "Enter the name of an existing process,\r\n"
-                                       "it must be no more than 64 characters long.\r\n";
+        static const char name_msg[] = "Enter exist process name to change its priority: \r\n";
+                                      
         setTerminalColor(Yellow);
         write(COM1, STR_BUF(name_msg));
         
         setTerminalColor(White);
         user_input_promptread();
-        if ((user_input_len < MPX_PCB_PROCNAME_SZ) && (user_input_len > 1))
+        if ((user_input_len < MPX_PCB_PROCNAME_SZ) && (user_input_len >= 1))
         {
             memcpy(proc_name, user_input, user_input_len + 1);
             pcb_findres = pcb_find(proc_name);
@@ -634,7 +634,7 @@ int setPcbPriorityCommand() {
             if (pcb_findres == NULL)
             {
                 setTerminalColor(Red);
-                static const char find_error_msg[] = "Could not find a pcb with that name.\r\n";
+                static const char find_error_msg[] = "Process name does not exist.\r\n";
                 write(COM1, STR_BUF(find_error_msg));
                 continue;
             }
@@ -643,11 +643,11 @@ int setPcbPriorityCommand() {
         user_input_clear();
         
         setTerminalColor(Red);
-        static const char name_error_msg[] = "Name falls out of the range of 8 and 64\r\n";
+        static const char name_error_msg[] = "Process with given name not found.\r\n";
         write(COM1, STR_BUF(name_error_msg));
     }
     while(1) {
-        static const char pri_msg[] = "Enter the base priority to set for the selected process (0-9):\r\n";
+        static const char pri_msg[] = "Enter process priority (0-9):\r\n";
         setTerminalColor(Yellow);
         write(COM1, STR_BUF(pri_msg));
         
@@ -679,7 +679,7 @@ int setPcbPriorityCommand() {
 
 int helpCommand() {
 	setTerminalColor(Yellow);
-    static const char help_msg[] = "Enter the command name or id to display a specific command\r\n"
+    static const char help_msg[] = "Enter the command name same case sensitive or the number of the command\r\n"
                                    "Enter [all] to display all commands\r\n";
 	write(COM1, STR_BUF(help_msg));
     setTerminalColor(White);
@@ -734,11 +734,11 @@ int showPcbCommand(){
     unsigned char propri = found->ppri;
     enum ProcState procstate = found->pstate;
 
-    const char msgName[] = "The name of the process is:\r\n";
-    const char msgClass[] = "\r\nThe class of the process is:\r\n";
-    const char msgPri[] = "\r\nThe priority of the process is:\r\n";
-    const char msgState[] = "\r\nThe state of the process is:\r\n";
-    const char msgStatus[] = "\r\nThe status of the process is:\r\n";
+    const char msgName[] = "\r\nProcess Name: ";
+    const char msgClass[] = "\r\nProcess Class: ";
+    const char msgPri[] = "\r\nProcess Priority: ";
+    const char msgState[] = "\r\nProcess State: ";
+    const char msgStatus[] = "\r\nProcess Status: ";
 
     const char* charClass = class_str(procclass);
     const char* charState = execstate_str(procstate);
@@ -764,7 +764,8 @@ int showPcbCommand(){
 }
 
 int deletePcbCommand() {
-    const char msg[] = "Please enter the name of the process you want removed:\r\n";
+    setTerminalColor(Yellow);
+    const char msg[] = "Enter exist process name to be deleted:\r\n";
     write(COM1, STR_BUF(msg));
 
     setTerminalColor(White);
@@ -794,7 +795,7 @@ int deletePcbCommand() {
 
 int blockPcbCommand() {
     setTerminalColor(Yellow);
-    const char msg[] = "Please enter the name of the process you want to block:\r\n";
+    const char msg[] = "Enter exist process name to block:\r\n";
     write(COM1, STR_BUF(msg));
     setTerminalColor(White);
     user_input_promptread();
@@ -818,7 +819,7 @@ int blockPcbCommand() {
 
 int unblockPcbCommand() {
     setTerminalColor(Yellow);
-    const char msg[] = "Please enter the name of the process you want to unblock:\r\n";
+    const char msg[] = "Enter exist process name to unblock:\r\n";
     write(COM1, STR_BUF(msg));
     setTerminalColor(White);
     user_input_promptread();
@@ -842,7 +843,7 @@ int unblockPcbCommand() {
 
 int suspendPcbCommand() {
     setTerminalColor(Yellow);
-    const char msg[] = "Please enter the name of the process you want to suspend:\r\n";
+    const char msg[] = "Enter exist process name to suspend:\r\n";
     write(COM1, STR_BUF(msg));
     setTerminalColor(White);
     user_input_promptread();
@@ -872,7 +873,7 @@ int suspendPcbCommand() {
 
 int resumePcbCommand() {
     setTerminalColor(Yellow);
-    const char msg[] = "Please enter the name of the process you want to resume:\r\n";
+    const char msg[] = "Enter exist process name to resume:\r\n";
     write(COM1, STR_BUF(msg));
     setTerminalColor(White);
     user_input_promptread();
@@ -895,11 +896,11 @@ int resumePcbCommand() {
 
 int showPcbReadyCommand(){
     setTerminalColor(Yellow);
-    const char msgName[] = "The name of the process is:\r\n";
-    const char msgClass[] = "\r\nThe class of the process is:\r\n";
-    const char msgPri[] = "\r\nThe priority of the process is:\r\n";
-    const char msgState[] = "\r\nThe state of the process is:\r\n";
-    const char msgStatus[] = "\r\nThe status of the process is:\r\n";
+    const char msgName[] = "\r\nProcess Name: ";
+    const char msgClass[] = "\r\nProcess Class: ";
+    const char msgPri[] = "\r\nProcess Priority: ";
+    const char msgState[] = "\r\nProcess State: ";
+    const char msgStatus[] = "\r\nProcess Status: ";
     
     for (int i = 0; i <= 3; i += 2)
     {
@@ -949,11 +950,11 @@ int showPcbReadyCommand(){
 
 int showPcbBlockedCommand() {
     setTerminalColor(Yellow);
-    const char msgName[] = "The name of the process is:\r\n";
-    const char msgClass[] = "\r\nThe class of the process is:\r\n";
-    const char msgPri[] = "\r\nThe priority of the process is:\r\n";
-    const char msgState[] = "\r\nThe state of the process is:\r\n";
-    const char msgStatus[] = "\r\nThe status of the process is:\r\n";
+    const char msgName[] = "\r\nProcess Name: ";
+    const char msgClass[] = "\r\nProcess Class: ";
+    const char msgPri[] = "\r\nProcess Priority: ";
+    const char msgState[] = "\r\nProcess State: ";
+    const char msgStatus[] = "\r\nProcess Status: ";
     
     for (int i = 1; i <= 3; i += 2)
     {
@@ -1003,11 +1004,12 @@ int showPcbBlockedCommand() {
 
 int showPcbAllCommand() {
     setTerminalColor(Yellow);
-    const char msgName[] = "The name of the process is:\r\n";
-    const char msgClass[] = "\r\nThe class of the process is:\r\n";
-    const char msgPri[] = "\r\nThe priority of the process is:\r\n";
-    const char msgState[] = "\r\nThe state of the process is:\r\n";
-    const char msgStatus[] = "\r\nThe status of the process is:\r\n";
+    const char msgName[] = "\r\nProcess Name: ";
+    const char msgClass[] = "\r\nProcess Class: ";
+    const char msgPri[] = "\r\nProcess Priority: ";
+    const char msgState[] = "\r\nProcess State: ";
+    const char msgStatus[] = "\r\nProcess Status: ";
+    //const char newLine[] = "\n";
     
     for (int i = 0; i <= 3; ++i)
     {
