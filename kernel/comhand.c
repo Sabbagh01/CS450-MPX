@@ -537,13 +537,13 @@ int createPcbCommand() {
     
     while(1) {
         static const char name_msg[] = "Enter the name for the new process,\r\n"
-                                       "it must be no more than 64 characters long.\r\n";
+                                       "it must be no more than 64 characters long and unique.\r\n";
         setTerminalColor(Yellow);
         write(COM1, STR_BUF(name_msg));
         
         setTerminalColor(White);
         user_input_promptread();
-        if ((user_input_len < MPX_PCB_PROCNAME_SZ))
+        if ((user_input_len < MPX_PCB_PROCNAME_SZ) && (pcb_find(user_input) == NULL))
         {
             memcpy(proc_name, user_input, user_input_len + 1);
             user_input_clear();
@@ -552,7 +552,7 @@ int createPcbCommand() {
         user_input_clear();
         
         setTerminalColor(Red);
-        static const char name_error_msg[] = "Name falls out of the range of 8 and 64\r\n";
+        static const char name_error_msg[] = "Name falls out of the range of 64 characters or process with given name already exists\r\n";
         write(COM1, STR_BUF(name_error_msg));
     }
     while(1) {
