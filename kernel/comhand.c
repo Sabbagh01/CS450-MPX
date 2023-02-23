@@ -62,8 +62,9 @@ struct str_pcbprop_map {
 };
 
 const struct str_pcbprop_map avail_pcb_class[] = {
+    { KERNEL,   "kernel",   "Kernel" }, 
     { USER,     "user",     "User"   },
-    { KERNEL,   "kernel",   "Kernel" },
+
 };
 
 const struct str_pcbprop_map avail_pcb_execstate[] = {
