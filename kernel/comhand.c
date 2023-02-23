@@ -1009,7 +1009,6 @@ int showPcbAllCommand() {
     const char msgPri[] = "\r\nProcess Priority: ";
     const char msgState[] = "\r\nProcess State: ";
     const char msgStatus[] = "\r\nProcess Status: ";
-    //const char newLine[] = "\n";
     
     for (int i = 0; i <= 3; ++i)
     {
