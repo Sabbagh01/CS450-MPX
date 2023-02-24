@@ -543,11 +543,15 @@ int createPcbCommand() {
         
         setTerminalColor(White);
         user_input_promptread();
-        if ((user_input_len <= MPX_PCB_PROCNAME_SZ) && (pcb_find(user_input) == NULL))
+        if ((user_input_len > 0) && (user_input_len <= MPX_PCB_PROCNAME_SZ))
         {
-            memcpy(proc_name, user_input, user_input_len + 1);
-            user_input_clear();
-            break;
+            // no processes with the name
+            if (pcb_find(user_input) == NULL)
+            {
+                memcpy(proc_name, user_input, user_input_len + 1);
+                user_input_clear();
+                break;
+            }
         }
         user_input_clear();
         
@@ -619,14 +623,14 @@ int setPcbPriorityCommand() {
 
     struct pcb* pcb_findres;
     while(1) {
-        static const char name_msg[] = "Enter exist process name to change its priority: \r\n";
+        static const char name_msg[] = "Enter the name of an existing process to change its priority:\r\n";
                                       
         setTerminalColor(Yellow);
         write(COM1, STR_BUF(name_msg));
         
         setTerminalColor(White);
         user_input_promptread();
-        if ((user_input_len < MPX_PCB_PROCNAME_SZ) && (user_input_len >= 1))
+        if ((user_input_len > 0) && (user_input_len <= MPX_PCB_PROCNAME_SZ))
         {
             memcpy(proc_name, user_input, user_input_len + 1);
             pcb_findres = pcb_find(proc_name);
