@@ -6,7 +6,8 @@
 @brief Facilities for manipulating process control blocks
 */
 
-#define MPX_PCB_PROCNAME_SZ (64)
+#define MPX_PCB_PROCNAME_BUFFER_SZ (64)
+#define MPX_PCB_PROCNAME_SZ (MPX_PCB_PROCNAME_BUFFER_SZ - 1)
 
 /**
 @brief Defines unique process class identifiers
@@ -56,15 +57,15 @@ enum ProcState {
         where 0 is the highest priority and increasing values indicate decreasing priority.
 @var pcb::pstate
     The current execution state of a process.
-@var pcb::psp
-    A pointer to the top of the stack for a process.
+@var pcb::pstackseg
+    A pointer to the allocated stack segment for a process.
 */
 struct pcb {
-    char pname[MPX_PCB_PROCNAME_SZ];
+    char pname[MPX_PCB_PROCNAME_BUFFER_SZ];
     enum ProcClass pcls;
     unsigned char ppri;
     enum ProcState pstate;
-    void* pbp;
+    void* pstackseg;
 };
 
 /**

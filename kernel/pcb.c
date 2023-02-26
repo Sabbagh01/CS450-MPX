@@ -120,48 +120,59 @@ void pcb_insert(struct pcb* pcb_in)
 
 struct pcb* pcb_allocate(void) {
     struct pcb* pcb_new = sys_alloc_mem(sizeof(struct pcb));
-    pcb_new->pbp = sys_alloc_mem(MPX_PCB_STACK_SZ);
-    if (pcb_new->pbp == NULL)
+    if (pcb_new != NULL)
     {
-        return NULL;
+        pcb_new->pstackseg = sys_alloc_mem(MPX_PCB_STACK_SZ);
+        if (pcb_new->pstackseg != NULL)
+        {
+            memset(pcb_new->pstackseg, 0, MPX_PCB_STACK_SZ);
+            return pcb_new;
+        }
+        sys_free_mem(pcb_new);
     }
-    memset(pcb_new->pbp, 0, MPX_PCB_STACK_SZ);
-    pcb_new->pbp += MPX_PCB_STACK_SZ - 1;
-    return pcb_new;
+    return NULL;
 }
 
 struct pcb* pcb_setup(const char* name, enum ProcClass cls, unsigned char pri) {
     // get the name length and check that it can fit in pcb->pname
     size_t namelen = strlen(name) + 1;
-    if (namelen <= MPX_PCB_PROCNAME_SZ)
+    // check that the name given can fit
+    if (namelen <= MPX_PCB_PROCNAME_BUFFER_SZ)
+        // check name is unique across all queues
+        if(pcb_find(name) == NULL)
     {
-        // initialize a pcb.
-        struct pcb* pcb_new = pcb_allocate();
-        if (pcb_new != NULL)
+        if (
+            ((cls == USER) || (cls == KERNEL))
+            && ((pri >= 0) && (pri <= 9))
+        )
         {
-            // initialize pcb fields
-                memcpy(pcb_new->pname, name, namelen);
-                pcb_new->pcls = cls;
-                pcb_new->ppri = pri;
-                pcb_new->pstate = ACTIVE | READY;
-            return pcb_new;
+            // initialize a pcb.
+            struct pcb* pcb_new = pcb_allocate();
+            if (pcb_new != NULL)
+            {
+                // initialize pcb fields
+                    memcpy(pcb_new->pname, name, namelen);
+                    pcb_new->pcls = cls;
+                    pcb_new->ppri = pri;
+                    pcb_new->pstate = ACTIVE | READY;
+                return pcb_new;
+            }
         }
     } 
     return NULL;
 }
 
 int pcb_free(struct pcb* pcb) {
-    if(!sys_free_mem(pcb->pbp - (MPX_PCB_STACK_SZ - 1)))
+    if(sys_free_mem(pcb->pstackseg))
     {
-        return -1;
+        memset(pcb, 0, sizeof(struct pcb));
+        if(sys_free_mem(pcb))
+        {
+            return 0;
+        }
     }
-    // clear and free 
-    memset(pcb, 0, sizeof(struct pcb));
-    if(!sys_free_mem(pcb))
-    {
-        return -1;
-    }
-    return 0;
+    // 
+    return -1;
 }
 
 struct pcb* pcb_find(const char* name) {

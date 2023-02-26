@@ -536,7 +536,7 @@ int createPcbCommand() {
     unsigned char proc_pri;
     
     while(1) {
-        static const char name_msg[] = "Enter process name (1-64) characters: \r\n";
+        static const char name_msg[] = "Enter process name (1-64 characters): \r\n";
                                        
         setTerminalColor(Yellow);
         write(COM1, STR_BUF(name_msg));
