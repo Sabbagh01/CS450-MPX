@@ -43,6 +43,8 @@ enum ProcState {
 
 #define MPX_PCB_STACK_SZ (1024)
 
+struct pcb_queue_node;
+
 /**
 @struct pcb
 @brief 
@@ -62,9 +64,10 @@ enum ProcState {
 */
 struct pcb {
     char pname[MPX_PCB_PROCNAME_BUFFER_SZ];
+    struct pcb_queue_node* pnode;
     enum ProcClass pcls;
-    unsigned char ppri;
     enum ProcState pstate;
+    unsigned char ppri;
     void* pstackseg;
 };
 

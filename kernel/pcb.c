@@ -43,13 +43,7 @@ int pcb_dequeue(struct pcb_queue* queue, struct pcb** pcb_out) {
 void pcb_insert(struct pcb* pcb_in)
 {
     struct pcb_queue* queue = &pcb_queues[PSTATE_QUEUE_SELECTOR(pcb_in->pstate)];
-    struct pcb_queue_node* node = sys_alloc_mem (sizeof (struct pcb_queue_node));
-    if (node == NULL)
-    {
-        return;
-    }
-    node->pcb_elem = pcb_in;
-    node->p_next = NULL;
+    struct pcb_queue_node* node = pcb_in->pnode;
     
     if (queue->head != NULL)
     {
@@ -122,11 +116,19 @@ struct pcb* pcb_allocate(void) {
     struct pcb* pcb_new = sys_alloc_mem(sizeof(struct pcb));
     if (pcb_new != NULL)
     {
-        pcb_new->pstackseg = sys_alloc_mem(MPX_PCB_STACK_SZ);
-        if (pcb_new->pstackseg != NULL)
+        pcb_new->pnode = sys_alloc_mem (sizeof (struct pcb_queue_node));
+        if (pcb_new->pnode != NULL)
         {
-            memset(pcb_new->pstackseg, 0, MPX_PCB_STACK_SZ);
-            return pcb_new;
+            pcb_new->pnode->pcb_elem = pcb_new;
+            pcb_new->pnode->p_next = NULL;
+            
+            pcb_new->pstackseg = sys_alloc_mem(MPX_PCB_STACK_SZ);
+            if (pcb_new->pstackseg != NULL)
+            {
+                memset(pcb_new->pstackseg, 0, MPX_PCB_STACK_SZ);
+                return pcb_new;
+            }
+            sys_free_mem(pcb_new->pnode);
         }
         sys_free_mem(pcb_new);
     }
@@ -138,8 +140,8 @@ struct pcb* pcb_setup(const char* name, enum ProcClass cls, unsigned char pri) {
     size_t namelen = strlen(name) + 1;
     // check that the name given can fit
     if (namelen <= MPX_PCB_PROCNAME_BUFFER_SZ)
-        // check name is unique across all queues
-        if(pcb_find(name) == NULL)
+    // check name (after size validation) is unique across all queues
+    if(pcb_find(name) == NULL)
     {
         if (
             ((cls == USER) || (cls == KERNEL))
@@ -163,15 +165,17 @@ struct pcb* pcb_setup(const char* name, enum ProcClass cls, unsigned char pri) {
 }
 
 int pcb_free(struct pcb* pcb) {
-    if(sys_free_mem(pcb->pstackseg))
+    if(sys_free_mem(pcb->pstackseg) == 0)
     {
-        memset(pcb, 0, sizeof(struct pcb));
-        if(sys_free_mem(pcb))
+        if(sys_free_mem(pcb->pnode) == 0)
         {
-            return 0;
+            memset(pcb, 0, sizeof(struct pcb));
+            if(sys_free_mem(pcb) == 0)
+            {
+                return 0;
+            }
         }
     }
-    // 
     return -1;
 }
 
@@ -215,11 +219,6 @@ int pcb_remove(struct pcb* pcb) {
     {
         // remove head
         node_temp = queue_curr->head->p_next;
-        memset(queue_curr->head, 0, sizeof(struct pcb_queue_node));
-        if (!sys_free_mem (queue_curr->head))
-        {
-            return -2;
-        }
         queue_curr->head = node_temp;
         return 0;
     }
@@ -236,20 +235,13 @@ int pcb_remove(struct pcb* pcb) {
         // after match, remove node and stitch up queue
         if (node_temp->p_next->pcb_elem == pcb)
         {
-            // save the removal node pointer, mandatory
-            struct pcb_queue_node* node_rmv = node_temp->p_next;
-            node_temp->p_next = node_rmv->p_next;
-            // make sure to reset the tail if removing the last element
-            if (node_rmv == queue_curr->tail)
+            // reset tail if the removal node is the last in the queue
+            if (node_temp->p_next == queue_curr->tail)
             {
                 queue_curr->tail = node_temp;
             }
-            // clear and free
-            memset(node_rmv, 0, sizeof(struct pcb_queue_node));
-            if (!sys_free_mem (node_rmv))
-            {
-                return -2;
-            }
+            // remove the node
+            node_temp->p_next = node_temp->p_next->p_next;
             return 0;
         }
         // no match so iterate
