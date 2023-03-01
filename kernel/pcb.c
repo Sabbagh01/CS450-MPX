@@ -1,4 +1,5 @@
 #include <mpx/pcb.h>
+
 #include <mpx/io.h>
 #include <mpx/serial.h>
 #include <string.h>
@@ -7,7 +8,6 @@
 
 
 #ifndef MPX_PROC_USE_ALT_QUEUES
-#define PSTATE_QUEUE_SELECTOR(ps) (PSTATE_EXEC_STATE_TOVALUE(~ps & READY) + 2 * PSTATE_DPATCH_STATE_TOVALUE(~ps))
 struct pcb_queue pcb_queues[] = {
     { NULL, NULL, 1 }, // ACTIVE READY
     { NULL, NULL, 0 }, // ACTIVE BLOCKED
@@ -135,7 +135,7 @@ struct pcb* pcb_allocate(void) {
     return NULL;
 }
 
-struct pcb* pcb_setup(const char* name, enum ProcClass cls, unsigned char pri) {
+struct pcb* pcb_setup(const char* name, enum ProcClassState cls, unsigned char pri) {
     // get the name length and check that it can fit in pcb->pname
     size_t namelen = strlen(name) + 1;
     // check that the name given can fit
@@ -154,9 +154,8 @@ struct pcb* pcb_setup(const char* name, enum ProcClass cls, unsigned char pri) {
             {
                 // initialize pcb fields
                     memcpy(pcb_new->pname, name, namelen);
-                    pcb_new->pcls = cls;
                     pcb_new->ppri = pri;
-                    pcb_new->pstate = ACTIVE | READY;
+                    pcb_new->pstate = ACTIVE | READY | cls;
                 return pcb_new;
             }
         }
@@ -209,6 +208,7 @@ int pcb_remove(struct pcb* pcb) {
     // only check the queue where the given pcb may be located according to its state
     struct pcb_queue* queue_curr = &pcb_queues[PSTATE_QUEUE_SELECTOR(pcb->pstate)];
     struct pcb_queue_node* node_temp;
+    struct pcb_queue_node* node_rmv;
     
     if (queue_curr->head == NULL)
     {
@@ -217,9 +217,10 @@ int pcb_remove(struct pcb* pcb) {
     // check if pcb resides at head of the queue
     if (queue_curr->head->pcb_elem == pcb)
     {
+        node_rmv = queue_curr->head;
         // remove head
-        node_temp = queue_curr->head->p_next;
-        queue_curr->head = node_temp;
+        queue_curr->head = queue_curr->head->p_next;
+        node_rmv->p_next = NULL;
         return 0;
     }
     if (queue_curr->head->p_next == NULL)
@@ -240,8 +241,10 @@ int pcb_remove(struct pcb* pcb) {
             {
                 queue_curr->tail = node_temp;
             }
+            node_rmv = node_temp->p_next;
             // remove the node
             node_temp->p_next = node_temp->p_next->p_next;
+            node_rmv->p_next = NULL;
             return 0;
         }
         // no match so iterate

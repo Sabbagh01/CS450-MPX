@@ -56,7 +56,7 @@ char intParsable(const char* string, size_t size) {
 }
 
 struct str_pcbprop_map {
-    const char class;
+    const char prop;
     const char* str;
     const char* str_out;
 };
@@ -78,15 +78,15 @@ const struct str_pcbprop_map avail_pcb_dpatchstate[] = {
     { ACTIVE,       "active",       "Active"    },
 };
 
-const char* class_str(enum ProcClass cls) {
-    return avail_pcb_class[cls].str_out;
+const char* class_str(enum ProcClassState cls) {
+    return avail_pcb_class[PSTATE_CLASS_STATE_TOVALUE(cls)].str_out;
 }
 
-const char* execstate_str(enum ProcState state) {
+const char* execstate_str(enum ProcExecState state) {
     return avail_pcb_execstate[PSTATE_EXEC_STATE_TOVALUE(state)].str_out;
 }
 
-const char* dpatchstate_str(enum ProcState state) {
+const char* dpatchstate_str(enum ProcDpatchState state) {
     return avail_pcb_dpatchstate[PSTATE_DPATCH_STATE_TOVALUE(state)].str_out;
 }
 
@@ -532,7 +532,7 @@ int versionCommand() {
 
 int createPcbCommand() {
     char proc_name[MPX_PCB_PROCNAME_SZ];
-    enum ProcClass proc_class;
+    enum ProcClassState proc_class;
     unsigned char proc_pri;
     
     while(1) {
@@ -570,7 +570,7 @@ int createPcbCommand() {
         {
             if (strcmp(user_input, avail_pcb_class[i].str) == 0)
             {
-                proc_class = avail_pcb_class[i].class;
+                proc_class = avail_pcb_class[i].prop;
                 user_input_clear();
                 goto procbreak;
             }
@@ -647,7 +647,7 @@ int setPcbPriorityCommand() {
         user_input_clear();
         
         setTerminalColor(Red);
-        static const char name_error_msg[] = "Process with given name not found.\r\n";
+        static const char name_error_msg[] = "A process with the given name was not found\r\n";
         write(COM1, STR_BUF(name_error_msg));
     }
     while(1) {
@@ -719,7 +719,7 @@ int helpCommand() {
 
 int showPcbCommand(){
     setTerminalColor(Yellow);
-    const char msg[] = "Please enter the name of the process:\r\n";
+    const char msg[] = "Enter the name of an existing process:\r\n";
     write(COM1, STR_BUF(msg));
 
     setTerminalColor(White);
@@ -733,11 +733,12 @@ int showPcbCommand(){
         write(COM1, STR_BUF(msgNotFound));
         return 1;
     }
-    char* proName = found->pname;
-    enum ProcClass procclass = found->pcls;
-    unsigned char propri = found->ppri;
-    enum ProcState procstate = found->pstate;
-
+    char* procname = found->pname;
+    enum ProcClassState procclass = PSTATE_CLASS_STATE(found->pstate);
+    enum ProcExecState procexecstate = PSTATE_EXEC_STATE(found->pstate);
+    enum ProcDpatchState procdpatchstate = PSTATE_DPATCH_STATE(found->pstate);
+    unsigned char procpri = found->ppri;
+    
     const char msgName[] = "\r\nProcess Name: ";
     const char msgClass[] = "\r\nProcess Class: ";
     const char msgPri[] = "\r\nProcess Priority: ";
@@ -745,15 +746,14 @@ int showPcbCommand(){
     const char msgStatus[] = "\r\nProcess Status: ";
 
     const char* charClass = class_str(procclass);
-    const char* charState = execstate_str(procstate);
-    const char* charStatus = dpatchstate_str(procstate);
-    int intPri = (int) propri;
+    const char* charState = execstate_str(procexecstate);
+    const char* charStatus = dpatchstate_str(procdpatchstate);
     char* charPri = NULL;
-    itoa(charPri, intPri);
+    itoa(charPri, (int) procpri);
 
     setTerminalColor(Yellow);
     write(COM1, STR_BUF(msgName));
-    write(COM1, proName, strlen(proName));
+    write(COM1, procname, strlen(procname));
     write(COM1, STR_BUF(msgClass));
     write(COM1, charClass, strlen(charClass));
     write(COM1, STR_BUF(msgPri));
@@ -769,115 +769,119 @@ int showPcbCommand(){
 
 int deletePcbCommand() {
     setTerminalColor(Yellow);
-    const char msg[] = "Enter exist process name to be deleted:\r\n";
+    const char msg[] = "Enter the name of an existing process to be deleted:\r\n";
     write(COM1, STR_BUF(msg));
 
     setTerminalColor(White);
     user_input_promptread();
 
     struct pcb* found = pcb_find(user_input);
-    user_input_clear();
-    if (found->pcls == KERNEL){
+    user_input_clear();    
+    if (found == NULL)
+    {
         setTerminalColor(Red);
-        const char msgKernel[] = "Process is a kernel process, can not be removed\n";
-        write(COM1, STR_BUF(msgKernel));
+        const char msgNotFound[] = "A process with the given name was not found\r\n";
+        write(COM1, STR_BUF(msgNotFound));
         return 1;
     }
-    
-    if (found == NULL){
+
+    if (PSTATE_CLASS_STATE_TOVALUE(found->pstate) == KERNEL)
+    {
         setTerminalColor(Red);
-        const char msgNotFound[] = "Process with given name not found\r\n";
-        write(COM1, STR_BUF(msgNotFound));
+        const char msgKernel[] = "Process is a kernel process, cannot be removed\n";
+        write(COM1, STR_BUF(msgKernel));
         return 1;
     }
 
     pcb_remove(found);
     pcb_free(found);
     return 0;
-
 }
 
 int blockPcbCommand() {
     setTerminalColor(Yellow);
-    const char msg[] = "Enter exist process name to block:\r\n";
+    const char msg[] = "Enter the name of an existing process to block:\r\n";
     write(COM1, STR_BUF(msg));
     setTerminalColor(White);
     user_input_promptread();
-
 
     struct pcb* found = pcb_find(user_input);
     user_input_clear();
     if (found == NULL){
         setTerminalColor(Red);
-        const char msgNotFound[] = "Process with given name not found\r\n";
+        const char msgNotFound[] = "A process with the given name was not found\r\n";
         write(COM1, STR_BUF(msgNotFound));
         return 1;
     }
 
     pcb_remove(found);
 
-    found->pstate = found->pstate & ~READY;
+    found->pstate &= ~EXEC_BITS;
+    found->pstate |= BLOCKED;
     pcb_insert(found);
     return 0;
 }
 
 int unblockPcbCommand() {
     setTerminalColor(Yellow);
-    const char msg[] = "Enter exist process name to unblock:\r\n";
+    const char msg[] = "Enter the name of an existing process to unblock:\r\n";
     write(COM1, STR_BUF(msg));
     setTerminalColor(White);
     user_input_promptread();
-
 
     struct pcb* found = pcb_find(user_input);
     user_input_clear();
     if (found == NULL){
         setTerminalColor(Red);
-        const char msgNotFound[] = "Process with given name not found\r\n";
+        const char msgNotFound[] = "A process with the given name was not found\r\n";
         write(COM1, STR_BUF(msgNotFound));
         return 1;
     }
 
     pcb_remove(found);
-
-    found->pstate = found->pstate | READY;
+    
+    found->pstate &= ~EXEC_BITS;
+    found->pstate |= READY;
     pcb_insert(found);
     return 0;  
 }
 
 int suspendPcbCommand() {
     setTerminalColor(Yellow);
-    const char msg[] = "Enter exist process name to suspend:\r\n";
+    const char msg[] = "Enter the name of an existing process to suspend:\r\n";
     write(COM1, STR_BUF(msg));
     setTerminalColor(White);
     user_input_promptread();
     
     struct pcb* found = pcb_find(user_input);
     user_input_clear();
-    if (found->pcls == KERNEL){
+    if (found == NULL)
+    {
         setTerminalColor(Red);
-        const char msgKernel[] = "Process is a kernel process, can not be suspended\n";
+        const char msgNotFound[] = "A process with the given name was not found\r\n";
+        write(COM1, STR_BUF(msgNotFound));
+        return 1;
+    }
+
+    if (PSTATE_CLASS_STATE(found->pstate) == KERNEL)
+    {
+        setTerminalColor(Red);
+        const char msgKernel[] = "Process is a kernel process, cannot be suspended\n";
         write(COM1, STR_BUF(msgKernel));
         return 1;
     }
 
-    if (found == NULL){
-        setTerminalColor(Red);
-        const char msgNotFound[] = "Process with given name not found\r\n";
-        write(COM1, STR_BUF(msgNotFound));
-        return 1;
-    }
-    
     pcb_remove(found);
     
-    found->pstate = (found->pstate & ~ACTIVE);
+    found->pstate &= ~DPATCH_BITS;
+    found->pstate |= SUSPENDED;
     pcb_insert(found);
     return 0;  
 }
 
 int resumePcbCommand() {
     setTerminalColor(Yellow);
-    const char msg[] = "Enter exist process name to resume:\r\n";
+    const char msg[] = "Enter the name of an existing process to resume:\r\n";
     write(COM1, STR_BUF(msg));
     setTerminalColor(White);
     user_input_promptread();
@@ -886,14 +890,15 @@ int resumePcbCommand() {
     user_input_clear();
     if (found == NULL){
         setTerminalColor(Red);
-        const char msgNotFound[] = "Process with given name not found\r\n";
+        const char msgNotFound[] = "A process with the given name was not found\r\n";
         write(COM1, STR_BUF(msgNotFound));
         return 1;
     }
     
     pcb_remove(found);
     
-    found->pstate = (found->pstate | ACTIVE);
+    found->pstate &= ~DPATCH_BITS;
+    found->pstate |= ACTIVE;
     pcb_insert(found);
     return 0;
 }
@@ -906,9 +911,9 @@ int showPcbReadyCommand(){
     const char msgState[] = "\r\nProcess State: ";
     const char msgStatus[] = "\r\nProcess Status: ";
     
-    for (int i = 0; i <= 3; i += 2)
+     for (unsigned char i = SUSPENDED; i <= ACTIVE; ++i)
     {
-        struct pcb_queue* queue_curr = &pcb_queues[i];
+        struct pcb_queue* queue_curr = &pcb_queues[PSTATE_QUEUE_SELECTOR(i | READY)];
         // check that the queue is not empty (size > 0)
         if (queue_curr->head != NULL)
         {
@@ -917,17 +922,17 @@ int showPcbReadyCommand(){
             {
                 //Get process info
                 char* procname = node_temp->pcb_elem->pname;
-                enum ProcClass procclass = node_temp->pcb_elem->pcls;
+                enum ProcClassState procclass = PSTATE_CLASS_STATE(node_temp->pcb_elem->pstate);
+                enum ProcExecState procexecstate = PSTATE_EXEC_STATE(node_temp->pcb_elem->pstate);
+                enum ProcDpatchState procdpatchstate = PSTATE_DPATCH_STATE(node_temp->pcb_elem->pstate);
                 unsigned char procpri = node_temp->pcb_elem->ppri;
-                enum ProcState procstate = node_temp->pcb_elem->pstate;
 
                 //Display information on process
                 const char* charClass = class_str(procclass);
-                const char* charState = execstate_str(procstate);
-                const char* charStatus = dpatchstate_str(procstate);
-                int intPri = (int) procpri;
+                const char* charState = execstate_str(procexecstate);
+                const char* charStatus = dpatchstate_str(procdpatchstate);
                 char* charPri = NULL;
-                itoa(charPri, intPri);
+                itoa(charPri, (int) procpri);
 
                 write(COM1, STR_BUF(msgName));
                 write(COM1, procname, strlen(procname));
@@ -960,9 +965,9 @@ int showPcbBlockedCommand() {
     const char msgState[] = "\r\nProcess State: ";
     const char msgStatus[] = "\r\nProcess Status: ";
     
-    for (int i = 1; i <= 3; i += 2)
+    for (unsigned char i = SUSPENDED; i <= ACTIVE; ++i)
     {
-        struct pcb_queue* queue_curr = &pcb_queues[i];
+        struct pcb_queue* queue_curr = &pcb_queues[PSTATE_QUEUE_SELECTOR(i | BLOCKED)];
         // check that the queue is not empty (size > 0)
         if (queue_curr->head != NULL)
         {
@@ -971,17 +976,17 @@ int showPcbBlockedCommand() {
             {
                 //Get process info
                 char* procname = node_temp->pcb_elem->pname;
-                enum ProcClass procclass = node_temp->pcb_elem->pcls;
+                enum ProcClassState procclass = PSTATE_CLASS_STATE(node_temp->pcb_elem->pstate);
+                enum ProcExecState procexecstate = PSTATE_EXEC_STATE(node_temp->pcb_elem->pstate);
+                enum ProcDpatchState procdpatchstate = PSTATE_DPATCH_STATE(node_temp->pcb_elem->pstate);
                 unsigned char procpri = node_temp->pcb_elem->ppri;
-                enum ProcState procstate = node_temp->pcb_elem->pstate;
 
                 //Display information on process
                 const char* charClass = class_str(procclass);
-                const char* charState = execstate_str(procstate);
-                const char* charStatus = dpatchstate_str(procstate);
-                int intPri = (int) procpri;
+                const char* charState = execstate_str(procexecstate);
+                const char* charStatus = dpatchstate_str(procdpatchstate);
                 char* charPri = NULL;
-                itoa(charPri, intPri);
+                itoa(charPri, (int) procpri);
 
                 write(COM1, STR_BUF(msgName));
                 write(COM1, procname, strlen(procname));
@@ -1014,7 +1019,7 @@ int showPcbAllCommand() {
     const char msgState[] = "\r\nProcess State: ";
     const char msgStatus[] = "\r\nProcess Status: ";
     
-    for (int i = 0; i <= 3; ++i)
+    for (size_t i = 0; i < sizeof(pcb_queues) / sizeof(struct pcb_queue); ++i)
     {
         struct pcb_queue* queue_curr = &pcb_queues[i];
         // check that the queue is not empty (size > 0)
@@ -1025,17 +1030,17 @@ int showPcbAllCommand() {
             {
                 //Get process info
                 char* procname = node_temp->pcb_elem->pname;
-                enum ProcClass procclass = node_temp->pcb_elem->pcls;
+                enum ProcClassState procclass = PSTATE_CLASS_STATE(node_temp->pcb_elem->pstate);
+                enum ProcExecState procexecstate = PSTATE_EXEC_STATE(node_temp->pcb_elem->pstate);
+                enum ProcDpatchState procdpatchstate = PSTATE_DPATCH_STATE(node_temp->pcb_elem->pstate);
                 unsigned char procpri = node_temp->pcb_elem->ppri;
-                enum ProcState procstate = node_temp->pcb_elem->pstate;
 
                 //Display information on process
                 const char* charClass = class_str(procclass);
-                const char* charState = execstate_str(procstate);
-                const char* charStatus = dpatchstate_str(procstate);
-                int intPri = (int) procpri;
+                const char* charState = execstate_str(procexecstate);
+                const char* charStatus = dpatchstate_str(procdpatchstate);
                 char* charPri = NULL;
-                itoa(charPri, intPri);
+                itoa(charPri, (int) procpri);
 
                 write(COM1, STR_BUF(msgName));
                 write(COM1, procname, strlen(procname));
