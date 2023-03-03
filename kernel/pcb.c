@@ -16,29 +16,7 @@ struct pcb_queue pcb_queues[] = {
 };
 #endif
 
-int pcb_dequeue(struct pcb_queue* queue, struct pcb** pcb_out) {
-    if (queue->head == NULL)
-    {
-        return 1;
-    }
-
-    struct pcb* pcb_ret = queue->head->pcb_elem;
-
-    struct pcb_queue_node* next = NULL;
-    if (queue->head->p_next == NULL) // queue will be empty after dequeue
-    {
-        queue->tail = NULL;
-    }
-    else
-    {
-        next = queue->head->p_next;
-    }
-    sys_free_mem (queue->head);
-    queue->head = next;
-    
-    *pcb_out = pcb_ret;
-    return 0;
-}
+struct pcb* pcb_running = NULL;
 
 void pcb_insert(struct pcb* pcb_in)
 {
@@ -126,6 +104,7 @@ struct pcb* pcb_allocate(void) {
             if (pcb_new->pstackseg != NULL)
             {
                 memset(pcb_new->pstackseg, 0, MPX_PCB_STACK_SZ);
+                pcb_new->psp = NULL; // TODO: Future problem with initial scheduling
                 return pcb_new;
             }
             sys_free_mem(pcb_new->pnode);

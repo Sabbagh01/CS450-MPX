@@ -6,6 +6,8 @@
 #include <mpx/time.h>
 #include <mpx/syscalls.h>
 #include <mpx/pcb.h>
+#include <mpx/bufhelpers.h>
+
 #include <string.h>
 #include <stdlib.h>
 #include <memory.h>

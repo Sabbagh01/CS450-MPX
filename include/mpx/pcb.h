@@ -1,6 +1,8 @@
 #ifndef MPX_PCB_H
 #define MPX_PCB_H
 
+#include <mpx/context.h>
+
 /**
 @file mpx/pcb.h
 @brief Facilities for manipulating process control blocks
@@ -52,7 +54,7 @@ enum ProcClassState {
     USER        = 0x01 << CLASS_OFFSET,
 };
 
-#define MPX_PCB_STACK_SZ (1024)
+#define MPX_PCB_STACK_SZ (4096)
 
 struct pcb_queue_node;
 
@@ -79,6 +81,7 @@ struct pcb {
     unsigned char pstate;
     unsigned char ppri;
     void* pstackseg;
+    struct context* psp;
 };
 
 /**
@@ -124,6 +127,8 @@ struct pcb_queue {
 */
 extern struct pcb_queue pcb_queues[QUEUE_SZ];
 #endif
+
+extern struct pcb* pcb_running;
 
 /**
 @brief
