@@ -27,7 +27,7 @@ sys_call_isr:
     push es
     push fs
     push gs
-    push esp
+    push esp            ; Recall 'push esp' will push the previous value of esp, which will point to gs
 	call sys_call
     cmp eax, -1
     je nocswitch        ; R or W, then just pop, else set the stack pointer
@@ -41,6 +41,7 @@ sys_call_isr:
     mov eax, 0
     iret
 nocswitch:
+    add esp, 4
     pop gs
     pop fs
     pop es

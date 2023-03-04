@@ -23,16 +23,13 @@ struct context* sys_call(struct context* context_in)
     // set an original context for the first sys_call entry.
     if (context_original == NULL)
     {
-        context_original = context_in + 4;
+        context_original = context_in;
     }
     
     if ((op == READ) || (op == WRITE))
     {
         return (void*)-1;
     }
-    // ensure the context pointer is before the pushed ESP to allow popping off the segments.
-    // same is done above in checking for first context
-    context_in += 4;
     struct pcb* runnext = NULL;
     if (op == IDLE)
     {
