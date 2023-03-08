@@ -1,5 +1,4 @@
 #include <mpx/comhand.h>
-
 #include <mpx/io.h>
 #include <mpx/serial.h>
 #include <mpx/sys_req.h>
@@ -7,7 +6,7 @@
 #include <mpx/syscalls.h>
 #include <mpx/pcb.h>
 #include <mpx/bufhelpers.h>
-
+#include <mpx/loadR3.h>
 #include <string.h>
 #include <stdlib.h>
 #include <memory.h>
@@ -333,6 +332,17 @@ cmd_entries[] =
 		    "\tshuts down the machine after confirmation is given by entering 1\r\n"
         )
     },
+    { STR_BUF("19"), STR_BUF("loadR3"), loadR3,
+        STR_BUF(
+        "Shut Down\r\n"
+		    "\tInput:\r\n"
+		    "\tno input parameters\r\n"
+		    "\tOutput:\r\n"
+		    "\tno output value\r\n"
+		    "\tDescription:\r\n"
+		    "\tshuts down the machine after confirmation is given by entering 1\r\n"
+        )
+    }
 };
 
 char user_input[128];
@@ -1096,7 +1106,7 @@ void comhand() {
                                        "5 ) Get Date        6 ) Create PCB        7 ) Change PCB Pri   8 ) Show PCB\r\n"
                                        "9 ) Show Ready PCB  10) Show Blocked PCB  11) Show All PCB     12) Delete PCB\r\n"
                                        "13) Block PCB       14) Unblock PCB       15) Suspend PCB      16) Resume PCB\r\n"
-                                       "17) Version         18) Shutdown\r\n"
+                                       "17) Version         18) Shutdown          19) loadR3\r\n"
                                        "Enter number of choice:\r\n";
     
     setTerminalColor(Blue);
