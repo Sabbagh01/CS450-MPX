@@ -39,12 +39,12 @@ struct context* sys_call(struct context* context_in)
             runnext = pcb_queues[0].head->pcb_elem;
             pcb_remove(pcb_queues[0].head->pcb_elem);
             // set the yielding process' stack pointer to the context to switch to after next run
-            pcb_running->psp = context_in;
+            pcb_running->pctxt = context_in;
             // enqueue the yielding process into the active ready queue (state unchanged)
             pcb_insert(pcb_running);
             // set the running pcb to the dequeued one and return its context to switch to
             pcb_running = runnext;
-            return runnext->psp;
+            return runnext->pctxt;
         }
         else // no dequeueable processes, continue with yielded process
         {
@@ -61,7 +61,7 @@ struct context* sys_call(struct context* context_in)
             pcb_remove(pcb_queues[0].head->pcb_elem);
             // set the running pcb to the dequeued one and return its context to switch to
             pcb_running = runnext;
-            return runnext->psp;
+            return runnext->pctxt;
         }
         else // no dequeueable processes, load first arrived context
         {

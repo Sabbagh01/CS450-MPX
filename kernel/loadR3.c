@@ -3,27 +3,28 @@
 #include <mpx/context.h>
 #include <mpx/loadR3.h>
 int loadR3(){
-    struct pcb* pro1 = pcb_setup("proc1",KERNEL,1);
-    pcb_insert(pro1);
-    struct context* pr1 = pro1 -> psp;
+    struct pcb* pro1 = pcb_setup("proc1", KERNEL, 1);
+    pro1 -> pctxt = pro1->pstackseg + MPX_PCB_STACK_SZ - sizeof(struct context);
+    struct context* pr1 = pro1 -> pctxt;
     pr1 -> ss = 0x10;
     pr1 -> ds = 0x10;
     pr1 -> es = 0x10;
     pr1 -> fs = 0x10;
     pr1 -> gs = 0x10;
     pr1 -> cs = 0x08;
-    pr1 -> ebp = (unsigned int) pro1 ->pstackseg;
-    pr1 -> esp = (unsigned int) pro1 -> psp;
-    pr1 -> eip = (unsigned int) proc1;
+    pr1 -> ebp = (unsigned long) pro1->pstackseg + MPX_PCB_STACK_SZ - 1;
+    pr1 -> esp = (unsigned long) pro1->pctxt;
+    pr1 -> eip = (unsigned long) proc1;
     pr1 -> eflags = 0x0202;
-    pr1 -> edi =0;
-    pr1 -> esi=0;
-    pr1 -> ebp=0;
-    pr1 -> esp=0;
-    pr1 -> ebx=0;
-    pr1 -> edx=0;
-    pr1 -> ecx=0;
-    pr1 -> eax=0;
+    pr1 -> edi = 0;
+    pr1 -> esi = 0;
+    pr1 -> ebp = 0;
+    pr1 -> esp = 0;
+    pr1 -> ebx = 0;
+    pr1 -> edx = 0;
+    pr1 -> ecx = 0;
+    pr1 -> eax = 0;
+    pcb_insert(pro1);
 
     // struct pcb* pro2 = pcb_setup("proc2",1,1);
     

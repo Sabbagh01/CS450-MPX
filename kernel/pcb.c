@@ -104,7 +104,7 @@ struct pcb* pcb_allocate(void) {
             if (pcb_new->pstackseg != NULL)
             {
                 memset(pcb_new->pstackseg, 0, MPX_PCB_STACK_SZ);
-                pcb_new->psp = NULL; // TODO: Future problem with initial scheduling
+                pcb_new->pctxt = NULL; // TODO: Address initial scheduling
                 return pcb_new;
             }
             sys_free_mem(pcb_new->pnode);

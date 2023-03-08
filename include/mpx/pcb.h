@@ -73,7 +73,11 @@ struct pcb_queue_node;
 @var pcb::pstate
     The current execution state of a process.
 @var pcb::pstackseg
-    A pointer to the allocated stack segment for a process.
+    A pointer to the stack section allocated for a process.
+@var pcb::pctxt
+    A pointer to a saved context for a process. When the process is not active,
+        it will point to a valid context in the allocated stack section,
+        which will be situated on top of the stack.
 */
 struct pcb {
     char pname[MPX_PCB_PROCNAME_BUFFER_SZ];
@@ -81,7 +85,7 @@ struct pcb {
     unsigned char pstate;
     unsigned char ppri;
     void* pstackseg;
-    struct context* psp;
+    struct context* pctxt;
 };
 
 /**
