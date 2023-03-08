@@ -1,8 +1,8 @@
-#include "time.h"
+#include <mpx/time.h>
 
 #include <mpx/io.h>
 #include <mpx/serial.h>
-#include <sys_req.h>
+#include <mpx/sys_req.h>
 #include <mpx/interrupts.h>
 #include <string.h>
 
@@ -35,10 +35,8 @@ void setTime(int hours, int minute, int seconds) {
     
     outb(0x70, 0x00);
     outb(0x71, decimalToBCD(seconds));
-    
     outb(0x70, 0x02);
     outb(0x71, decimalToBCD(minute));
-    
     outb(0x70, 0x04);
     outb(0x71, decimalToBCD(hours));
     
@@ -67,10 +65,25 @@ void getTime() {
     // convert seconds, minutes, hours to strings
     char seconds_str[3];
     itoa (seconds_str, seconds);
+    if (seconds < 10) {
+        seconds_str[1] = seconds_str[0];
+        seconds_str[0] = '0';
+        seconds_str[2] = '\0';
+    }
     char minutes_str[3];
     itoa (minutes_str, minutes);
+    if (minutes < 10) {
+        minutes_str[1] = minutes_str[0];
+        minutes_str[0] = '0';
+        minutes_str[2] = '\0';
+    }
     char hours_str[3];
     itoa (hours_str, hours);
+    if (hours < 10) {
+        hours_str[1] = hours_str[0];
+        hours_str[0] = '0';
+        hours_str[2] = '\0';
+    }
     // going to [unsafely] assume we will not overrun datebuffer
     // print hours
     for (int i = 0; hours_str[i] != '\0'; ++i, ++bufsz) {
@@ -103,15 +116,13 @@ void getTime() {
 
 void setDate(int day, int month, int year) {
     cli ();
-    
-    outb (0x70, (0x07 & ~0x80) | 0x80); // access day
-    outb (0x71, decimalToBCD (day));
-
-    outb (0x70, (0x08 & ~0x80) | 0x80); // month
-    outb (0x71, decimalToBCD (month));
 
     outb (0x70, (0x09 & ~0x80) | 0x80); // year
     outb (0x71, decimalToBCD (year));
+    outb (0x70, (0x08 & ~0x80) | 0x80); // month
+    outb (0x71, decimalToBCD (month));
+    outb (0x70, (0x07 & ~0x80) | 0x80); // access day
+    outb (0x71, decimalToBCD (day)); 
     
     sti ();
     
@@ -121,12 +132,12 @@ void setDate(int day, int month, int year) {
 void getDate() {
     cli ();
 
-    outb (0x70, (0x07 & ~0x80) | 0x80); // access day
-    int day = BCDtoDecimal (inb (0x71));
-    outb (0x70, (0x08 & ~0x80) | 0x80); // month
-    int month = BCDtoDecimal (inb (0x71));
     outb (0x70, (0x09 & ~0x80) | 0x80); // year
     int year = BCDtoDecimal (inb (0x71));
+    outb (0x70, (0x08 & ~0x80) | 0x80); // month
+    int month = BCDtoDecimal (inb (0x71));
+    outb (0x70, (0x07 & ~0x80) | 0x80); // access day
+    int day = BCDtoDecimal (inb (0x71));
     
     sti ();
     
@@ -140,6 +151,11 @@ void getDate() {
     itoa (daystr, day);
     char yearstr[3];
     itoa (yearstr, year);
+    if (year < 10) {
+        yearstr[1] = yearstr[0];
+        yearstr[0] = '0';
+        yearstr[2] = '\0';
+    }
     // going to [unsafely] assume we will not overrun datebuffer
     // print month
     for (int i = 0; month_info[month - 1].name[i] != '\0'; ++i, ++bufsz) {

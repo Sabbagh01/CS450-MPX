@@ -93,25 +93,24 @@ char *strtok(char * restrict s1, const char * restrict s2)
 	return s1;
 }
 void itoa(char string[], int integer){
-	int i;
-	int remainder;
-	int size = 0;
 	int temp;
-	if(integer == 0){
+	int size = 0;
+	if(integer == 0) {
 		string[0] = '0';
-		size++;
-	}
-	else{
-	temp = integer;
-	while(temp != 0) {
-		++size;
-		temp= temp /10;
-	}
-	for(i=0; i < size; i++){
-		remainder = integer % 10;
-		integer /=10;
-		string[size - (i+1)] = remainder + '0';
-	}
+        ++size;
+	} else {
+        temp = integer;
+        // get the size to order digits correctly
+        while (temp != 0) {
+            temp /= 10;
+            ++size;
+        }
+        temp = size - 1;
+	    while (temp >= 0) {
+            string[temp] = (integer % 10) + '0';
+            integer /= 10;
+            --temp;
+        }
 	}
 	string[size] = '\0';
 }

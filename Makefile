@@ -2,6 +2,9 @@
 # Makefile for MPX
 #
 
+DOXYGEN_DIR =\
+doc/doxygen
+
 KERNEL_OBJECTS =\
 kernel/irq.o\
 kernel/core.o\
@@ -9,6 +12,9 @@ kernel/kmain.o\
 kernel/serial.o\
 kernel/comhand.o\
 kernel/time.o\
+kernel/syscalls.o\
+kernel/pcb.o\
+kernel/sys_call.o\
 
 LIB_OBJECTS =\
 lib/ctype.o\
@@ -47,3 +53,4 @@ doc: Doxyfile
 
 clean:
 	rm -f $(OBJFILES) kernel.bin
+	rm -f -r $(DOXYGEN_DIR)

@@ -1,10 +1,7 @@
 name: Makefile CI
 
 on:
-  push:
-    branches: [ "mpx" ]
-  pull_request:
-    branches: [ "mpx" ]
+  push
 
 jobs:
   build:
@@ -13,7 +10,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Install dependencies
       run: sudo apt update && sudo apt install -y clang make nasm binutils-i686-linux-gnu
 

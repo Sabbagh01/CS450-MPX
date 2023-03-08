@@ -205,7 +205,7 @@ void pic_init(void)
 #include <mpx/panic.h>
 #include <mpx/serial.h>
 #include <mpx/interrupts.h>
-#include <sys_req.h>
+#include <mpx/sys_req.h>
 #include <string.h>
 #include <stdnoreturn.h>
 
