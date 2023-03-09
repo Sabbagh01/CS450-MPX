@@ -760,7 +760,7 @@ int showPcbCommand(){
     const char* charClass = class_str(procclass);
     const char* charState = execstate_str(procexecstate);
     const char* charStatus = dpatchstate_str(procdpatchstate);
-    char* charPri = NULL;
+    char charPri[4]; 
     itoa(charPri, (int) procpri);
 
     setTerminalColor(Yellow);
@@ -776,7 +776,6 @@ int showPcbCommand(){
     write(COM1, charStatus, strlen(charStatus));
     write(COM1, STR_BUF("\r\n"));
     return 0;
-
 }
 
 int deletePcbCommand() {
@@ -943,7 +942,7 @@ int showPcbReadyCommand(){
                 const char* charClass = class_str(procclass);
                 const char* charState = execstate_str(procexecstate);
                 const char* charStatus = dpatchstate_str(procdpatchstate);
-                char* charPri = NULL;
+                char charPri[4];
                 itoa(charPri, (int) procpri);
 
                 write(COM1, STR_BUF(msgName));
@@ -997,7 +996,7 @@ int showPcbBlockedCommand() {
                 const char* charClass = class_str(procclass);
                 const char* charState = execstate_str(procexecstate);
                 const char* charStatus = dpatchstate_str(procdpatchstate);
-                char* charPri = NULL;
+                char charPri[4];
                 itoa(charPri, (int) procpri);
 
                 write(COM1, STR_BUF(msgName));
@@ -1051,7 +1050,7 @@ int showPcbAllCommand() {
                 const char* charClass = class_str(procclass);
                 const char* charState = execstate_str(procexecstate);
                 const char* charStatus = dpatchstate_str(procdpatchstate);
-                char* charPri = NULL;
+                char charPri[4];
                 itoa(charPri, (int) procpri);
 
                 write(COM1, STR_BUF(msgName));
