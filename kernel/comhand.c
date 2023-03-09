@@ -340,6 +340,17 @@ cmd_entries[] =
 		    "\tOutput:\r\n"
 		    "\tno output value\r\n"
 		    "\tDescription:\r\n"
+		    "\ts 1\r\n"
+        )
+    },
+     { STR_BUF("20"), STR_BUF("yield"), yield,
+        STR_BUF(
+        "Shut Down\r\n"
+		    "\tInput:\r\n"
+		    "\tno input parameters\r\n"
+		    "\tOutput:\r\n"
+		    "\tno output value\r\n"
+		    "\tDescription:\r\n"
 		    "\tshuts down the machine after confirmation is given by entering 1\r\n"
         )
     }

@@ -2,6 +2,7 @@
 #include <mpx/pcb.h>
 #include <mpx/context.h>
 #include <mpx/loadR3.h>
+#include <mpx/sys_req.h>
 int loadR3(){
     struct pcb* pro1 = pcb_setup("proc1", KERNEL, 1);
     pro1 -> pctxt = pro1->pstackseg + MPX_PCB_STACK_SZ - sizeof(struct context);
@@ -12,8 +13,8 @@ int loadR3(){
     pr1 -> fs = 0x10;
     pr1 -> gs = 0x10;
     pr1 -> cs = 0x08;
-    pr1 -> ebp = (unsigned long) pro1->pstackseg + MPX_PCB_STACK_SZ - 1;
     pr1 -> esp = (unsigned long) pro1->pctxt;
+    pr1 -> ebp = (unsigned long) pro1->pstackseg + MPX_PCB_STACK_SZ - 1;
     pr1 -> eip = (unsigned long) proc1;
     pr1 -> eflags = 0x0202;
     pr1 -> edi = 0;
@@ -128,4 +129,8 @@ int loadR3(){
     // struct pcb* icom25 = pcb_setup("icom25",1,1);
     // struct pcb* iocom = pcb_setup("iocom",1,1);
     return 0;
+}
+int yield(){
+ sys_req(IDLE);
+ return 0;
 }
