@@ -1,19 +1,14 @@
+#include <stdint.h>
 #ifndef MPX_CONTEXT_H
 #define MPX_CONTEXT_H
-
 struct context
 {
-    unsigned short __pad1,
-                   gs,
-                   __pad2,
+    uint32_t       gs,
                    fs,
-                   __pad3,
                    es,
-                   __pad4,
                    ds,
-                   __pad5,
                    ss;
-    unsigned long edi,
+    uint32_t      edi,
                   esi,
                   ebp,
                   esp,
@@ -21,10 +16,10 @@ struct context
                   edx,
                   ecx,
                   eax;
-    unsigned long eip;
-    unsigned short __pad6,
-                   cs;
-    unsigned long eflags;
+    uint32_t      eip;
+
+    uint32_t       cs;
+    uint32_t   eflags;
 } __attribute__((packed));
 
 #endif // MPX_CONTEXT_H
