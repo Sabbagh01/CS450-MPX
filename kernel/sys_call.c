@@ -17,14 +17,7 @@ struct context* sys_call(struct context* context_in)
     //     it for scheduling in.
     // goal for scheduling in a process is to get the next pcb, which has a stack pointer
     //     pointing to a context in its stack.
-    int op;
-    __asm__ volatile("mov %0, %%eax" : "=r"(op));
-    
-    // set an original context for the first sys_call entry.
-    if (context_original == NULL)
-    {
-        context_original = context_in;
-    }
+    int op = context_in->eax;
     
     if ((op == READ) || (op == WRITE))
     {
@@ -33,22 +26,35 @@ struct context* sys_call(struct context* context_in)
     struct pcb* runnext = NULL;
     if (op == IDLE)
     {
+        // set an original context for the first sys_call IDLE.
+        if (context_original == NULL)
+        {
+            context_original = context_in;
+        }
         if (pcb_queues[0].head != NULL)
         {
             // dequeue the next active ready process
             runnext = pcb_queues[0].head->pcb_elem;
-            pcb_remove(pcb_queues[0].head->pcb_elem);
+            pcb_remove(runnext);
             // set the yielding process' stack pointer to the context to switch to after next run
             pcb_running->pctxt = context_in;
             // enqueue the yielding process into the active ready queue (state unchanged)
-            pcb_insert(pcb_running);
+            if (pcb_running != NULL)
+            {
+                pcb_running->pstate = (pcb_running->pstate & ~EXEC_BITS) | READY;
+                pcb_insert(pcb_running);
+            }
             // set the running pcb to the dequeued one and return its context to switch to
             pcb_running = runnext;
+            runnext->pstate = (runnext->pstate & ~EXEC_BITS) | RUNNING;
             return runnext->pctxt;
         }
-        else // no dequeueable processes, continue with yielded process
+        else if (context_original != NULL) // no dequeueable processes, continue with first yielded process
         {
-            return context_in;
+            pcb_running = NULL;
+            struct context* temp = context_original;
+            context_original = NULL;
+            return temp;
         }
     }
     if (op == EXIT)
@@ -63,9 +69,12 @@ struct context* sys_call(struct context* context_in)
             pcb_running = runnext;
             return runnext->pctxt;
         }
-        else // no dequeueable processes, load first arrived context
+        else if (context_original != NULL) // no dequeueable processes, load first arrived context
         {
-            return context_original;
+            pcb_running = NULL;
+            struct context* temp = context_original;
+            context_original = NULL;
+            return temp;
         }
     }
     // unrecognized op

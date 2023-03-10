@@ -1,25 +1,32 @@
-#include <stdint.h>
 #ifndef MPX_CONTEXT_H
 #define MPX_CONTEXT_H
+
+#include <stdint.h>
+
 struct context
 {
-    uint32_t       gs,
-                   fs,
-                   es,
-                   ds,
-                   ss;
-    uint32_t      edi,
-                  esi,
-                  ebp,
-                  esp,
-                  ebx,
-                  edx,
-                  ecx,
-                  eax;
-    uint32_t      eip;
-
-    uint32_t       cs;
-    uint32_t   eflags;
+    uint16_t gs,
+             __pad1,
+             fs,
+             __pad2,
+             es,
+             __pad3,
+             ds,
+             __pad4,
+             ss,
+             __pad5;
+    uint32_t edi,
+             esi,
+             ebp,
+             esp,
+             ebx,
+             edx,
+             ecx,
+             eax;
+    uint32_t eip;
+    uint16_t cs,
+             __pad6;
+    uint32_t eflags;
 } __attribute__((packed));
 
 #endif // MPX_CONTEXT_H
