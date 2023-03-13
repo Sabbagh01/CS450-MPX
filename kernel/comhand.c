@@ -186,20 +186,7 @@ cmd_entries[] =
             "\tformat\r\n"
         )
     },
-    { STR_BUF("6"), STR_BUF("Create PCB"), createPcbCommand,
-        STR_BUF(
-        "Create PCB\r\n"
-		    "\tInput:\r\n"
-		    "\tprocess name - name to provide to the new process\r\n"
-            "\tprocess class - class of the new process\r\n"
-            "\tprocess priority - base priority of the new process\r\n"
-		    "\tOutput:\r\n"
-		    "\tno output if successful, error if a pcb could not be created\r\n"
-		    "\tDescription:\r\n"
-		    "\tCreates a new process pcb to insert it into an active ready queue\r\n"
-        )
-    },
-    { STR_BUF("7"), STR_BUF("Set PCB Priority"), setPcbPriorityCommand,
+    { STR_BUF("6"), STR_BUF("Set PCB Priority"), setPcbPriorityCommand,
         STR_BUF(
         "Set PCB Priority\r\n"
 		    "\tInput:\r\n"
@@ -211,7 +198,7 @@ cmd_entries[] =
 		    "\tLocates a process pcb and changes its base priority\r\n"
         )
     },
-    { STR_BUF("8"), STR_BUF("Show PCB"), showPcbCommand,
+    { STR_BUF("7"), STR_BUF("Show PCB"), showPcbCommand,
         STR_BUF(
         "Show PCB\r\n"
             "\tInput:\r\n"
@@ -222,7 +209,7 @@ cmd_entries[] =
             "\tPrints the name, class, state, suspended status, and priority of the given process\r\n"
         )
     },
-    { STR_BUF("9"), STR_BUF("Show Ready PCBs"), showPcbReadyCommand,
+    { STR_BUF("8"), STR_BUF("Show Ready PCBs"), showPcbReadyCommand,
         STR_BUF(
         "Show Ready PCBs\r\n"
             "\tInput:\r\n"
@@ -233,7 +220,7 @@ cmd_entries[] =
             "\tPrints the name, class, state, suspended status, and priority of all ready PCBs\r\n"
         )
     },
-    { STR_BUF("10"), STR_BUF("Show Blocked PCBs"), showPcbBlockedCommand,
+    { STR_BUF("9"), STR_BUF("Show Blocked PCBs"), showPcbBlockedCommand,
         STR_BUF(
         "Show Blocked PCBs\r\n"
             "\tInput:\r\n"
@@ -244,7 +231,7 @@ cmd_entries[] =
             "\tPrints the name, class, state, suspended status, and priority of all blocked PCBs\r\n"
         )
     },
-    { STR_BUF("11"), STR_BUF("Show All PCBs"), showPcbAllCommand,
+    { STR_BUF("10"), STR_BUF("Show All PCBs"), showPcbAllCommand,
         STR_BUF(
         "Show All PCBs\r\n"
             "\tInput:\r\n"
@@ -255,7 +242,7 @@ cmd_entries[] =
             "\tPrints the name, class, state, suspended status, and priority of all PCBs\r\n"
         )
     },
-    { STR_BUF("12"), STR_BUF("Delete PCB"), deletePcbCommand,
+    { STR_BUF("11"), STR_BUF("Delete PCB"), deletePcbCommand,
         STR_BUF(
         "Delete PCB\r\n"
             "\tInput:\r\n"
@@ -266,7 +253,7 @@ cmd_entries[] =
             "\tDeletes the PCB and frees associated memory of given PCB name if found\r\n"
         )
     },
-    { STR_BUF("13"), STR_BUF("Block PCB"), blockPcbCommand,
+    { STR_BUF("12"), STR_BUF("Block PCB"), blockPcbCommand,
         STR_BUF(
         "Block PCB\r\n"
             "\tInput:\r\n"
@@ -277,7 +264,7 @@ cmd_entries[] =
             "\tSets the state of PCB to blocked if found\r\n"
         )
     },
-    { STR_BUF("14"), STR_BUF("Unblock PCB"), unblockPcbCommand,
+    { STR_BUF("13"), STR_BUF("Unblock PCB"), unblockPcbCommand,
         STR_BUF(
         "Unblock PCB\r\n"
             "\tInput:\r\n"
@@ -288,7 +275,7 @@ cmd_entries[] =
             "\tSets the state of PCB to unblocked if found\r\n"
         )
     },
-    { STR_BUF("15"), STR_BUF("Suspend PCB"), suspendPcbCommand,
+    { STR_BUF("14"), STR_BUF("Suspend PCB"), suspendPcbCommand,
         STR_BUF(
         "Suspend PCB\r\n"
             "\tInput:\r\n"
@@ -299,7 +286,7 @@ cmd_entries[] =
             "\tSuspends the PCB if found\r\n"
         )
     },
-    { STR_BUF("16"), STR_BUF("Resume PCB"), resumePcbCommand,
+    { STR_BUF("15"), STR_BUF("Resume PCB"), resumePcbCommand,
         STR_BUF(
         "Resume PCB\r\n"
             "\tInput:\r\n"
@@ -310,7 +297,7 @@ cmd_entries[] =
             "\tUnsuspends the PCB if found\r\n"
         )
     },
-    { STR_BUF("17"), STR_BUF("Version"), versionCommand,
+    { STR_BUF("16"), STR_BUF("Version"), versionCommand,
         STR_BUF(
         "Version\r\n"
 		    "\tInput:\r\n"
@@ -321,7 +308,7 @@ cmd_entries[] =
 		    "\tprints the current version of MPX and the compilation date\r\n"
         )
     },
-    { STR_BUF("18"), STR_BUF("Shut Down"), shutdownCommand,
+    { STR_BUF("17"), STR_BUF("Shut Down"), shutdownCommand,
         STR_BUF(
         "Shut Down\r\n"
 		    "\tInput:\r\n"
@@ -332,7 +319,7 @@ cmd_entries[] =
 		    "\tshuts down the machine after confirmation is given by entering 1\r\n"
         )
     },
-    { STR_BUF("19"), STR_BUF("loadR3"), loadR3,
+    { STR_BUF("18"), STR_BUF("LoadR3"), loadR3,
         STR_BUF(
         "Shut Down\r\n"
 		    "\tInput:\r\n"
@@ -343,7 +330,7 @@ cmd_entries[] =
 		    "\ts 1\r\n"
         )
     },
-     { STR_BUF("20"), STR_BUF("yield"), yield,
+     { STR_BUF("19"), STR_BUF("Yield"), yield,
         STR_BUF(
         "Shut Down\r\n"
 		    "\tInput:\r\n"
@@ -550,93 +537,6 @@ int versionCommand() {
    
     write(COM1, STR_BUF(__DATE__));
     write(COM1, STR_BUF("\r\n"));
-    return 0;
-}
-
-int createPcbCommand() {
-    char proc_name[MPX_PCB_PROCNAME_SZ];
-    enum ProcClassState proc_class;
-    unsigned char proc_pri;
-    
-    while(1) {
-        static const char name_msg[] = "Enter process name (1-64 characters): \r\n";
-                                       
-        setTerminalColor(Yellow);
-        write(COM1, STR_BUF(name_msg));
-        
-        setTerminalColor(White);
-        user_input_promptread();
-        if ((user_input_len > 0) && (user_input_len <= MPX_PCB_PROCNAME_SZ))
-        {
-            // no processes with the name
-            if (pcb_find(user_input) == NULL)
-            {
-                memcpy(proc_name, user_input, user_input_len + 1);
-                user_input_clear();
-                break;
-            }
-        }
-        user_input_clear();
-        
-        setTerminalColor(Red);
-        static const char name_error_msg[] = "Name out of range or name already exist.\r\n";
-        write(COM1, STR_BUF(name_error_msg));
-    }
-    while(1) {
-        static const char class_msg[] = "Enter process class (user or kernel):\r\n";
-        setTerminalColor(Yellow);
-        write(COM1, STR_BUF(class_msg));
-        
-        setTerminalColor(White);
-        user_input_promptread();
-        for (size_t i = 0; i < sizeof(avail_pcb_class) / sizeof(struct str_pcbprop_map); ++i)
-        {
-            if (strcmp(user_input, avail_pcb_class[i].str) == 0)
-            {
-                proc_class = avail_pcb_class[i].prop;
-                user_input_clear();
-                goto procbreak;
-            }
-        }
-        user_input_clear();
-        
-        setTerminalColor(Red);
-        static const char class_error_msg[] = "Invalid class provided. Please enter user or kernel in lower case.\r\n";
-        write(COM1, STR_BUF(class_error_msg));
-    }
-    procbreak:
-    while(1) {
-        static const char pri_msg[] = "Enter process priority (0-9):\r\n";
-        setTerminalColor(Yellow);
-        write(COM1, STR_BUF(pri_msg));
-        
-        setTerminalColor(White);
-        user_input_promptread();
-        if (user_input_len == 1)
-        {
-            if (intParsable(user_input, user_input_len))
-            {
-                proc_pri = atoi(user_input);
-                if ((proc_pri >= 0) && (proc_pri <= MPX_PCB_PROCPRI_MAX))
-                {
-                    user_input_clear();
-                    break;
-                }
-            }
-        }
-        user_input_clear();
-        
-        setTerminalColor(Red);
-        static const char pri_error_msg[] = "Priority is not in the accepted range.\r\n";
-        write(COM1, STR_BUF(pri_error_msg));
-    }
-
-    struct pcb* pcb_new = pcb_setup(proc_name, proc_class, proc_pri);
-    if (pcb_new == NULL)
-    {
-        return -1;
-    }
-    pcb_insert(pcb_new);
     return 0;
 }
 
@@ -1112,11 +1012,11 @@ int shutdownCommand() {
 void comhand() {
     static const char menu_welcome_msg[] = "Welcome to 5x5 MPX.\r\n";
     static const char menu_options[] = "Please select an option by choosing a number.\r\n"
-                                       "1 ) Help            2 ) Set Time          3 ) Get Time         4 ) Set Date\r\n"
-                                       "5 ) Get Date        6 ) Create PCB        7 ) Change PCB Pri   8 ) Show PCB\r\n"
-                                       "9 ) Show Ready PCB  10) Show Blocked PCB  11) Show All PCB     12) Delete PCB\r\n"
-                                       "13) Block PCB       14) Unblock PCB       15) Suspend PCB      16) Resume PCB\r\n"
-                                       "17) Version         18) Shutdown          19) loadR3           20) yield\r\n"
+                                       "1 ) Help              2 ) Set Time          3 ) Get Time       4 ) Set Date\r\n"
+                                       "5 ) Get Date          6 ) Change PCB Pri    7 ) Show PCB       8 ) Show Ready PCB\r\n"
+                                       "9 ) Show Blocked PCB  10) Show All PCB      11) Delete PCB     12) Block PCB\r\n"
+                                       "13) Unblock PCB       14) Suspend PCB       15) Resume PCB     16) Version\r\n"
+                                       "17) Shutdown          18) loadR3            19) yield\r\n"
                                        "Enter number of choice:\r\n";
     
     setTerminalColor(Blue);
