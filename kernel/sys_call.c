@@ -41,12 +41,12 @@ struct context* sys_call(struct context* context_in)
             // enqueue the yielding process into the active ready queue (state unchanged)
             if (pcb_running != NULL)
             {
-                pcb_running->pstate = (pcb_running->pstate & ~EXEC_BITS) | READY;
+                pcb_running->state.exec = READY;
                 pcb_insert(pcb_running);
             }
             // set the running pcb to the dequeued one and return its context to switch to
             pcb_running = runnext;
-            runnext->pstate = (runnext->pstate & ~EXEC_BITS) | RUNNING;
+            runnext->state.exec = RUNNING;
             return runnext->pctxt;
         }
         else if (context_original != NULL) // no dequeueable processes, continue with first yielded process

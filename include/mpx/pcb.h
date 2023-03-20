@@ -13,50 +13,41 @@
 
 #define MPX_PCB_PROCPRI_MAX (9)
 
-#define EXEC_BITS_SPAN      (0x03)
-#define EXEC_OFFSET         (0)
-#define EXEC_BITS           (EXEC_BITS_SPAN)
-#define DPATCH_BITS_SPAN    (0x01)
-#define DPATCH_OFFSET       (EXEC_OFFSET + 2)
-#define DPATCH_BITS         (DPATCH_BITS_SPAN << DPATCH_OFFSET)
-#define CLASS_BITS_SPAN     (0x01)
-#define CLASS_OFFSET        (DPATCH_OFFSET + 1)
-#define CLASS_BITS          (CLASS_BITS_SPAN << CLASS_OFFSET)
-#define PSTATE_EXEC_STATE(ps)           (ps & EXEC_BITS)
-#define PSTATE_DPATCH_STATE(ps)         (ps & DPATCH_BITS)
-#define PSTATE_CLASS_STATE(ps)          (ps & CLASS_BITS)
-#define PSTATE_EXEC_STATE_TOVALUE(ps)   ((ps & EXEC_BITS) >> EXEC_OFFSET)
-#define PSTATE_DPATCH_STATE_TOVALUE(ps) ((ps & DPATCH_BITS) >> DPATCH_OFFSET)
-#define PSTATE_CLASS_STATE_TOVALUE(ps)  ((ps & CLASS_BITS) >> CLASS_OFFSET)
-
 /**
 @brief Defines unique process execution state identifiers
 */
 enum ProcExecState {
-    BLOCKED     = 0x00 << EXEC_OFFSET,
-    READY       = 0x01 << EXEC_OFFSET,
-    RUNNING     = 0x02 << EXEC_OFFSET,
+    BLOCKED     = 0x00,
+    READY       = 0x01,
+    RUNNING     = 0x02,
 };
 
 /**
 @brief Defines unique process dispatch state identifiers
 */
 enum ProcDpatchState {
-    SUSPENDED   = 0x00 << DPATCH_OFFSET,
-    ACTIVE      = 0x01 << DPATCH_OFFSET,
+    SUSPENDED   = 0x00,
+    ACTIVE      = 0x01,
 };
 
 /**
 @brief Defines unique process class identifiers
 */
 enum ProcClassState {
-    KERNEL      = 0x00 << CLASS_OFFSET,
-    USER        = 0x01 << CLASS_OFFSET,
+    KERNEL      = 0x00,
+    USER        = 0x01,
 };
 
 #define MPX_PCB_STACK_SZ (4096)
 
 struct pcb_queue_node;
+
+struct pcb_state {
+    unsigned char exec   : 2;
+    unsigned char dpatch : 1;
+    unsigned char cls    : 1;
+    unsigned char pri    : 4;
+};
 
 /**
 @struct pcb
@@ -80,10 +71,9 @@ struct pcb_queue_node;
         which will be situated on top of the stack.
 */
 struct pcb {
-    char pname[MPX_PCB_PROCNAME_BUFFER_SZ];
+    char name[MPX_PCB_PROCNAME_BUFFER_SZ];
     struct pcb_queue_node* pnode;
-    unsigned char pstate;
-    unsigned char ppri;
+    struct pcb_state state;
     void* pstackseg;
     struct context* pctxt;
 };
@@ -123,7 +113,7 @@ struct pcb_queue {
 };
 
 #ifndef MPX_PROC_USE_ALT_QUEUES
-#define PSTATE_QUEUE_SELECTOR(ps) (PSTATE_EXEC_STATE_TOVALUE(~ps & READY) + 2 * PSTATE_DPATCH_STATE_TOVALUE(~ps))
+#define PSTATE_QUEUE_SELECTOR(state) ((state.exec != READY) + 2 * ((state.dpatch != ACTIVE)))
 #define QUEUE_SZ (4)
 /**
 @var pcb_queues

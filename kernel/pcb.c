@@ -20,7 +20,7 @@ struct pcb* pcb_running = NULL;
 
 void pcb_insert(struct pcb* pcb_in)
 {
-    struct pcb_queue* queue = &pcb_queues[PSTATE_QUEUE_SELECTOR(pcb_in->pstate)];
+    struct pcb_queue* queue = &pcb_queues[PSTATE_QUEUE_SELECTOR(pcb_in->state)];
     struct pcb_queue_node* node = pcb_in->pnode;
     
     if (queue->head != NULL)
@@ -28,7 +28,7 @@ void pcb_insert(struct pcb* pcb_in)
         if (queue->head->p_next == NULL) // size == 1
         {
             // check incoming pcb has greater priority if selected queue is a priority queue
-            if (queue->type_pri && (pcb_in->ppri < queue->head->pcb_elem->ppri))
+            if (queue->type_pri && (pcb_in->state.pri < queue->head->pcb_elem->state.pri))
             {
                 // place node at head (higher priority)
                 // note head is also tail here so no need to assign
@@ -48,7 +48,7 @@ void pcb_insert(struct pcb* pcb_in)
                 struct pcb_queue_node* prevcmpnode = NULL;
                 struct pcb_queue_node* cmpnode = queue->head;
                 // iterate past greater or equal priorities to insert pcb before other pcbs of the same priority
-                while (pcb_in->ppri >= cmpnode->pcb_elem->ppri)
+                while (pcb_in->state.pri >= cmpnode->pcb_elem->state.pri)
                 {
                     prevcmpnode = cmpnode;
                     cmpnode = cmpnode->p_next;
@@ -132,9 +132,11 @@ struct pcb* pcb_setup(const char* name, enum ProcClassState cls, unsigned char p
             if (pcb_new != NULL)
             {
                 // initialize pcb fields
-                    memcpy(pcb_new->pname, name, namelen);
-                    pcb_new->ppri = pri;
-                    pcb_new->pstate = ACTIVE | READY | cls;
+                    memcpy(pcb_new->name, name, namelen);
+                    pcb_new->state.pri = pri;
+                    pcb_new->state.exec = ACTIVE;
+                    pcb_new->state.dpatch = READY; 
+                    pcb_new->state.cls = cls;
                 return pcb_new;
             }
         }
@@ -169,7 +171,7 @@ struct pcb* pcb_find(const char* name) {
             while(1)
             {
                 // match name
-                if (strcmp(name, node_temp->pcb_elem->pname) == 0) {
+                if (strcmp(name, node_temp->pcb_elem->name) == 0) {
                     return node_temp->pcb_elem;
                 }
                 if (node_temp->p_next == NULL)
@@ -185,7 +187,7 @@ struct pcb* pcb_find(const char* name) {
 
 int pcb_remove(struct pcb* pcb) {
     // only check the queue where the given pcb may be located according to its state
-    struct pcb_queue* queue_curr = &pcb_queues[PSTATE_QUEUE_SELECTOR(pcb->pstate)];
+    struct pcb_queue* queue_curr = &pcb_queues[PSTATE_QUEUE_SELECTOR(pcb->state)];
     struct pcb_queue_node* node_temp;
     struct pcb_queue_node* node_rmv;
     
