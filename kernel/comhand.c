@@ -328,17 +328,6 @@ cmd_entries[] =
 		    "\tDescription:\r\n"
 		    "\ts 1\r\n"
         )
-    },
-     { STR_BUF("19"), STR_BUF("Yield"), yield,
-        STR_BUF(
-        "Shut Down\r\n"
-		    "\tInput:\r\n"
-		    "\tno input parameters\r\n"
-		    "\tOutput:\r\n"
-		    "\tno output value\r\n"
-		    "\tDescription:\r\n"
-		    "\tshuts down the machine after confirmation is given by entering 1\r\n"
-        )
     }
 };
 
@@ -531,7 +520,7 @@ int getDateCommand() {
 
 int versionCommand() {
     setTerminalColor(White);
-    static const char ver_msg[] = "MPX vR2.\r\nCompiled ";
+    static const char ver_msg[] = "MPX vR4.\r\nCompiled ";
     write(COM1, STR_BUF(ver_msg));
    
     write(COM1, STR_BUF(__DATE__));
@@ -985,6 +974,7 @@ int shutdownCommand() {
         static const char sdexec_msg[] = "Shutting down now.\r\n";
         write(COM1, STR_BUF(sdexec_msg));
         user_input_clear();
+        sys_req(EXIT);
         return 0;
     }
     static const char sdcancel_msg[] = "Shut down cancelled.\r\n";
@@ -1000,7 +990,7 @@ void comhand() {
                                        "5 ) Get Date          6 ) Change PCB Pri    7 ) Show PCB       8 ) Show Ready PCB\r\n"
                                        "9 ) Show Blocked PCB  10) Show All PCB      11) Delete PCB     12) Block PCB\r\n"
                                        "13) Unblock PCB       14) Suspend PCB       15) Resume PCB     16) Version\r\n"
-                                       "17) Shutdown          18) loadR3            19) yield\r\n"
+                                       "17) Shutdown          18) loadR3\r\n"
                                        "Enter number of choice:\r\n";
     
     setTerminalColor(Blue);
@@ -1011,11 +1001,10 @@ void comhand() {
         setTerminalColor(Purple);
         //display the menu
         write(COM1, STR_BUF(menu_options));
-        
         setTerminalColor(White);
-        // get the input and call the corresponding function
+        // get the input and call the corresponding function and yield CPU
         user_input_promptread();
-        
+        sys_req(IDLE);
         int retcode;
         for (size_t i = 0; i < sizeof(cmd_entries) / sizeof(struct cmd_entry); ++i)
         {

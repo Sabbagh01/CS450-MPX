@@ -129,8 +129,3 @@ int loadR3(){
     // struct pcb* iocom = pcb_setup("iocom",1,1);
     return 0;
 }
-
-int yield(){
-    sys_req(IDLE);
-    return 0;
-}
