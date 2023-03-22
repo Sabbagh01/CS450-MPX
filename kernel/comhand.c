@@ -354,84 +354,124 @@ void comhand(){
 }
 
 int alarmCommand() {
-	    int day, month, year;
-	      
-	    static const char error_msg[] = "Could not parse, please re-enter time:\r\n";
-	    
-	    while(1) {
-		setTerminalColor(Yellow);
-		static const char month_msg[] = "Enter the month (1-12):\r\n";
-		write(COM1, STR_BUF(month_msg));
-		
-		setTerminalColor(White);
-		user_input_promptread();
-		if (intParsable(user_input, user_input_len)) {
-		    month = atoi (user_input);
-		    
-		    if ( (month <= 12) && (month >= 1) ) {
-		        user_input_clear();
-		        break;
-		    }
-		}
-		user_input_clear();
+    size_t input_len;
+    char input_buffer[30] = { 0 };
+    int hour, minute, second;
 
-		setTerminalColor(Red);       
-		write(COM1, STR_BUF(error_msg));    
-	    }
-	    while(1) {
-		setTerminalColor(Yellow);
-		static const char year_msg[] = "Enter the last two digits of the year (0-99):\r\n";
-		write(COM1, STR_BUF(year_msg));
-		
-		setTerminalColor(White);
-		user_input_promptread();
-		if (intParsable(user_input, user_input_len)) {
-		    year = atoi (user_input);
-		    
-		    if ( (year < 100) && (year >= 0) ) {
-		        user_input_clear();
-		        break;
-		    }
-		}
-		user_input_clear();
-		
-		setTerminalColor(Red);
-		write(COM1, STR_BUF(error_msg));
-	    }
-	    while(1) {
-		setTerminalColor(Yellow);
-		static const char day_msg[] = "Enter the day of the month:\r\n";
-		write(COM1, STR_BUF(day_msg));
-		
-		setTerminalColor(White);
-		user_input_promptread();
-		if (intParsable(user_input, user_input_len)) {
-		    day = atoi (user_input);
-		    
-		    if (
-		         (
-		            (day <= month_info[month - 1].lastday) || 
-		            ((month == 2) && (year % 4 == 0) && (day <= 29))
-		         ) && 
-		         (day >= 1) 
-		    ) {
-		        user_input_clear();
-		        break;
-		    }
-		}
-		user_input_clear();
-		
-		setTerminalColor(Red); 
-		write(COM1, STR_BUF(error_msg));
-	    }
-	    setTerminalColor(Yellow);
-	    static const char msg_msg[] = "Enter the message to display:\r\n";
-	    write(COM1, STR_BUF(day_msg));
-	    setTerminalColor(White);
-	    user_input_promptread();
-	    write(COM1, STR_BUF("\r\n"));
-   	    
-   	struct pcb* timerpcb= pcb_setup("timer_X", USER, 9);
+
+    const char error_msg[] = "\r\nCould not parse, please re-enter time:";
+    
+    while(1) {
+
+        //yellow color
+        const char yellowColor[] = "\033[0;33m";
+        sys_req(WRITE, COM1, yellowColor, sizeof(yellowColor));
+
+        const char hour_msg[] = "\r\nEnter the hour (0-24):\r\n";
+        sys_req(WRITE, COM1, hour_msg, sizeof(hour_msg));
+
+        //white color
+        const char whiteColor[] = "\033[0;37m";
+        sys_req(WRITE, COM1, whiteColor, sizeof(whiteColor));
+
+        input_len = sys_req(READ, COM1, input_buffer, sizeof(input_buffer));
+        hour = atoi(input_buffer);
+        if (strcmp(input_buffer,"0") == 0 || strcmp(input_buffer,"00") == 0){
+            break;
+        }
+        memset(input_buffer, 0, input_len);
+        
+        if ( (hour < 24) && (hour > 0) ) {
+            break;
+        }
+        //red color
+        const char redColor[] = "\033[0;31m";
+        sys_req(WRITE, COM1, redColor, sizeof(redColor));
+
+        sys_req(WRITE, COM1, error_msg, sizeof(error_msg));
+
+        //white color
+        sys_req(WRITE, COM1, whiteColor, sizeof(whiteColor));
+
+    }
+    while(1) {
+
+        //yellow color
+        const char yellowColor[] = "\033[0;33m";
+        sys_req(WRITE, COM1, yellowColor, sizeof(yellowColor));
+
+        const char minute_msg[] = "\r\nEnter the minute (0-60):\r\n";
+        sys_req(WRITE, COM1, minute_msg, sizeof(minute_msg));
+
+        //white color
+        const char whiteColor[] = "\033[0;37m";
+        sys_req(WRITE, COM1, whiteColor, sizeof(whiteColor));
+
+        input_len = sys_req(READ, COM1, input_buffer, sizeof(input_buffer));
+        minute = atoi(input_buffer);
+        if (strcmp(input_buffer,"0") == 0 || strcmp(input_buffer,"00") == 0){
+            break;
+        }
+        memset(input_buffer, 0, input_len);
+        
+        if ( (minute < 60) && (minute > 0) ) {
+            break;
+        }
+        //red color
+        const char redColor[] = "\033[0;31m";
+        sys_req(WRITE, COM1, redColor, sizeof(redColor));
+
+        sys_req(WRITE, COM1, error_msg, sizeof(error_msg));
+
+        //white color
+        sys_req(WRITE, COM1, whiteColor, sizeof(whiteColor));
+    }
+    while (1) {
+         //yellow color
+        const char yellowColor[] = "\033[0;33m";
+        sys_req(WRITE, COM1, yellowColor, sizeof(yellowColor));
+
+        const char second_msg[] = "\r\nEnter the second (0-60):\r\n";
+        sys_req(WRITE, COM1, second_msg, sizeof(second_msg));
+
+         //white color
+        const char whiteColor[] = "\033[0;37m";
+        sys_req(WRITE, COM1, whiteColor, sizeof(whiteColor));
+
+        input_len = sys_req(READ, COM1, input_buffer, sizeof(input_buffer));
+        second = atoi(input_buffer);
+        if (strcmp(input_buffer,"0") == 0 || strcmp(input_buffer,"00") == 0){
+            break;
+        }
+        if ( (second < 60) && (second >= 0) ) {
+            break;
+        }
+        //red color
+        const char redColor[] = "\033[0;31m";
+        sys_req(WRITE, COM1, redColor, sizeof(redColor));
+
+        sys_req(WRITE, COM1, error_msg, sizeof(error_msg));
+
+        //white color
+        sys_req(WRITE, COM1, whiteColor, sizeof(whiteColor));
+    }
+   	
+    char *baseName = "timer";
+    int suffixNum = 0;
+    char *suffixPtr = NULL;
+    //new process name with suffix
+    char *processName = NULL;
+    //convert to string
+    itoa(suffixPtr, suffixNum);
+    strcpy(processName, (strcat(baseName, suffixPtr));
+    //finding the process name
+    while (pcb_find(processName) != NULL) {
+   	 suffixNum++;
+   	 //new process name with suffix
+   	 itoa(suffixPtr, suffixNum);
+   	 strcpy(processName, (strcat(baseName, suffixPtr));
+    }
+   	struct pcb* timerpcb = pcb_setup(processName, USER, 9);
 	timerpcb -> pctxt = timerpcb->pstackseg + MPX_PCB_STACK_SZ - sizeof(struct context);
 	struct context* timerct = timerpcb -> pctxt;
 	timerct -> ss = 0x0010;
@@ -447,13 +487,13 @@ int alarmCommand() {
 	timerct-> edx = 0;
 	timerct -> ecx = 0;
 	timerct -> eax = 0;
-	timerct -> eip = (uint32_t) PROCESS NAME HERE;
+	timerct -> eip = (uint32_t); //PROCESS NAME HERE
 	timerct -> cs = 0x0008;
 	timerct -> eflags = 0x00000202;
 	pcb_insert(timerpcb);
 	
 
-	    user_input_clear();
-	    return 0;
+     user_input_clear();
+     return 0;
 }
 
