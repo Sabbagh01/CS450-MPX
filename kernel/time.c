@@ -178,3 +178,25 @@ void getDate() {
     return;
 }
 
+void alarm(int hours, int, minutes, int seconds, const char* msg) {
+	timeToMatch = (hours * 60 * 60) + (minutes * 60) + (seconds)
+	outb(0x70, 0x00); // access seconds
+	int curSeconds = BCDtoDecimal(inb(0x71));
+	outb(0x70, 0x02); // access minutes
+	int curMinutes = BCDtoDecimal(inb(0x71));
+	outb(0x70, 0x04); // access hours
+	int curHours = BCDtoDecimal(inb(0x71));
+	sys_req(IDLE);
+	while ((curHours * 60 * 60) + (curMinutes * 60) + (curSeconds) < timeToMatch) {
+		outb(0x70, 0x00); // access seconds
+		int curSeconds = BCDtoDecimal(inb(0x71));
+		outb(0x70, 0x02); // access minutes
+		int curMinutes = BCDtoDecimal(inb(0x71));
+		outb(0x70, 0x04); // access hours
+		int curHours = BCDtoDecimal(inb(0x71));
+		sys_req(IDLE);
+	}
+	sys_req(WRITE, COM1, msg, strlen(msg));
+	sys_req(EXIT);
+}
+
