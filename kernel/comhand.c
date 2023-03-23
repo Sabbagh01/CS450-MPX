@@ -108,6 +108,7 @@ int showPcbBlockedCommand();
 int showPcbAllCommand();
 int versionCommand();
 int shutdownCommand();
+int alarmCommand();
 
 const struct cmd_entry {
     const char* key;
@@ -327,6 +328,18 @@ cmd_entries[] =
 		    "\tno output value\r\n"
 		    "\tDescription:\r\n"
 		    "\ts 1\r\n"
+        )
+    },
+    { STR_BUF("19"), STR_BUF("Alarm"), alarmCommand,
+        STR_BUF(
+        "Alarm\r\n"
+		    "\tInput:\r\n"
+		    "\tTime to set off alarm.\r\n"
+            "\tMessage to display at the alarm\r\n"
+		    "\tResult:\r\n"
+		    "\tAlarm created to wait until past the set time.\r\n"
+		    "\tDescription:\r\n"
+		    "\tSpawns an alarm process to wait until it passes a set time\r\n"
         )
     }
 };
@@ -983,6 +996,118 @@ int shutdownCommand() {
     return 1;
 }
 
+#define ALARMCMD_MAX_ALARM_ID (256)
+#define ALARMCMD_TIMER_PREFIX "timer_"
+#define ALARMCMD_TIMER_PREFIX_SZ sizeof(ALARMCMD_TIMER_PREFIX)
+
+int alarmCommand() {
+    int day, month, year, hour, minute, second;
+      
+    static const char error_msg[] = "Could not parse, please re-enter time:\r\n";
+    
+    while(1) {
+    setTerminalColor(Yellow);
+    static const char month_msg[] = "Enter the month (1-12):\r\n";
+    write(COM1, STR_BUF(month_msg));
+    
+    setTerminalColor(White);
+    user_input_promptread();
+    if (intParsable(user_input, user_input_len)) {
+        month = atoi (user_input);
+        
+        if ( (month <= 12) && (month >= 1) ) {
+            user_input_clear();
+            break;
+        }
+    }
+    user_input_clear();
+
+    setTerminalColor(Red);       
+    write(COM1, STR_BUF(error_msg));    
+    }
+    while(1) {
+    setTerminalColor(Yellow);
+    static const char year_msg[] = "Enter the last two digits of the year (0-99):\r\n";
+    write(COM1, STR_BUF(year_msg));
+    
+    setTerminalColor(White);
+    user_input_promptread();
+    if (intParsable(user_input, user_input_len)) {
+        year = atoi (user_input);
+        
+        if ( (year < 100) && (year >= 0) ) {
+            user_input_clear();
+            break;
+        }
+    }
+    user_input_clear();
+    
+    setTerminalColor(Red);
+    write(COM1, STR_BUF(error_msg));
+    }
+    while(1) {
+    setTerminalColor(Yellow);
+    static const char day_msg[] = "Enter the day of the month:\r\n";
+    write(COM1, STR_BUF(day_msg));
+    
+    setTerminalColor(White);
+    user_input_promptread();
+    if (intParsable(user_input, user_input_len)) {
+        day = atoi (user_input);
+        
+        if (
+             (
+                (day <= month_info[month - 1].lastday) || 
+                ((month == 2) && (year % 4 == 0) && (day <= 29))
+             ) && 
+             (day >= 1) 
+        ) {
+            user_input_clear();
+            break;
+        }
+    }
+    user_input_clear();
+    
+    setTerminalColor(Red); 
+    write(COM1, STR_BUF(error_msg));
+    }
+    setTerminalColor(Yellow);
+    static const char msg_msg[] = "Enter the message to display:\r\n";
+    write(COM1, STR_BUF(msg_msg));
+    setTerminalColor(White);
+    user_input_promptread();
+    // must be freed in spawned process
+    char* alarm_msg = sys_alloc_mem(sizeof(user_input));
+   	memcpy(alarm_msg, user_input, sizeof(user_input));
+
+    char timername[MPX_PCB_PROCNAME_BUFFER_SZ] = ALARMCMD_TIMER_PREFIX;
+    // cannot have a negative integer postfix and have to avoid overflow
+    for (unsigned int i = 0; i < ALARMCMD_MAX_ALARM_ID; ++i)
+    {
+        itoa(&timername[ALARMCMD_TIMER_PREFIX_SZ], (int) i);
+        if (pcb_find(&timername[0]) == NULL)
+        {
+            break;
+        }
+        memset (timername, 0, ALARMCMD_TIMER_PREFIX_SZ + strlen(&timername[ALARMCMD_TIMER_PREFIX_SZ]));
+    }
+   	struct pcb* timerpcb = pcb_setup(timername, USER, 0);
+    struct alarmProcessParams alarm_args = {
+        day,
+        month,
+        year,
+        0,
+        0,
+        0,
+        alarm_msg
+    };
+	pcb_context_setup(timerpcb, alarmProcess, (void*) &alarm_args, sizeof(struct alarmProcessParams));
+	pcb_insert(timerpcb);
+
+	user_input_clear();
+	return 0;
+}
+
 void comhand() {
     static const char menu_welcome_msg[] = "Welcome to 5x5 MPX.\r\n";
     static const char menu_options[] = "Please select an option by choosing a number.\r\n"
@@ -990,7 +1115,7 @@ void comhand() {
                                        "5 ) Get Date          6 ) Change PCB Pri    7 ) Show PCB       8 ) Show Ready PCB\r\n"
                                        "9 ) Show Blocked PCB  10) Show All PCB      11) Delete PCB     12) Block PCB\r\n"
                                        "13) Unblock PCB       14) Suspend PCB       15) Resume PCB     16) Version\r\n"
-                                       "17) Shutdown          18) loadR3\r\n"
+                                       "17) Shutdown          18) loadR3            19) Alarm\r\n"
                                        "Enter number of choice:\r\n";
     
     setTerminalColor(Blue);

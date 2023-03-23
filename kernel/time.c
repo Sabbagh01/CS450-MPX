@@ -186,3 +186,28 @@ void getDate() {
     return;
 }
 
+#include <memory.h>
+
+void alarmProcess(struct alarmProcessParams args) {
+	int timeToMatch = (args.hours * 60 + args.minutes) * 60 + args.seconds;
+	outb(0x70, 0x00); // access seconds
+	int curSeconds = BCDtoDecimal(inb(0x71));
+	outb(0x70, 0x02); // access minutes
+	int curMinutes = BCDtoDecimal(inb(0x71));
+	outb(0x70, 0x04); // access hours
+	int curHours = BCDtoDecimal(inb(0x71));
+	while ((curHours * 60 + curMinutes) * 60 + curSeconds < timeToMatch)
+    {
+        sys_req(IDLE);
+		outb(0x70, 0x00); // access seconds
+		curSeconds = BCDtoDecimal(inb(0x71));
+		outb(0x70, 0x02); // access minutes
+		curMinutes = BCDtoDecimal(inb(0x71));
+		outb(0x70, 0x04); // access hours
+		curHours = BCDtoDecimal(inb(0x71));
+	}
+	sys_req(WRITE, COM1, args.msg, strlen(args.msg));
+    sys_free_mem(args.msg);
+	sys_req(EXIT);
+}
+

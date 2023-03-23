@@ -53,5 +53,21 @@ void setDate(int day, int month, int year);
 */
 void getDate();
 
+struct alarmProcessParams {
+    int day;
+    int month;
+    int year;
+    int hours;
+    int minutes;
+    int seconds;
+    const char* msg;
+};
+
+/**
+@brief
+    A process for setting alarms (used by alarmCommand). Do not call directly.
+*/
+void alarmProcess(struct alarmProcessParams args);
+
 #endif // MPX_TIME_H
 
