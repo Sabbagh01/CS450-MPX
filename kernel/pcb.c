@@ -137,11 +137,45 @@ struct pcb* pcb_setup(const char* name, enum ProcClassState cls, unsigned char p
                     pcb_new->state.exec = ACTIVE;
                     pcb_new->state.dpatch = READY; 
                     pcb_new->state.cls = cls;
+                    pcb_new->pctxt = pcb_new->pstackseg + MPX_PCB_STACK_SZ;
                 return pcb_new;
             }
         }
     } 
     return NULL;
+}
+
+void pcb_context_setup(struct pcb* pcb, void* func, void* fargs, size_t fargc) {
+	if (fargc > MPX_PCB_MAX_ARG_SZ)
+    {
+        return;
+    }
+    if (fargs != NULL)
+    {
+        pcb->pctxt -= fargc;
+        memcpy (pcb->pctxt, fargs, fargc);
+    }
+    pcb->pctxt -= sizeof (struct context);
+    // alias pcb context
+    struct context* pctxt = pcb->pctxt;
+    // set up context for the pcb
+	pctxt -> ss = 0x0010;
+	pctxt -> ds = 0x0010;
+	pctxt -> es = 0x0010;
+	pctxt -> fs = 0x0010;
+	pctxt -> gs = 0x0010;
+	pctxt -> edi = 0;
+	pctxt -> esi = 0;
+	pctxt -> ebp = (uint32_t) pcb->pstackseg + MPX_PCB_STACK_SZ - 1;
+	pctxt -> esp = (uint32_t) pcb->pctxt;
+	pctxt -> ebx = 0;
+	pctxt -> edx = 0;
+	pctxt -> ecx = 0;
+	pctxt -> eax = 0;
+	pctxt -> eip = (uint32_t) func;
+	pctxt -> cs = 0x0008;
+	pctxt -> eflags = 0x00000202;
+    return;
 }
 
 int pcb_free(struct pcb* pcb) {

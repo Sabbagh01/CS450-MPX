@@ -1,6 +1,7 @@
 #ifndef MPX_PCB_H
 #define MPX_PCB_H
 
+#include <stddef.h>
 #include <mpx/context.h>
 
 /**
@@ -158,6 +159,24 @@ int pcb_free(struct pcb* pcb);
         initialization, or invalid parameters.
 */
 struct pcb* pcb_setup(const char* name, enum ProcClassState cls, unsigned char pri);
+
+#define MPX_PCB_MAX_ARG_SZ (32)
+
+/**
+@brief
+    Sets up the context for a process.
+@param pcb
+    PCB to set up the context for.
+@param func
+    Entry point to set for the PCB.
+@param fargs
+    A pointer to a buffer of arguments to be copied into the PCB stack to be
+        accessed by the entry point. If NULL, fargc is disregarded and the buffer
+        is not copied.
+@param fargc
+    Size of the buffer pointed to by fargs.
+*/
+void pcb_context_setup(struct pcb* pcb, void* func, void* fargs, size_t fargc);
 
 /**
 @brief
