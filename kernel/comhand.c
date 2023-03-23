@@ -283,6 +283,7 @@ cmd_entries[] =
 		    "\tOutput:\r\n"
 		    "\tno output value\r\n"
 		    "\tDescription:\r\n"
+            "\tLoad 5 process to the queue.\r\n"
 		    "\ts 1\r\n"
         )
     },
