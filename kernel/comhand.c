@@ -277,14 +277,13 @@ cmd_entries[] =
     },
     { STR_BUF("18"), STR_BUF("LoadR3"), loadR3,
         STR_BUF(
-        "Shut Down\r\n"
+        "LoadR3\r\n"
 		    "\tInput:\r\n"
 		    "\tno input parameters\r\n"
 		    "\tOutput:\r\n"
 		    "\tno output value\r\n"
 		    "\tDescription:\r\n"
-            "\tLoad 5 process to the queue.\r\n"
-		    "\ts 1\r\n"
+		    "\tLoads the processes associated with module R3.\r\n"
         )
     },
     { STR_BUF("19"), STR_BUF("Alarm"), alarmCommand,
