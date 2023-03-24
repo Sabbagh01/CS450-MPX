@@ -94,48 +94,12 @@ void kmain(void)
 	// 9) YOUR command handler -- *create and #include an appropriate .h file*
 	// Pass execution to your command handler so the user can interact with the system.
 	struct pcb* comhandpcb = pcb_setup("comhand", KERNEL, 0);
-	comhandpcb -> pctxt = comhandpcb->pstackseg + MPX_PCB_STACK_SZ - sizeof(struct context);
-	struct context* comhandct = comhandpcb -> pctxt;
-	comhandct -> ss = 0x0010;
-    comhandct -> ds = 0x0010;
-    comhandct -> es = 0x0010;
-    comhandct -> fs = 0x0010;
-    comhandct -> gs = 0x0010;
-    comhandct -> edi = 0;
-    comhandct -> esi = 0;
-    comhandct -> ebp = (uint32_t) comhandpcb->pstackseg + MPX_PCB_STACK_SZ - 1;
-    comhandct  -> esp = (uint32_t) comhandpcb->pctxt;
-    comhandct -> ebx = 0;
-    comhandct-> edx = 0;
-    comhandct -> ecx = 0;
-    comhandct -> eax = 0;
-    comhandct -> eip = (uint32_t) comhand;
-    comhandct -> cs = 0x0008;
-    comhandct -> eflags = 0x00000202;
-	pcb_insert(comhandpcb);
+	pcb_context_init(comhandpcb, comhand, NULL, 0);
+    pcb_insert(comhandpcb);
 
-	struct pcb* idlepcb= pcb_setup("idle", KERNEL, 9);
-	idlepcb -> pctxt = idlepcb->pstackseg + MPX_PCB_STACK_SZ - sizeof(struct context);
-	struct context* idlect = idlepcb -> pctxt;
-	idlect -> ss = 0x0010;
-    idlect -> ds = 0x0010;
-    idlect -> es = 0x0010;
-    idlect -> fs = 0x0010;
-    idlect -> gs = 0x0010;
-    idlect -> edi = 0;
-    idlect -> esi = 0;
-    idlect -> ebp = (uint32_t) idlepcb->pstackseg + MPX_PCB_STACK_SZ - 1;
-    idlect  -> esp = (uint32_t) idlepcb->pctxt;
-    idlect -> ebx = 0;
-    idlect-> edx = 0;
-    idlect -> ecx = 0;
-    idlect -> eax = 0;
-    idlect -> eip = (uint32_t) sys_idle_process;
-    idlect -> cs = 0x0008;
-    idlect -> eflags = 0x00000202;
+	struct pcb* idlepcb = pcb_setup("idle", KERNEL, 9);
+    pcb_context_init(idlepcb, sys_idle_process, NULL, 0);
 	pcb_insert(idlepcb);
-
-
 
 	klogv(COM1, "Transferring control to commhand...");
 	__asm__ volatile ("int $0x60" :: "a"(IDLE));

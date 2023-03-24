@@ -943,6 +943,17 @@ int shutdownCommand() {
         static const char sdexec_msg[] = "Shutting down now.\r\n";
         write(COM1, STR_BUF(sdexec_msg));
         user_input_clear();
+        
+        // clean up all processes
+        for (unsigned int i = 0; i < sizeof(pcb_queues) / sizeof(struct pcb_queue); ++i)
+        {
+            while (pcb_queues[i].head != NULL)
+            {
+                struct pcb* hdl = pcb_queues[i].head->pcb_elem;
+                pcb_remove(hdl);
+                pcb_free(hdl);
+            }
+        }
 
         sys_req(EXIT);
     }

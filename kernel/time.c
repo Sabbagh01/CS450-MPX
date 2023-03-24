@@ -227,7 +227,7 @@ void alarmProcess(struct alarmProcessParams args) {
 		hour_now = BCDtoDecimal(inb(0x71));
 	}
     setTerminalColor(Red);
-    write(COM1, STR_BUF("Alarm: "));
+    write(COM1, STR_BUF("[ALARM]: "));
 	write(COM1, args.msg, strlen(args.msg));
     write(COM1, STR_BUF("\r\n"));
     sys_free_mem((void*) args.msg);

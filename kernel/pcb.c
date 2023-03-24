@@ -156,7 +156,8 @@ void pcb_context_init(struct pcb* pcb, void* func, void* fargs, size_t fargc) {
         // + 1 as pctxt after pcb_setup will point to last byte in allocated stack
         memcpy (pcb->pctxt, fargs, fargc);
     }
-    // account for return data, i.e, two words on top of params
+    // account for return address placeholder, i.e, one word on top of params
+    // when context popped, note generated callee code will also push ebp over return address
     pcb->pctxt = (void*)pcb->pctxt - 4;
     // other side of context (stack base, context struct bottom at first word)
     void* pctxt_oppo = pcb->pctxt;
@@ -238,6 +239,11 @@ int pcb_remove(struct pcb* pcb) {
     // check if pcb resides at head of the queue
     if (queue_curr->head->pcb_elem == pcb)
     {
+        // head is last element
+        if (queue_curr->head == queue_curr->tail)
+        {
+            queue_curr->tail = NULL;
+        }
         node_rmv = queue_curr->head;
         // remove head
         queue_curr->head = queue_curr->head->p_next;
