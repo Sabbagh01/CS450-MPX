@@ -4,6 +4,7 @@
 #include <mpx/serial.h>
 #include <mpx/sys_req.h>
 #include <mpx/syscalls.h>
+#include <mpx/term_util.h>
 #include <mpx/interrupts.h>
 #include <string.h>
 
@@ -225,6 +226,7 @@ void alarmProcess(struct alarmProcessParams args) {
 		outb(0x70, 0x04); // access hours
 		hour_now = BCDtoDecimal(inb(0x71));
 	}
+    setTerminalColor(Red);
     write(COM1, STR_BUF("Alarm: "));
 	write(COM1, args.msg, strlen(args.msg));
     write(COM1, STR_BUF("\r\n"));
