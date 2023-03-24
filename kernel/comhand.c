@@ -7,54 +7,10 @@
 #include <mpx/pcb.h>
 #include <mpx/bufhelpers.h>
 #include <mpx/loadR3.h>
+#include <mpx/term_util.h>
 #include <string.h>
 #include <stdlib.h>
 #include <memory.h>
-
-// colors, note that how a terminal represents colors will not be constant
-// i.e, terminals may be configured with different color palettes
-// color strings below thus represent colors on most terminals using their default palette
-#define resetColor  "\033[0m"
-#define yellowColor "\033[0;33m"
-#define whiteColor  "\033[0;37m"
-#define redColor    "\033[0;31m"
-#define purpleColor "\033[0;36m"
-#define blueColor   "\033[0;34m"
-
-static const struct { 
-    char* colorbytes; 
-    size_t sz;
-} serial_text_colors[] = {
-    { STR_BUF(resetColor) },
-    { STR_BUF(yellowColor) },
-    { STR_BUF(whiteColor) },
-    { STR_BUF(redColor) },
-    { STR_BUF(purpleColor) },
-    { STR_BUF(blueColor) }
-};
-
-enum Color {
-    Reset = 0x00,
-    Yellow,
-    White,
-    Red,
-    Purple,
-    Blue
-};
-
-// simplification for serial terminal color setting.
-void setTerminalColor(enum Color color) {
-    write(COM1, serial_text_colors[color].colorbytes, serial_text_colors[color].sz);
-}
-
-char intParsable(const char* string, size_t size) {
-    for (size_t i = 0; i < size; ++i) {
-        if ( (string[i] > '9') || (string[i] < '0') ) {
-            return 0;
-        }
-    }
-    return 1;
-}
 
 struct str_pcbprop_map {
     const char prop;
