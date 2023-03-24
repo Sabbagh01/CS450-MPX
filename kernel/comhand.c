@@ -1138,11 +1138,8 @@ int alarmCommand() {
     setTerminalColor(White);
     user_input_promptread();
     // must be freed in spawned process
-    char* alarm_msg = sys_alloc_mem(user_input_len + 3);
+    char* alarm_msg = sys_alloc_mem(user_input_len + 1);
     memcpy(alarm_msg, user_input, user_input_len);
-    alarm_msg[user_input_len]     = '\r';
-    alarm_msg[user_input_len + 1] = '\n';
-    alarm_msg[user_input_len + 2] = '\0';
 
     char timername[MPX_PCB_PROCNAME_BUFFER_SZ] = ALARMCMD_TIMER_PREFIX;
     // cannot have a negative integer postfix and have to avoid overflow

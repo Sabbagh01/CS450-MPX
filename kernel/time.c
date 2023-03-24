@@ -3,6 +3,7 @@
 #include <mpx/io.h>
 #include <mpx/serial.h>
 #include <mpx/sys_req.h>
+#include <mpx/syscalls.h>
 #include <mpx/interrupts.h>
 #include <string.h>
 
@@ -204,12 +205,12 @@ void alarmProcess(struct alarmProcessParams args) {
 	int hour_now = BCDtoDecimal(inb(0x71));
 	while (
         (hour_now * 60 + minute_now) * 60 + second_now < timeToMatch
-        && year_now < args.year
-        && month_now < args.month
-        && day_now < args.day
+        || year_now < args.year
+        || month_now < args.month
+        || day_now < args.day
     )
     {
-        sys_req(IDLE);
+        idle();
         // poll for current time
         outb (0x70, (0x09 & ~0x80) | 0x80); // year
         year_now = BCDtoDecimal (inb (0x71));
@@ -224,8 +225,10 @@ void alarmProcess(struct alarmProcessParams args) {
 		outb(0x70, 0x04); // access hours
 		hour_now = BCDtoDecimal(inb(0x71));
 	}
-	sys_req(WRITE, COM1, args.msg, strlen(args.msg));
+    write(COM1, STR_BUF("Alarm: "));
+	write(COM1, args.msg, strlen(args.msg));
+    write(COM1, STR_BUF("\r\n"));
     sys_free_mem((void*) args.msg);
-	sys_req(EXIT);
+	exitret();
 }
 
