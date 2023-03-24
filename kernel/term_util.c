@@ -1,6 +1,6 @@
 #include <mpx/term_util.h>
 
-#include <syscall.h>
+#include <mpx/syscalls.h>
 #include <stddef.h>
 
 
