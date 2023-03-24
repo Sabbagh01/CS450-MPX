@@ -176,7 +176,7 @@ struct pcb* pcb_setup(const char* name, enum ProcClassState cls, unsigned char p
 @param fargc
     Size of the buffer pointed to by fargs.
 */
-void pcb_context_setup(struct pcb* pcb, void* func, void* fargs, size_t fargc);
+void pcb_context_init(struct pcb* pcb, void* func, void* fargs, size_t fargc);
 
 /**
 @brief

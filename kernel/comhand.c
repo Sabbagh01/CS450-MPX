@@ -987,8 +987,8 @@ int shutdownCommand() {
         static const char sdexec_msg[] = "Shutting down now.\r\n";
         write(COM1, STR_BUF(sdexec_msg));
         user_input_clear();
+
         sys_req(EXIT);
-        return 0;
     }
     static const char sdcancel_msg[] = "Shut down cancelled.\r\n";
     write(COM1, STR_BUF(sdcancel_msg));
@@ -998,87 +998,151 @@ int shutdownCommand() {
 
 #define ALARMCMD_MAX_ALARM_ID (256)
 #define ALARMCMD_TIMER_PREFIX "timer_"
-#define ALARMCMD_TIMER_PREFIX_SZ sizeof(ALARMCMD_TIMER_PREFIX)
+#define ALARMCMD_TIMER_PREFIX_SZ (sizeof(ALARMCMD_TIMER_PREFIX) - 1)
 
 int alarmCommand() {
     int day, month, year, hour, minute, second;
       
-    static const char error_msg[] = "Could not parse, please re-enter time:\r\n";
-    
-    while(1) {
-    setTerminalColor(Yellow);
-    static const char month_msg[] = "Enter the month (1-12):\r\n";
-    write(COM1, STR_BUF(month_msg));
-    
-    setTerminalColor(White);
-    user_input_promptread();
-    if (intParsable(user_input, user_input_len)) {
-        month = atoi (user_input);
-        
-        if ( (month <= 12) && (month >= 1) ) {
-            user_input_clear();
-            break;
-        }
-    }
-    user_input_clear();
+    static const char error_msg[] = "Could not parse, please re-enter time value:\r\n";
 
-    setTerminalColor(Red);       
-    write(COM1, STR_BUF(error_msg));    
+    while(1) {
+        setTerminalColor(Yellow);
+        static const char month_msg[] = "Enter the month (1-12):\r\n";
+        write(COM1, STR_BUF(month_msg));
+
+        setTerminalColor(White);
+        user_input_promptread();
+        if (intParsable(user_input, user_input_len)) {
+            month = atoi (user_input);
+            
+            if ( (month <= 12) && (month >= 1) ) {
+                user_input_clear();
+                break;
+            }
+        }
+        user_input_clear();
+
+        setTerminalColor(Red);       
+        write(COM1, STR_BUF(error_msg));    
     }
     while(1) {
-    setTerminalColor(Yellow);
-    static const char year_msg[] = "Enter the last two digits of the year (0-99):\r\n";
-    write(COM1, STR_BUF(year_msg));
-    
-    setTerminalColor(White);
-    user_input_promptread();
-    if (intParsable(user_input, user_input_len)) {
-        year = atoi (user_input);
-        
-        if ( (year < 100) && (year >= 0) ) {
-            user_input_clear();
-            break;
+        setTerminalColor(Yellow);
+        static const char year_msg[] = "Enter the last two digits of the year (0-99):\r\n";
+        write(COM1, STR_BUF(year_msg));
+
+        setTerminalColor(White);
+        user_input_promptread();
+        if (intParsable(user_input, user_input_len)) {
+            year = atoi (user_input);
+            
+            if ( (year < 100) && (year >= 0) ) {
+                user_input_clear();
+                break;
+            }
         }
-    }
-    user_input_clear();
-    
-    setTerminalColor(Red);
-    write(COM1, STR_BUF(error_msg));
+        user_input_clear();
+
+        setTerminalColor(Red);
+        write(COM1, STR_BUF(error_msg));
     }
     while(1) {
-    setTerminalColor(Yellow);
-    static const char day_msg[] = "Enter the day of the month:\r\n";
-    write(COM1, STR_BUF(day_msg));
-    
-    setTerminalColor(White);
-    user_input_promptread();
-    if (intParsable(user_input, user_input_len)) {
-        day = atoi (user_input);
-        
-        if (
-             (
-                (day <= month_info[month - 1].lastday) || 
-                ((month == 2) && (year % 4 == 0) && (day <= 29))
-             ) && 
-             (day >= 1) 
-        ) {
-            user_input_clear();
-            break;
+        setTerminalColor(Yellow);
+        static const char day_msg[] = "Enter the day of the month:\r\n";
+        write(COM1, STR_BUF(day_msg));
+
+        setTerminalColor(White);
+        user_input_promptread();
+        if (intParsable(user_input, user_input_len)) {
+            day = atoi (user_input);
+            
+            if (
+                 (
+                    (day <= month_info[month - 1].lastday) || 
+                    ((month == 2) && (year % 4 == 0) && (day <= 29))
+                 ) && 
+                 (day >= 1) 
+            ) {
+                user_input_clear();
+                break;
+            }
         }
+        user_input_clear();
+
+        setTerminalColor(Red); 
+        write(COM1, STR_BUF(error_msg));
     }
-    user_input_clear();
-    
-    setTerminalColor(Red); 
-    write(COM1, STR_BUF(error_msg));
+    while(1) {
+        setTerminalColor(Yellow);
+        static const char hour_msg[] = "Enter the hour (0-23):\r\n";
+        write(COM1, STR_BUF(hour_msg));
+
+        setTerminalColor(White);
+        user_input_promptread();
+        if (intParsable(user_input, user_input_len)) {
+            hour = atoi(user_input);
+                    
+            if ( (hour < 24) && (hour >= 0) ) {
+                user_input_clear();
+                break;
+            }
+        }
+        user_input_clear();
+        
+        setTerminalColor(Red);
+        write(COM1, STR_BUF(error_msg));
+    }
+    while(1) {
+        setTerminalColor(Yellow);
+        static const char minute_msg[] = "Enter the minute (0-59):\r\n";
+        write(COM1, STR_BUF(minute_msg));
+
+        setTerminalColor(White);
+        user_input_promptread();
+        if (intParsable(user_input, user_input_len)) {
+            minute = atoi(user_input);
+             
+            if ( (minute < 60) && (minute >= 0) ) {
+                user_input_clear();
+                break;
+            }
+        }
+        user_input_clear();
+        
+        setTerminalColor(Red);
+        write(COM1, STR_BUF(error_msg));
+    }
+    while (1) {
+        setTerminalColor(Yellow);
+        static const char second_msg[] = "Enter the second (0-59):\r\n";
+        write(COM1, STR_BUF(second_msg));
+
+        setTerminalColor(White);
+        user_input_promptread();
+        if (intParsable(user_input, user_input_len)) {
+            second = atoi(user_input);
+            
+            if ( (second < 60) && (second >= 0) ) {
+                user_input_clear();
+                break;
+            }
+        }
+        user_input_clear();
+        
+        setTerminalColor(Red);
+        write(COM1, STR_BUF(error_msg));
     }
     setTerminalColor(Yellow);
     static const char msg_msg[] = "Enter the message to display:\r\n";
     write(COM1, STR_BUF(msg_msg));
+
     setTerminalColor(White);
     user_input_promptread();
     // must be freed in spawned process
-    char* alarm_msg = sys_alloc_mem(sizeof(user_input));
-   	memcpy(alarm_msg, user_input, sizeof(user_input));
+    char* alarm_msg = sys_alloc_mem(user_input_len + 3);
+    memcpy(alarm_msg, user_input, user_input_len);
+    alarm_msg[user_input_len]     = '\r';
+    alarm_msg[user_input_len + 1] = '\n';
+    alarm_msg[user_input_len + 2] = '\0';
 
     char timername[MPX_PCB_PROCNAME_BUFFER_SZ] = ALARMCMD_TIMER_PREFIX;
     // cannot have a negative integer postfix and have to avoid overflow
@@ -1089,23 +1153,23 @@ int alarmCommand() {
         {
             break;
         }
-        memset (timername, 0, ALARMCMD_TIMER_PREFIX_SZ + strlen(&timername[ALARMCMD_TIMER_PREFIX_SZ]));
+        memset (timername + ALARMCMD_TIMER_PREFIX_SZ, 0, strlen(&timername[ALARMCMD_TIMER_PREFIX_SZ]));
     }
-   	struct pcb* timerpcb = pcb_setup(timername, USER, 0);
+    struct pcb* timerpcb = pcb_setup(timername, USER, 0);
     struct alarmProcessParams alarm_args = {
         day,
         month,
         year,
-        0,
-        0,
-        0,
+        hour,
+        minute,
+        second,
         alarm_msg
     };
-	pcb_context_setup(timerpcb, alarmProcess, (void*) &alarm_args, sizeof(struct alarmProcessParams));
-	pcb_insert(timerpcb);
+    pcb_context_init(timerpcb, alarmProcess, (void*) &alarm_args, sizeof(struct alarmProcessParams));
+    pcb_insert(timerpcb);
 
-	user_input_clear();
-	return 0;
+    user_input_clear();
+    return 0;
 }
 
 void comhand() {
@@ -1123,13 +1187,13 @@ void comhand() {
     
     while (1) {
         commandloop_begin:
+        sys_req(IDLE);
         setTerminalColor(Purple);
         //display the menu
         write(COM1, STR_BUF(menu_options));
         setTerminalColor(White);
-        // get the input and call the corresponding function and yield CPU
+        // get the input and call the corresponding function
         user_input_promptread();
-        sys_req(IDLE);
         int retcode;
         for (size_t i = 0; i < sizeof(cmd_entries) / sizeof(struct cmd_entry); ++i)
         {

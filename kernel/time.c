@@ -189,25 +189,43 @@ void getDate() {
 #include <memory.h>
 
 void alarmProcess(struct alarmProcessParams args) {
+    outb (0x70, (0x09 & ~0x80) | 0x80); // access year
+    int year_now = BCDtoDecimal (inb (0x71));
+    outb (0x70, (0x08 & ~0x80) | 0x80); // access month
+    int month_now = BCDtoDecimal (inb (0x71));
+    outb (0x70, (0x07 & ~0x80) | 0x80); // access day
+    int day_now = BCDtoDecimal (inb (0x71));
 	int timeToMatch = (args.hours * 60 + args.minutes) * 60 + args.seconds;
 	outb(0x70, 0x00); // access seconds
-	int curSeconds = BCDtoDecimal(inb(0x71));
+	int second_now = BCDtoDecimal(inb(0x71));
 	outb(0x70, 0x02); // access minutes
-	int curMinutes = BCDtoDecimal(inb(0x71));
+	int minute_now = BCDtoDecimal(inb(0x71));
 	outb(0x70, 0x04); // access hours
-	int curHours = BCDtoDecimal(inb(0x71));
-	while ((curHours * 60 + curMinutes) * 60 + curSeconds < timeToMatch)
+	int hour_now = BCDtoDecimal(inb(0x71));
+	while (
+        (hour_now * 60 + minute_now) * 60 + second_now < timeToMatch
+        && year_now < args.year
+        && month_now < args.month
+        && day_now < args.day
+    )
     {
         sys_req(IDLE);
+        // poll for current time
+        outb (0x70, (0x09 & ~0x80) | 0x80); // year
+        year_now = BCDtoDecimal (inb (0x71));
+        outb (0x70, (0x08 & ~0x80) | 0x80); // month
+        month_now = BCDtoDecimal (inb (0x71));
+        outb (0x70, (0x07 & ~0x80) | 0x80); // access day
+        day_now = BCDtoDecimal (inb (0x71));
 		outb(0x70, 0x00); // access seconds
-		curSeconds = BCDtoDecimal(inb(0x71));
+		second_now = BCDtoDecimal(inb(0x71));
 		outb(0x70, 0x02); // access minutes
-		curMinutes = BCDtoDecimal(inb(0x71));
+		minute_now = BCDtoDecimal(inb(0x71));
 		outb(0x70, 0x04); // access hours
-		curHours = BCDtoDecimal(inb(0x71));
+		hour_now = BCDtoDecimal(inb(0x71));
 	}
 	sys_req(WRITE, COM1, args.msg, strlen(args.msg));
-    sys_free_mem(args.msg);
+    sys_free_mem((void*) args.msg);
 	sys_req(EXIT);
 }
 

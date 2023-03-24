@@ -137,7 +137,7 @@ struct pcb* pcb_setup(const char* name, enum ProcClassState cls, unsigned char p
                     pcb_new->state.exec = ACTIVE;
                     pcb_new->state.dpatch = READY; 
                     pcb_new->state.cls = cls;
-                    pcb_new->pctxt = pcb_new->pstackseg + MPX_PCB_STACK_SZ;
+                    pcb_new->pctxt = pcb_new->pstackseg + MPX_PCB_STACK_SZ - 1;
                 return pcb_new;
             }
         }
@@ -145,20 +145,25 @@ struct pcb* pcb_setup(const char* name, enum ProcClassState cls, unsigned char p
     return NULL;
 }
 
-void pcb_context_setup(struct pcb* pcb, void* func, void* fargs, size_t fargc) {
+void pcb_context_init(struct pcb* pcb, void* func, void* fargs, size_t fargc) {
 	if (fargc > MPX_PCB_MAX_ARG_SZ)
     {
         return;
     }
     if (fargs != NULL)
     {
-        pcb->pctxt -= fargc;
+        pcb->pctxt = (void*)pcb->pctxt - fargc + 1;
+        // + 1 as pctxt after pcb_setup will point to last byte in allocated stack
         memcpy (pcb->pctxt, fargs, fargc);
     }
-    pcb->pctxt -= sizeof (struct context);
-    // alias pcb context
+    // account for return data, i.e, two words on top of params
+    pcb->pctxt = (void*)pcb->pctxt - 4;
+    // other side of context (stack base, context struct bottom at first word)
+    void* pctxt_oppo = pcb->pctxt;
+    pcb->pctxt = (void*)pcb->pctxt - sizeof (struct context);
+    // alias context (top of struct)
     struct context* pctxt = pcb->pctxt;
-    // set up context for the pcb
+    // set up context for the pcb, note pcb->pctxt is on the other side of pctxt
 	pctxt -> ss = 0x0010;
 	pctxt -> ds = 0x0010;
 	pctxt -> es = 0x0010;
@@ -166,8 +171,9 @@ void pcb_context_setup(struct pcb* pcb, void* func, void* fargs, size_t fargc) {
 	pctxt -> gs = 0x0010;
 	pctxt -> edi = 0;
 	pctxt -> esi = 0;
-	pctxt -> ebp = (uint32_t) pcb->pstackseg + MPX_PCB_STACK_SZ - 1;
-	pctxt -> esp = (uint32_t) pcb->pctxt;
+    // note ebp points to what would be the saved ebp of the caller
+	pctxt -> ebp = (uint32_t) pctxt_oppo;
+	pctxt -> esp = (uint32_t) pctxt_oppo;
 	pctxt -> ebx = 0;
 	pctxt -> edx = 0;
 	pctxt -> ecx = 0;

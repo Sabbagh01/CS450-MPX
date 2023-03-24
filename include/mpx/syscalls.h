@@ -26,7 +26,7 @@ int write(device dev, const void* buffer_in, size_t buffer_in_sz);
 
 /**
 @brief
-    Alias for sys_req(READ)
+    Alias for sys_req(READ).
 @param dev
     Device to write to.
 @param buffer_inout
@@ -37,5 +37,21 @@ int write(device dev, const void* buffer_in, size_t buffer_in_sz);
     A status code corresponding to the result of sys_req(WRITE).
 */
 int read(device dev, const void* buffer_inout, size_t buffer_inout_sz);
+
+/**
+@brief
+    Alias for sys_req(IDLE).
+@return
+    A status code corresponding to the result of sys_req(IDLE).
+*/
+int idle();
+
+/**
+@brief
+    Alias for sys_req(EXIT).
+@return
+    A status code corresponding to the result of sys_req(EXIT).
+*/
+int exitret();
 
 #endif // MPX_SYSCALLS_H
