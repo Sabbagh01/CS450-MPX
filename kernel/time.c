@@ -204,11 +204,38 @@ void alarmProcess(struct alarmProcessParams args) {
 	int minute_now = BCDtoDecimal(inb(0x71));
 	outb(0x70, 0x04); // access hours
 	int hour_now = BCDtoDecimal(inb(0x71));
+    // leap years account for year 2000
+    int daysToMatch = (args.year * 365) + ((args.year - 1) / 4) + args.day;
+    for (int i = 0; i < args.month - 1; ++i)
+    {
+        daysToMatch += month_info[i].lastday;
+    }
+    if ((args.year % 4 == 0) && (args.month > 2))
+    {
+        ++daysToMatch;
+    }
+    if (args.year > 0)
+    {
+        ++daysToMatch;
+    }
+    int daysCurr = (year_now * 365) + ((year_now - 1) / 4) + day_now;
+    for (int i = 0; i < month_now - 1; ++i)
+    {
+        daysCurr += month_info[i].lastday;
+    }
+    if ((year_now % 4 == 0) && (month_now > 2))
+    {
+        ++daysCurr;
+    }
+    if (year_now > 0)
+    {
+        ++daysCurr;
+    }
 	while (
-        (hour_now * 60 + minute_now) * 60 + second_now < timeToMatch
-        || year_now < args.year
-        || month_now < args.month
-        || day_now < args.day
+            !(
+                ((hour_now * 60 + minute_now) * 60 + second_now >= timeToMatch)
+                && (daysCurr >= daysToMatch)
+            )
     )
     {
         idle();
@@ -225,6 +252,21 @@ void alarmProcess(struct alarmProcessParams args) {
 		minute_now = BCDtoDecimal(inb(0x71));
 		outb(0x70, 0x04); // access hours
 		hour_now = BCDtoDecimal(inb(0x71));
+
+        daysCurr = (year_now * 365) + ((year_now - 1) / 4) + day_now;
+        for (int i = 0; i < month_now - 1; ++i)
+        {
+            daysCurr += month_info[i].lastday;
+        }
+        if ((year_now % 4 == 0) && (month_now > 2))
+        {
+            ++daysCurr;
+        }
+        if (year_now > 0)
+        {
+            ++daysCurr;
+        }
+
 	}
     setTerminalColor(Red);
     write(COM1, STR_BUF("[ALARM]: "));
