@@ -435,6 +435,9 @@ void vm_init(void)
 		new_frame(get_page(i, kdir, 1));
 	}
 
+	// enable page faults on the 0 page (NULL)
+	memset(&kdir->tables[0]->pages[0], 0, sizeof(kdir->tables[0]->pages[0]));
+
 	// load the kernel page directory
 	__asm__ volatile ("mov %0,%%cr3" :: "b"(&kdir->tables_phys[0]));
 
