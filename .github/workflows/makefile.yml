@@ -5,14 +5,17 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    container: ghcr.io/wvu-cs450/build-environment:cs450
 
     steps:
     - uses: actions/checkout@v3
 
-    - name: Install dependencies
-      run: sudo apt update && sudo apt install -y clang make nasm binutils-i686-linux-gnu
-
     - name: Build
       run: make
+
+    - name: Save kernel.bin
+      uses: actions/upload-artifact@v3
+      with:
+        name: mpx
+        path: kernel.bin
