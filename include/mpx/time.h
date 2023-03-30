@@ -54,9 +54,6 @@ void setDate(int day, int month, int year);
 void getDate();
 
 struct alarmProcessParams {
-    int day;
-    int month;
-    int year;
     int hours;
     int minutes;
     int seconds;

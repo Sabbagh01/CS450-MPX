@@ -968,76 +968,10 @@ int shutdownCommand() {
 #define ALARMCMD_TIMER_PREFIX_SZ (sizeof(ALARMCMD_TIMER_PREFIX) - 1)
 
 int alarmCommand() {
-    int day, month, year, hour, minute, second;
+    int hour, minute, second;
       
     static const char error_msg[] = "Could not parse, please re-enter time value:\r\n";
 
-    while(1) {
-        setTerminalColor(Yellow);
-        static const char month_msg[] = "Enter the month (1-12):\r\n";
-        write(COM1, STR_BUF(month_msg));
-
-        setTerminalColor(White);
-        user_input_promptread();
-        if (intParsable(user_input, user_input_len)) {
-            month = atoi (user_input);
-            
-            if ( (month <= 12) && (month >= 1) ) {
-                user_input_clear();
-                break;
-            }
-        }
-        user_input_clear();
-
-        setTerminalColor(Red);       
-        write(COM1, STR_BUF(error_msg));    
-    }
-    while(1) {
-        setTerminalColor(Yellow);
-        static const char year_msg[] = "Enter the last two digits of the year (0-99):\r\n";
-        write(COM1, STR_BUF(year_msg));
-
-        setTerminalColor(White);
-        user_input_promptread();
-        if (intParsable(user_input, user_input_len)) {
-            year = atoi (user_input);
-            
-            if ( (year < 100) && (year >= 0) ) {
-                user_input_clear();
-                break;
-            }
-        }
-        user_input_clear();
-
-        setTerminalColor(Red);
-        write(COM1, STR_BUF(error_msg));
-    }
-    while(1) {
-        setTerminalColor(Yellow);
-        static const char day_msg[] = "Enter the day of the month:\r\n";
-        write(COM1, STR_BUF(day_msg));
-
-        setTerminalColor(White);
-        user_input_promptread();
-        if (intParsable(user_input, user_input_len)) {
-            day = atoi (user_input);
-            
-            if (
-                 (
-                    (day <= month_info[month - 1].lastday) || 
-                    ((month == 2) && (year % 4 == 0) && (day <= 29))
-                 ) && 
-                 (day >= 1) 
-            ) {
-                user_input_clear();
-                break;
-            }
-        }
-        user_input_clear();
-
-        setTerminalColor(Red); 
-        write(COM1, STR_BUF(error_msg));
-    }
     while(1) {
         setTerminalColor(Yellow);
         static const char hour_msg[] = "Enter the hour (0-23):\r\n";
@@ -1121,9 +1055,6 @@ int alarmCommand() {
     }
     struct pcb* timerpcb = pcb_setup(timername, USER, 0);
     struct alarmProcessParams alarm_args = {
-        day,
-        month,
-        year,
         hour,
         minute,
         second,

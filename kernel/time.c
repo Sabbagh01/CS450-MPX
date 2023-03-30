@@ -191,12 +191,6 @@ void getDate() {
 #include <memory.h>
 
 void alarmProcess(struct alarmProcessParams args) {
-    outb (0x70, (0x09 & ~0x80) | 0x80); // access year
-    int year_now = BCDtoDecimal (inb (0x71));
-    outb (0x70, (0x08 & ~0x80) | 0x80); // access month
-    int month_now = BCDtoDecimal (inb (0x71));
-    outb (0x70, (0x07 & ~0x80) | 0x80); // access day
-    int day_now = BCDtoDecimal (inb (0x71));
 	int timeToMatch = (args.hours * 60 + args.minutes) * 60 + args.seconds;
 	outb(0x70, 0x00); // access seconds
 	int second_now = BCDtoDecimal(inb(0x71));
@@ -204,69 +198,16 @@ void alarmProcess(struct alarmProcessParams args) {
 	int minute_now = BCDtoDecimal(inb(0x71));
 	outb(0x70, 0x04); // access hours
 	int hour_now = BCDtoDecimal(inb(0x71));
-    // leap years account for year 2000
-    int daysToMatch = (args.year * 365) + ((args.year - 1) / 4) + args.day;
-    for (int i = 0; i < args.month - 1; ++i)
-    {
-        daysToMatch += month_info[i].lastday;
-    }
-    if ((args.year % 4 == 0) && (args.month > 2))
-    {
-        ++daysToMatch;
-    }
-    if (args.year > 0)
-    {
-        ++daysToMatch;
-    }
-    int daysCurr = (year_now * 365) + ((year_now - 1) / 4) + day_now;
-    for (int i = 0; i < month_now - 1; ++i)
-    {
-        daysCurr += month_info[i].lastday;
-    }
-    if ((year_now % 4 == 0) && (month_now > 2))
-    {
-        ++daysCurr;
-    }
-    if (year_now > 0)
-    {
-        ++daysCurr;
-    }
-	while (
-            !(
-                ((hour_now * 60 + minute_now) * 60 + second_now >= timeToMatch)
-                && (daysCurr >= daysToMatch)
-            )
-    )
+	while ((hour_now * 60 + minute_now) * 60 + second_now < timeToMatch)
     {
         idle();
         // poll for current time
-        outb (0x70, (0x09 & ~0x80) | 0x80); // year
-        year_now = BCDtoDecimal (inb (0x71));
-        outb (0x70, (0x08 & ~0x80) | 0x80); // month
-        month_now = BCDtoDecimal (inb (0x71));
-        outb (0x70, (0x07 & ~0x80) | 0x80); // access day
-        day_now = BCDtoDecimal (inb (0x71));
 		outb(0x70, 0x00); // access seconds
 		second_now = BCDtoDecimal(inb(0x71));
 		outb(0x70, 0x02); // access minutes
 		minute_now = BCDtoDecimal(inb(0x71));
 		outb(0x70, 0x04); // access hours
 		hour_now = BCDtoDecimal(inb(0x71));
-
-        daysCurr = (year_now * 365) + ((year_now - 1) / 4) + day_now;
-        for (int i = 0; i < month_now - 1; ++i)
-        {
-            daysCurr += month_info[i].lastday;
-        }
-        if ((year_now % 4 == 0) && (month_now > 2))
-        {
-            ++daysCurr;
-        }
-        if (year_now > 0)
-        {
-            ++daysCurr;
-        }
-
 	}
     setTerminalColor(Red);
     write(COM1, STR_BUF("[ALARM]: "));
