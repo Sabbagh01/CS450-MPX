@@ -21,8 +21,10 @@ struct context* sys_call(struct context* context_in)
     
     if ((op == READ) || (op == WRITE))
     {
-        return (void*)-1;
+        context_in->eax = -1;
+        return (void*)0;
     }
+    context_in->eax = 0;
     struct pcb* runnext = NULL;
     if (op == IDLE)
     {
@@ -77,5 +79,5 @@ struct context* sys_call(struct context* context_in)
         }
     }
     // unrecognized op
-    return (void*)-1;
+    return (void*)0;
 }

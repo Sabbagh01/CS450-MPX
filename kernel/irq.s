@@ -29,27 +29,20 @@ sys_call_isr:
     push gs
     push esp            ; Recall 'push esp' will push the previous value of esp, which will point to gs
 	call sys_call
-    cmp eax, -1
-    je nocswitch        ; R or W, then just pop, else set the stack pointer
+    cmp eax, 0
+    je sys_call_isr_nocswitch   ; R or W, then just pop, else set the stack pointer
     mov esp, eax
-    pop gs
-    pop fs
-    pop es
-    pop ds
-    pop ss
-    popad
-    mov eax, 0
-    iret
-nocswitch:
+    jmp sys_call_isr_ret
+sys_call_isr_nocswitch:
     add esp, 4
+sys_call_isr_ret:
     pop gs
     pop fs
     pop es
     pop ds
     pop ss
     popad
-    mov eax, -1
-	iret
+    iret
 
 ;;; Serial port ISR. To be implemented in Module R6
 serial_isr:
