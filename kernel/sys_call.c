@@ -31,16 +31,17 @@ struct context* sys_call(struct context* context_in)
         {
             context_original = context_in;
         }
+        // check for any ready processes
         if (pcb_queues[0].head != NULL)
         {
             // dequeue the next active ready process
             runnext = pcb_queues[0].head->pcb_elem;
             pcb_remove(runnext);
-            // set the yielding process' stack pointer to the context to switch to after next run
-            pcb_running->pctxt = context_in;
-            // enqueue the yielding process into the active ready queue (state unchanged)
+            // enqueue the yielding process (if any) into the active ready queue (state unchanged)
             if (pcb_running != NULL)
             {
+                // set the yielding process' stack pointer to the context to switch to after next run
+                pcb_running->pctxt = context_in;
                 pcb_running->state.exec = READY;
                 pcb_insert(pcb_running);
             }
@@ -49,13 +50,11 @@ struct context* sys_call(struct context* context_in)
             runnext->state.exec = RUNNING;
             return runnext->pctxt;
         }
-        else if (context_original != NULL) // no dequeueable processes, continue with first yielded process
-        {
-            pcb_running = NULL;
-            struct context* temp = context_original;
-            context_original = NULL;
-            return temp;
-        }
+        // continue to original context in the absence of processes
+        pcb_running = NULL;
+        struct context* temp = context_original;
+        context_original = NULL;
+        return temp;
     }
     if (op == EXIT)
     {
