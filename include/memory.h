@@ -1,5 +1,5 @@
-#ifndef MPX_MEMORY_H
-#define MPX_MEMORY_H
+#ifndef _MPX_MEMORY_H
+#define _MPX_MEMORY_H
 
 #include <stddef.h>
 
@@ -29,4 +29,4 @@ int sys_free_mem(void *ptr);
 */
 void sys_set_heap_functions(void * (*alloc_fn)(size_t), int (*free_fn)(void *));
 
-#endif
+#endif // _MPX_MEMORY_H

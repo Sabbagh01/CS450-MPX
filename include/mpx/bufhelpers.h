@@ -9,4 +9,4 @@
 #define BUF(buf) buf, (sizeof (buf))
 #define STR_BUF(str) str, STR_A_SZ(str)
 
-#endif
+#endif // BUFHELPERS_H

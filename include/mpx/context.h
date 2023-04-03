@@ -3,6 +3,13 @@
 
 #include <stdint.h>
 
+
+/**
+ @struct context
+ @brief
+    The structure of a context used by sys_call_isr and syscall handlers for
+    pushing and popping contexts. Fields correspond to similarly named registers.
+*/
 struct context
 {
     uint16_t gs,
