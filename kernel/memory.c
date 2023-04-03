@@ -30,3 +30,15 @@ void initialize_heap(size_t size)
         free_head->bsize = size;
     return;
 }
+
+void* allocate_memory(size_t size)
+{
+    // stub
+    return NULL;
+}
+
+int free_memory(void* ptr)
+{
+    // stub
+    return 0;
+}
