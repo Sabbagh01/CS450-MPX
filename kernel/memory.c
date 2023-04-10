@@ -9,6 +9,10 @@ struct mcb
 {
     struct mcb* p_prev;
     struct mcb* p_next;
+   // u32int address;
+
+   // 0 is free, 1 is allocated 
+   int type ;
     size_t bsize;
 };
 
@@ -34,7 +38,26 @@ void initialize_heap(size_t size)
 void* allocate_memory(size_t size)
 {
     // stub
-    return NULL;
+
+    //memory = block
+    //allocation block = freeblock
+    struct mcb* memory = free_head;
+    struct mcb* allocation_block = NULL;
+    while(memory != NULL){
+        memory = memory->p_next;
+    }
+   // allocation_block = memory -> address + size;
+    allocation_block ->bsize = size;
+    allocation_block -> type = 0;
+    allocation_block -> p_next = memory ->p_next;
+    allocation_block ->p_prev = memory -> p_prev;
+    
+    memory -> bsize = size;
+    memory -> p_next = alloc_head;
+    memory -> p_prev = NULL;
+    memory -> type = 1;
+    alloc_head = memory;
+    return 1;
 }
 
 int free_memory(void* ptr)
