@@ -16,7 +16,8 @@ kernel/syscalls.o\
 kernel/pcb.o\
 kernel/sys_call.o\
 kernel/loadR3.o\
-kernel/term_util.o
+kernel/term_util.o\
+kernel/memory.o
 
 LIB_OBJECTS =\
 lib/ctype.o\
