@@ -11,6 +11,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <memory.h>
+#include <ctype.h>
+#include <mpx/memory.h>
 
 struct str_pcbprop_map {
     const char prop;
@@ -65,6 +67,8 @@ int showPcbAllCommand();
 int versionCommand();
 int shutdownCommand();
 int alarmCommand();
+int allocateMemoryCommand();
+int freeMemoryCommand();
 
 const struct cmd_entry {
     const char* key;
@@ -296,6 +300,28 @@ cmd_entries[] =
 		    "\tAlarm created to wait until past the set time.\r\n"
 		    "\tDescription:\r\n"
 		    "\tSpawns an alarm process to wait until it passes a set time\r\n"
+        )
+    },
+    { STR_BUF("20"), STR_BUF("Allocate Memory"), allocateMemoryCommand,
+        STR_BUF(
+        "Allocate Memory\r\n"
+		    "\tInput:\r\n"
+		    "\tX.\r\n"
+		    "\tResult:\r\n"
+		    "\tX.\r\n"
+		    "\tDescription:\r\n"
+		    "\tX\r\n"
+        )
+    },
+    { STR_BUF("21"), STR_BUF("Free Memory"), freeMemoryCommand,
+        STR_BUF(
+        "Allocate Memory\r\n"
+		    "\tInput:\r\n"
+		    "\tX.\r\n"
+		    "\tResult:\r\n"
+		    "\tX.\r\n"
+		    "\tDescription:\r\n"
+		    "\tX\r\n"
         )
     }
 };
@@ -1067,6 +1093,172 @@ int alarmCommand() {
     return 0;
 }
 
+char hexParsable(const char* string, size_t size) {
+    for (size_t i = 0; i < size; ++i) {
+    	if (string[i] == '0' && (string[i + 1] == 'x' || string[i + 1] == 'X') ) {
+    		i = i + 2;
+    	}
+        if ( ( (string[i] > '9') || (string[i] < '0') ) && ( (string[i] > 'F') || (string[i] < 'A') ) ) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int hexTextToDecimal(const char *s)
+{
+	int res = 0;
+
+	while (isspace(*s)) {
+		s++;
+	}
+
+	if (*s == '0' && (*(s+1) == 'x' || *(s+1) == 'X') ) {
+		s = s + 2;
+	}
+
+	while ( ('0' <= *s && *s <= '9') || ('A' <= *s && *s <= 'F') ) {
+		if (('0' <= *s && *s <= '9')) {
+			res = res * 16 + (*s - '0');
+		} else {
+			res = res * 16 + (*s - 'A' + 10);
+		}
+		
+		s++;
+
+	}
+
+	return res;
+}
+
+void decimalToHexText(char string[], int integer){
+	int temp;
+	int size = 2;
+	if(integer == 0) {
+		string[2] = '0';
+        ++size;
+	} else {
+        temp = integer;
+        // get the size to order digits correctly
+        while (temp != 0) {
+            temp /= 16;
+            ++size;
+        }
+        temp = size - 1;
+	    while (temp >= 0) {
+	        if (integer % 16 <= 9 || integer % 16 == 16) {
+                string[temp] = (integer % 16) + '0';
+	        } else {
+	            string[temp] = (integer % 16 - 10) + 'A';
+	        }
+            integer /= 16;
+            --temp;
+        }
+	}
+	string[size] = '\0';
+	string[0] = '0';
+	string[1] = 'x';
+}
+
+int allocateMemoryCommand() {
+    char inputNum[100] = "";
+    static const char error_msg[] = "Could not parse, please re-enter integer value:\r\n";
+    
+    while (1) {
+          //input message
+          setTerminalColor(Yellow);
+          const char msg[] = "Enter the size of the allocation:\r\n";
+          write(COM1, STR_BUF(msg));
+    
+          //user input
+          setTerminalColor(White);
+          user_input_promptread();
+	   
+	  //interpret text as an integer
+	  if (intParsable(user_input, user_input_len)) {
+	          memcpy(inputNum, user_input, user_input_len);
+		  user_input_clear();
+		  break;
+	  }
+	  
+	  //error message  
+	  user_input_clear();
+	  setTerminalColor(Red);
+	  write(COM1, STR_BUF(error_msg));
+    }
+    int size = atoi(inputNum);
+    
+    user_input_clear();
+    
+    //atttempt command
+    void* addressPtr = allocate_memory((size_t) size);
+    
+    //if NULL then failure, otherwise success
+    if (addressPtr == NULL) {
+    	const char failMsg[] = "Memory could not be allocated:\r\n";
+        write(COM1, STR_BUF(failMsg));
+        return 1;
+    }
+    
+    //find int address
+    int address = *((int *) addressPtr);
+    
+    char addressMsg[50];
+    
+    //convert the integer to hex that is a string to be printed
+    decimalToHexText(addressMsg, address);
+    
+    const char baseMsg[] = "The address of the allocated memory is: ";
+    
+    write(COM1, STR_BUF(baseMsg));
+    write(COM1, STR_BUF(addressMsg));
+    
+    return 0;
+}
+
+int freeMemoryCommand() {
+    char inputHexText[128] = "";
+    static const char error_msg[] = "Could not parse, please re-enter hexadecimal value:\r\n";
+    
+    while (1) {
+          //input message
+          setTerminalColor(Yellow);
+          const char msg[] = "Enter the hexadecimal address of the memory block to free:\r\n";
+          write(COM1, STR_BUF(msg));
+    
+          //user input
+          setTerminalColor(White);
+          user_input_promptread();
+	   
+	  //interpret text as hex and store the value as int
+	  if (hexParsable(user_input, user_input_len)) {
+	          memcpy(inputHexText, user_input, user_input_len);
+		  user_input_clear();
+		  break;
+	  }
+	  
+	  //error message  
+	  user_input_clear();
+	  setTerminalColor(Red);
+	  write(COM1, STR_BUF(error_msg));
+    }
+    //address is an int
+    int address = hexTextToDecimal(inputHexText);
+    
+    user_input_clear();
+    //attempt command
+    int success = free_memory(&address);
+    
+    //if -1 then failure, if 0 success
+    if (success != 0) {
+    	const char failMsg[] = "Memory could not be cleared:\r\n";
+        write(COM1, STR_BUF(failMsg));
+        return 1;
+    }
+    
+    return 0;
+}
+
 void comhand() {
     static const char menu_welcome_msg[] = "Welcome to 5x5 MPX.\r\n";
     static const char menu_options[] = "Please select an option by choosing a number.\r\n"
@@ -1075,6 +1267,7 @@ void comhand() {
                                        "9 ) Show Blocked PCB  10) Show All PCB      11) Delete PCB     12) Block PCB\r\n"
                                        "13) Unblock PCB       14) Suspend PCB       15) Resume PCB     16) Version\r\n"
                                        "17) Shutdown          18) loadR3            19) Alarm\r\n"
+                                       "20) Allocate Memory   21) Free Memory\r\n"
                                        "Enter number of choice:\r\n";
     
     setTerminalColor(Blue);
