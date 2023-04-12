@@ -132,11 +132,11 @@ void* allocate_memory(size_t size)
 int free_memory(void* ptr)
 {
     // check that the heap was initialized
-    if (free_head == NULL)
+    if (!heap_isinit)
     {
-        return 1;
+        return NULL;
     }
-
+    
     //Find the allocated block
     struct mcb* mcb_allocated_blk = ptr - sizeof(struct mcb);
 
