@@ -134,9 +134,9 @@ int free_memory(void* ptr)
     // check that the heap was initialized
     if (!heap_isinit)
     {
-        return NULL;
+        return 1;
     }
-    
+
     //Find the allocated block
     struct mcb* mcb_allocated_blk = ptr - sizeof(struct mcb);
 
