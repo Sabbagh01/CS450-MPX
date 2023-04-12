@@ -13,6 +13,7 @@ struct mcb
     size_t blk_size;
 };
 
+unsigned char heap_isinit = 0;
 struct mcb* free_head = NULL;
 struct mcb* alloc_head = NULL;
 
@@ -21,7 +22,7 @@ static void* global_heap = NULL;
 void initialize_heap(size_t size)
 {
     // there will always be a free block referenced if the heap is initialized
-    if (free_head == NULL)
+    if (!heap_isinit)
     {
         // kmalloc() only checks for a size less than 0x10000 (65536 bytes) via alloc(), 
         // but this will only called once as the kernel initializes (for the scope of
@@ -34,6 +35,7 @@ void initialize_heap(size_t size)
             free_head->p_prev = global_heap;
             free_head->p_next = global_heap;
             free_head->blk_size = size;
+        heap_isinit = 1;
     }
     return;
 }
@@ -41,7 +43,7 @@ void initialize_heap(size_t size)
 void* allocate_memory(size_t size)
 {
     // check that the heap was initialized
-    if (free_head == NULL)
+    if (!heap_isinit)
     {
         return NULL;
     }
