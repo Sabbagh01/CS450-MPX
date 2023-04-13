@@ -54,12 +54,15 @@ void* allocate_memory(size_t size)
     // check for a free space via first fit strategy
     struct mcb* mcb_free_iter = free_head;
     // iterate through free blocks to find the first from free_next with fit
-    do
+    while (mcb_free_iter != NULL)
     {
         // check for ability to fit allocation and another mcb to accompany a new block
         // If block size is equal to allocation size, the free mcb can be replaced.
-        //  As this is exclusive to the other comparison, it is cached for later switching.
-        blk_replace_free = (mcb_free_iter->blk_size == size);
+        // Otherwise, if the request would not leave room for an mcb and at least a byte for the next free block
+        // then we can also replace the free mcb, as it makes no sense to have useless space.
+        //  As this is used later, it is cached for later switching.
+        blk_replace_free = mcb_free_iter->blk_size - (sizeof(struct mcb) + 1) < size;
+
         if ((mcb_free_iter->blk_size >= full_blk_size)
             || blk_replace_free)
         {
@@ -69,7 +72,6 @@ void* allocate_memory(size_t size)
         }
         mcb_free_iter = mcb_free_iter->p_next;
     }
-    while (mcb_free_iter != NULL);
     // if, by the end of this loop, no free mcb is selected then no free block can fit request
     return NULL;
 
@@ -102,7 +104,7 @@ void* allocate_memory(size_t size)
     }
     else
     {
-        full_blk_size = size;
+        full_blk_size = mcb_free_select->blk_size;
     }
 
     // operate on mcb_free_select to replace the old free mcb as the allocated mcb
@@ -138,13 +140,15 @@ int free_memory(void* ptr)
     }
 
     //Find the allocated block
-    struct mcb* mcb_allocated_blk = ptr - sizeof(struct mcb);
+    struct mcb* mcb_allocated_blk = (struct mcb*)((void*)ptr - sizeof(struct mcb));
 
     //Remove from allocated list
     struct mcb* alloc_iter = alloc_head;
-    while(alloc_iter != NULL){
+    while (alloc_iter != NULL)
+    {
         //Check if desired allocated block has been found
-        if(alloc_iter == mcb_allocated_blk){
+        if (alloc_iter == mcb_allocated_blk)
+        {
             break;
         }
         //Otherwise continue
@@ -152,17 +156,24 @@ int free_memory(void* ptr)
     }
 
     //If alloc_iter is null, then the block was not found
-    if(alloc_iter == NULL){
+    if (alloc_iter == NULL)
+    {
         static const char blockDNE[] = "The given allocated block does not exist\r\n";
         write(COM1, STR_BUF(blockDNE));
         return 1;
-    } if (alloc_iter == alloc_head){
+    }
+    if (alloc_iter == alloc_head)
+    {
         //If alloc_iter is the head, then the alloc head will become null, add to free list
         alloc_head = NULL;
-    } else if (alloc_iter->p_next == NULL){
+    }
+    else if (alloc_iter->p_next == NULL)
+    {
         //if alloc_iter is tail, remove tail, make new tail
         alloc_iter->p_prev->p_next = NULL;
-    } else {
+    }
+    else
+    {
         //Must be in middle, remove from list
         alloc_iter->p_prev->p_next = alloc_iter->p_next;
         alloc_iter->p_next->p_prev = alloc_iter->p_prev;
@@ -174,38 +185,49 @@ int free_memory(void* ptr)
     struct mcb* free_iter = free_head;
     int back_at_head = 0;
     //Find the block that is right before the block to free
-    while((free_iter != NULL) | (back_at_head == 1)){
-        if(free_iter > alloc_iter){
+    while ((free_iter != NULL) || (back_at_head == 1))
+    {
+        if (free_iter > alloc_iter)
+        {
             free_iter = free_iter->p_prev;
             break;
         }
         free_iter = free_iter->p_next;
-        if(free_iter->p_next == free_head){
+        if(free_iter->p_next == free_head)
+        {
             back_at_head++;
         }
     }
 
     //Now add the block to free list
     //check if head
-    if (free_iter == free_head){
+    if (free_iter == free_head)
+    {
         //If only head is in list
-        if(free_head->p_next == NULL){
+        if (free_head->p_next == NULL)
+        {
             alloc_iter->p_prev = free_head;
             alloc_iter->p_next = free_head;
             free_head->p_next = alloc_iter; 
-        } else{
+        }
         //Not just head in list
+        else
+        {
             alloc_iter->p_prev = free_head;
             free_head->p_next->p_prev = alloc_iter;
             alloc_iter->p_next = free_head->p_next; 
             free_head->p_next = alloc_iter;
         }
-    } else if(back_at_head == 1){
+    }
+    else if (back_at_head == 1)
+    {
         //means the needs to be freed block is after all allocated blocks
         alloc_iter->p_prev = free_iter;
         alloc_iter->p_next = free_head;
         free_iter->p_next = alloc_iter;
-    } else {
+    }
+    else
+    {
         //In between two blocks
         alloc_iter->p_prev = free_iter;
         free_iter->p_next->p_prev = alloc_iter;
@@ -216,7 +238,8 @@ int free_memory(void* ptr)
     //Check for adjacent free memory and merge
     //Check in front
     size_t newBlkSize;
-    if((alloc_iter + alloc_iter->blk_size + sizeof(struct mcb)) == alloc_iter->p_next){
+    if (((void*)alloc_iter + alloc_iter->blk_size + sizeof(struct mcb)) == alloc_iter->p_next)
+    {
         //Remove block
         newBlkSize = alloc_iter->blk_size + alloc_iter->p_next->blk_size;
         alloc_iter->p_next->p_next->p_prev = alloc_iter;
@@ -225,7 +248,8 @@ int free_memory(void* ptr)
         alloc_iter->blk_size = newBlkSize;    
     }
     //Check in back
-    if((alloc_iter - alloc_iter->p_prev->blk_size - sizeof(struct mcb)) == alloc_iter->p_prev){
+    if (((void*)alloc_iter - alloc_iter->p_prev->blk_size - sizeof(struct mcb)) == alloc_iter->p_prev)
+    {
         //Remove block
         newBlkSize = alloc_iter->blk_size + alloc_iter->p_prev->blk_size;
         alloc_iter->p_prev->p_next = alloc_iter->p_next;
@@ -234,6 +258,5 @@ int free_memory(void* ptr)
         alloc_iter->p_prev->blk_size = newBlkSize;
     } 
 
-    ptr = ptr + 1; // jeez, shut up mr. compiler
     return 0;
 }
