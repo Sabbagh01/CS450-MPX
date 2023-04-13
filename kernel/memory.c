@@ -32,9 +32,9 @@ void initialize_heap(size_t size)
         // Entire heap will be a free block, so a control block entry will be created at its beginning.
         // The free_list is cyclical so set head block to point to itself for p_prev and p_next.
         free_head = global_heap;
-            free_head->p_prev = global_heap;
-            free_head->p_next = global_heap;
-            free_head->blk_size = size;
+            free_head->p_prev = NULL;
+            free_head->p_next = NULL;
+            free_head->blk_size = size - sizeof(struct mcb);
         heap_isinit = 1;
     }
     return;
@@ -48,7 +48,7 @@ void* allocate_memory(size_t size)
         return NULL;
     }
 
-    size_t full_blk_size = size + sizeof(struct mcb);
+    size_t req_full_blk_size = size + sizeof(struct mcb);
     unsigned char blk_replace_free = 0;
     struct mcb* mcb_free_select;
     // check for a free space via first fit strategy
@@ -61,10 +61,14 @@ void* allocate_memory(size_t size)
         // Otherwise, if the request would not leave room for an mcb and at least a byte for the next free block
         // then we can also replace the free mcb, as it makes no sense to have useless space.
         //  As this is used later, it is cached for later switching.
-        blk_replace_free = mcb_free_iter->blk_size - (sizeof(struct mcb) + 1) < size;
+        // Note: The first comparison is used to account for unsigned overflow of the second comparison.
+        blk_replace_free = (mcb_free_iter->blk_size <= sizeof(struct mcb)) ||
+                           (
+                                (mcb_free_iter->blk_size - sizeof(struct mcb) <= size) &&
+                                (mcb_free_iter->blk_size >= size)
+                           );
 
-        if ((mcb_free_iter->blk_size >= full_blk_size)
-            || blk_replace_free)
+        if ((mcb_free_iter->blk_size >= req_full_blk_size) || blk_replace_free)
         {
             // alias for OOS
             mcb_free_select = mcb_free_iter;
@@ -77,58 +81,95 @@ void* allocate_memory(size_t size)
 
     found_free_block: ; // Note to members: this fixes parsing shenanigans 
                         // regarding goto labels and subsequent variable definition.
-    // locate an adjacent allocated block
+    // locate an adjacent allocated block, if any
+    struct mcb* mcb_alloc_select_next = NULL;
     struct mcb* mcb_alloc_select = alloc_head;
-    while (mcb_alloc_select != NULL)
+    if (alloc_head == NULL)
+    {
+        goto skip_alloc_find;
+    }
+    while (1)
     {
         // the the first allocated block ahead of the selected free block
         if (mcb_alloc_select > mcb_free_select)
+        {
+            mcb_alloc_select_next = mcb_alloc_select;
+            mcb_alloc_select = mcb_alloc_select->p_prev;
+            break;
+        }
+        // found end of list
+        if (mcb_alloc_select->p_next == NULL)
         {
             break;
         }
         mcb_alloc_select = mcb_alloc_select->p_next;
     }
-
+    skip_alloc_find: ;
+    
+    size_t allocnew_blk_size;
     // if we aren't replacing, a new free mcb will be made and placed
     if (!blk_replace_free)
     {
         // create new free block ahead of allocation by just moving the old block
         // offset from selected free mcb, account for mcb space and allocation size
-        struct mcb* mcb_free_new = (struct mcb*)(((void*)mcb_free_select) + full_blk_size);
+        struct mcb* mcb_free_new = (struct mcb*)(((void*)mcb_free_select) + req_full_blk_size);
         // copy old free mcb to new
         *mcb_free_new = *mcb_free_select;
         // ensure adjacent entries point to the new free mcb
-        mcb_free_new->p_prev->p_next = mcb_free_new;
-        mcb_free_new->p_next->p_prev = mcb_free_new;
-        mcb_free_new->blk_size = mcb_free_select->blk_size - full_blk_size;   
+        if (mcb_free_new->p_prev != NULL)
+        {
+            mcb_free_new->p_prev->p_next = mcb_free_new;
+        }
+        if (mcb_free_new->p_next != NULL)
+        {
+            mcb_free_new->p_next->p_prev = mcb_free_new;
+        }
+        mcb_free_new->blk_size -= req_full_blk_size;
+
+        if (mcb_free_select == free_head)
+        {
+            free_head = mcb_free_new;
+        }
+        allocnew_blk_size = size;
     }
-    else
+    else // replace free mcb
     {
-        full_blk_size = mcb_free_select->blk_size;
+        allocnew_blk_size = mcb_free_select->blk_size;
+        if (mcb_free_select == free_head)
+        {
+            free_head = free_head->p_next;
+        }
     }
 
     // operate on mcb_free_select to replace the old free mcb as the allocated mcb
-    mcb_free_select->blk_size = full_blk_size;
+    struct mcb* mcb_alloc_new = mcb_free_select;
+    mcb_alloc_new->blk_size = allocnew_blk_size;
     // check if there are other allocated blocks
     // if mcb_alloc_select is NULL, it can mean all the allocated mcbs are before
     // the original free block or there are no allocated mcbs (alloc_head is NULL)
-    if ((mcb_alloc_select != NULL) || ((alloc_head != NULL) && (mcb_alloc_select == NULL)))
+    
+    // check that a valid adjacent mcb was selected
+    // non-null alloc_select means the list exists
+    if (mcb_alloc_select != NULL)
     {
         // insert allocated block into the list of others
-        mcb_free_select->p_next = mcb_alloc_select;
-        mcb_free_select->p_prev = mcb_alloc_select->p_prev;
-        mcb_alloc_select->p_prev->p_next = mcb_free_select;
-        mcb_alloc_select->p_prev = mcb_free_select;
+        mcb_alloc_new->p_next = mcb_alloc_select_next;
+        mcb_alloc_new->p_prev = mcb_alloc_select;
+        mcb_alloc_select->p_next = mcb_alloc_new;
+        if (mcb_alloc_select_next != NULL)
+        {
+            mcb_alloc_select_next->p_prev = mcb_alloc_new;
+        }
     }
     // check for no other blocks (only one free block)
     else
     {
-        alloc_head = mcb_free_select;
-        mcb_free_select->p_next = NULL;
-        mcb_free_select->p_prev = NULL;
-        mcb_free_select->blk_size = full_blk_size;
+        alloc_head = mcb_alloc_new;
+        mcb_alloc_new->p_next = NULL;
+        mcb_alloc_new->p_prev = NULL;
     }
-    return mcb_free_select + sizeof(struct mcb);    
+
+    return mcb_free_select + sizeof(struct mcb);
 }
 
 int free_memory(void* ptr)

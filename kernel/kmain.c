@@ -15,6 +15,7 @@
 #include <mpx/serial.h>
 #include <mpx/vm.h>
 #include <mpx/sys_req.h>
+#include <mpx/memory.h>
 #include <string.h>
 #include <memory.h>
 #include <mpx/pcb.h>
@@ -88,6 +89,7 @@ void kmain(void)
 	// 8) MPX Modules -- *headers vary*
 	// Module specific initialization -- not all modules require this
 	klogv(COM1, "Initializing MPX modules...");
+    initialize_heap(0x10000 >> 1); // half of KHEAP_SIZE in core.c
 	// R5: sys_set_heap_functions(...);
 	// R4: create commhand and idle processes
 

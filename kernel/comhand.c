@@ -1165,32 +1165,32 @@ int allocateMemoryCommand() {
     static const char error_msg[] = "Could not parse, please re-enter integer value:\r\n";
     
     while (1) {
-          //input message
-          setTerminalColor(Yellow);
-          const char msg[] = "Enter the size of the allocation:\r\n";
-          write(COM1, STR_BUF(msg));
+        //input message
+        setTerminalColor(Yellow);
+        const char msg[] = "Enter the size of the allocation:\r\n";
+        write(COM1, STR_BUF(msg));
     
-          //user input
-          setTerminalColor(White);
-          user_input_promptread();
-	   
-	  //interpret text as an integer
-	  if (intParsable(user_input, user_input_len)) {
-	          memcpy(inputNum, user_input, user_input_len);
-		  user_input_clear();
-		  break;
-	  }
-	  
-	  //error message  
-	  user_input_clear();
-	  setTerminalColor(Red);
-	  write(COM1, STR_BUF(error_msg));
+        //user input
+        setTerminalColor(White);
+        user_input_promptread();
+
+	    //interpret text as an integer
+	    if (intParsable(user_input, user_input_len)) {
+	        memcpy(inputNum, user_input, user_input_len);
+		    user_input_clear();
+		    break;
+	    }
+
+	    //error message  
+	    user_input_clear();
+	    setTerminalColor(Red);
+	    write(COM1, STR_BUF(error_msg));
     }
     int size = atoi(inputNum);
     
     user_input_clear();
     
-    //atttempt command
+    //attempt command
     void* addressPtr = allocate_memory((size_t) size);
     
     //if NULL then failure, otherwise success
@@ -1212,6 +1212,7 @@ int allocateMemoryCommand() {
     
     write(COM1, STR_BUF(baseMsg));
     write(COM1, STR_BUF(addressMsg));
+    write(COM1, STR_BUF("\r\n"));
     
     return 0;
 }
@@ -1221,26 +1222,26 @@ int freeMemoryCommand() {
     static const char error_msg[] = "Could not parse, please re-enter hexadecimal value:\r\n";
     
     while (1) {
-          //input message
-          setTerminalColor(Yellow);
-          const char msg[] = "Enter the hexadecimal address of the memory block to free:\r\n";
-          write(COM1, STR_BUF(msg));
-    
-          //user input
-          setTerminalColor(White);
-          user_input_promptread();
+        //input message
+        setTerminalColor(Yellow);
+        const char msg[] = "Enter the hexadecimal address of the memory block to free:\r\n";
+        write(COM1, STR_BUF(msg));
+
+        //user input
+        setTerminalColor(White);
+        user_input_promptread();
 	   
-	  //interpret text as hex and store the value as int
-	  if (hexParsable(user_input, user_input_len)) {
-	          memcpy(inputHexText, user_input, user_input_len);
-		  user_input_clear();
-		  break;
-	  }
-	  
-	  //error message  
-	  user_input_clear();
-	  setTerminalColor(Red);
-	  write(COM1, STR_BUF(error_msg));
+	    //interpret text as hex and store the value as int
+	    if (hexParsable(user_input, user_input_len)) {
+	        memcpy(inputHexText, user_input, user_input_len);
+		    user_input_clear();
+		    break;
+	    }
+
+	    //error message  
+	    user_input_clear();
+	    setTerminalColor(Red);
+	    write(COM1, STR_BUF(error_msg));
     }
     //address is an int
     int address = hexTextToDecimal(inputHexText);
