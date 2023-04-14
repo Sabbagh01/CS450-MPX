@@ -1118,42 +1118,47 @@ int alarmCommand() {
     return 0;
 }
 
-char hexParsable(const char* string, size_t size) {
-    for (size_t i = 0; i < size; ++i) {
-    	if (string[i] == '0' && (string[i + 1] == 'x' || string[i + 1] == 'X') ) {
-    		i = i + 2;
-    	}
-        if ( ( (string[i] > '9') || (string[i] < '0') ) && ( (string[i] > 'F') || (string[i] < 'A') ) ) {
+unsigned char hexParsable(const char* string, size_t size) {
+    if (size >= 2)
+    {
+        if ( (string[0] != '0') || ( (string[1] != 'x') && (string[1] != 'X') ) )
+        {
             return 0;
+        }
+        for (size_t i = 2; i < size; ++i)
+        {
+            if ( ( (string[i] > '9') || (string[i] < '0') ) && ( (string[i] > 'F') || (string[i] < 'A') ) )
+            {
+                return 0;
+            }
         }
     }
     return 1;
 }
 
-int hexTextToDecimal(const char *s)
+void* hexToAddress(const char *s)
 {
-	int res = 0;
+	size_t res = 0;
 
-	while (isspace(*s)) {
-		s++;
-	}
-
-	if (*s == '0' && (*(s+1) == 'x' || *(s+1) == 'X') ) {
+	if (s[0] == '0' && ( (s[1] == 'x') || (s[1] == 'X') ) )
+    {
 		s = s + 2;
 	}
 
-	while ( ('0' <= *s && *s <= '9') || ('A' <= *s && *s <= 'F') ) {
-		if (('0' <= *s && *s <= '9')) {
-			res = res * 16 + (*s - '0');
-		} else {
-			res = res * 16 + (*s - 'A' + 10);
+	while ( ( ('0' <= *s) && (*s <= '9') ) || ( ('A' <= *s) && (*s <= 'F') ) )
+    {
+		if ( ('0' <= *s) && (*s <= '9') )
+        {
+			res = (res << 4) + (*s - '0');
 		}
-		
+        else
+        {
+			res = (res << 4) + (*s - 'A' + 10);
+		}
 		s++;
-
 	}
 
-	return res;
+	return (void*)res;
 }
 
 void decimalToHexText(char string[], int integer){
@@ -1268,26 +1273,28 @@ int freeMemoryCommand() {
 	    setTerminalColor(Red);
 	    write(COM1, STR_BUF(error_msg));
     }
-    //address is an int
-    int address = hexTextToDecimal(inputHexText);
+
+    void* address = (void*)hexToAddress(inputHexText);
     
     user_input_clear();
     //attempt command
-    int success = free_memory(&address);
+    int success = free_memory(address);
     
-    //if -1 then failure, if 0 success
+    //if 1 then failure, if 0 success
     if (success != 0) {
-    	const char failMsg[] = "Memory could not be cleared:\r\n";
+    	const char failMsg[] = "Memory could not be freed.\r\n";
         write(COM1, STR_BUF(failMsg));
         return 1;
     }
     
     return 0;
 }
+
 int showAllocatedMemoryCommand(){
     showAllocatedMemory();
     return 1;
 }
+
 int showFreeMemoryCommand(){
     showFreeMemory();
     return 1;
@@ -1301,7 +1308,7 @@ void comhand() {
                                        "9 ) Show Blocked PCB  10) Show All PCB      11) Delete PCB     12) Block PCB\r\n"
                                        "13) Unblock PCB       14) Suspend PCB       15) Resume PCB     16) Version\r\n"
                                        "17) Shutdown          18) loadR3            19) Alarm\r\n"
-                                       "20) Allocate Memory   21) Free Memory       22) Show Free Mem  23) Show Allocated Mem\r\n"
+                                       "20) Allocate Memory   21) Free Memory       22) Show Free Mem  23) Show Alloced Mem\r\n"
                                        "Enter number of choice:\r\n";
     
     setTerminalColor(Blue);
