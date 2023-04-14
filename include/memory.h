@@ -29,4 +29,6 @@ int sys_free_mem(void *ptr);
 */
 void sys_set_heap_functions(void * (*alloc_fn)(size_t), int (*free_fn)(void *));
 
+void showFreeMemory();
+void showAllocatedMemory();
 #endif // _MPX_MEMORY_H

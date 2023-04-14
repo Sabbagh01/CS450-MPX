@@ -3,6 +3,8 @@
 #include <mpx/vm.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
+#include <stdlib.h>
 #include <mpx/syscalls.h>
 
 
@@ -300,4 +302,62 @@ int free_memory(void* ptr)
     } 
 
     return 0;
+}
+void showAllocatedMemory() {
+    struct mcb* currList = alloc_head;
+    char allocatedMemoryMsg[] = "\nAllocated Memory: \n";
+    write(COM1, STR_BUF(allocatedMemoryMsg));
+    
+    while(currList != NULL){
+        
+        //char* printAddress = {0};
+       // itoa(printAddress, (int) (currList -> Address));
+        char addressMsg[] = "\tAddress: ";
+        write(COM1, STR_BUF(addressMsg));
+        //char newStr[20];
+        //decimalToHexText(newStr, (int) (currList -> Address));
+       //char startAddress1[] = newStr;
+        //write(COM1, STR_BUF(startAddress1));
+        
+        char printSize[6];
+        itoa(printSize, (int) (currList -> blk_size));
+        
+        char sizeMsg[] = "\tSize: ";
+        char newLine[] = "\n: ";
+        write(COM1, STR_BUF(sizeMsg));
+        write(COM1, STR_BUF(printSize));
+        write(COM1, STR_BUF(newLine));
+        
+        currList = currList -> p_next;
+        
+    }
+}
+void showFreeMemory(){
+    struct mcb* currList = free_head;
+    char allocatedMemoryMsg[] = "\nAllocated Memory: \n";
+    write(COM1, STR_BUF(allocatedMemoryMsg));
+    
+    while(currList != NULL){
+        
+        //char* printAddress = {0};
+        //itoa(printAddress, (int) (currList -> Address));
+        char addressMsg[] = "\tAddress: ";
+        write(COM1, STR_BUF(addressMsg));
+        //char newStr[20];
+       //decimalToHexText(newStr, (int) (currList -> Address));
+       //char startAddress1[] = newStr;
+       //write(COM1, STR_BUF(startAddress1));
+        
+        char printSize[6];
+        itoa(printSize, (int) (currList -> blk_size));
+        
+        char sizeMsg[] = "\tSize: ";
+        char newLine[] = "\n: ";
+        write(COM1, STR_BUF(sizeMsg));
+        write(COM1, STR_BUF(printSize));
+        write(COM1, STR_BUF(newLine));
+        
+        currList = currList -> p_next;
+        
+    }
 }

@@ -69,6 +69,8 @@ int shutdownCommand();
 int alarmCommand();
 int allocateMemoryCommand();
 int freeMemoryCommand();
+int showAllocatedMemoryCommand();
+int showFreeMemoryCommand();
 
 const struct cmd_entry {
     const char* key;
@@ -323,7 +325,30 @@ cmd_entries[] =
 		    "\tDescription:\r\n"
 		    "\tX\r\n"
         )
+    },
+    { STR_BUF("22"), STR_BUF("Show Free Memory"), showFreeMemoryCommand,
+        STR_BUF(
+        "Show Free Memory\r\n"
+            "\tInput:\r\n"
+            "\tX.\r\n"
+            "\tResult:\r\n"
+            "\tX.\r\n"
+            "\tDescription:\r\n"
+            "\tX\r\n"
+        )
+    },
+    { STR_BUF("23"), STR_BUF("Show Allocated Memory"), showAllocatedMemoryCommand,
+        STR_BUF(
+        "Show Allocate Memory\r\n"
+            "\tInput:\r\n"
+            "\tX.\r\n"
+            "\tResult:\r\n"
+            "\tX.\r\n"
+            "\tDescription:\r\n"
+            "\tX\r\n"
+        )
     }
+    
 };
 
 char user_input[128];
@@ -1259,6 +1284,14 @@ int freeMemoryCommand() {
     
     return 0;
 }
+int showAllocatedMemoryCommand(){
+    showAllocatedMemory();
+    return 1;
+}
+int showFreeMemoryCommand(){
+    showFreeMemory();
+    return 1;
+}
 
 void comhand() {
     static const char menu_welcome_msg[] = "Welcome to 5x5 MPX.\r\n";
@@ -1268,7 +1301,7 @@ void comhand() {
                                        "9 ) Show Blocked PCB  10) Show All PCB      11) Delete PCB     12) Block PCB\r\n"
                                        "13) Unblock PCB       14) Suspend PCB       15) Resume PCB     16) Version\r\n"
                                        "17) Shutdown          18) loadR3            19) Alarm\r\n"
-                                       "20) Allocate Memory   21) Free Memory\r\n"
+                                       "20) Allocate Memory   21) Free Memory       22) Show Free Mem  23) Show Allocated Mem\r\n"
                                        "Enter number of choice:\r\n";
     
     setTerminalColor(Blue);
