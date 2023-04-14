@@ -189,3 +189,19 @@ int serial_poll(device dev, char *buffer, size_t len)
     }
     return currsz;
 }
+
+int serial_open(device dev, int speed);
+
+int serial_close(device dev);
+
+int serial_read(device dev, char* buf, size_t len);
+
+int serial_write(device dev, char* buf, size_t len);
+
+void serial_interrupt(void) {
+    return;
+}
+
+void serial_input_interrupt(struct dcb* dcb);
+
+void serial_output_interrupt(struct dcb* dcb);

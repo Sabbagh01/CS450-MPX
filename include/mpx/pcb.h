@@ -2,6 +2,7 @@
 #define MPX_PCB_H
 
 #include <stddef.h>
+#include <mpx/device.h>
 #include <mpx/context.h>
 
 /**
@@ -82,6 +83,9 @@ struct pcb_state {
     A pointer to a saved context for a process. When the process is not active,
     it will point to a valid context in the allocated stack section,
     which will be situated on top of the stack.
+ @var pcb::curr_io
+    A pointer to a current I/O operation being done by a process. If not NULL,
+    the process is waiting for I/O and will be blocked.
 */
 struct pcb {
     char name[MPX_PCB_PROCNAME_BUFFER_SZ];
@@ -89,6 +93,8 @@ struct pcb {
     struct pcb_state state;
     void* pstackseg;
     struct context* pctxt;
+
+    struct iocb* curr_io;
 };
 
 /**

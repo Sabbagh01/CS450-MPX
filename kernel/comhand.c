@@ -59,8 +59,6 @@ int showPcbCommand();
 int deletePcbCommand();
 int resumePcbCommand();
 int suspendPcbCommand();
-int unblockPcbCommand();
-int blockPcbCommand();
 int showPcbReadyCommand();
 int showPcbBlockedCommand();
 int showPcbAllCommand();
@@ -215,29 +213,7 @@ cmd_entries[] =
             "\tDeletes the PCB and frees associated memory of given PCB name if found\r\n"
         )
     },
-    { STR_BUF("12"), STR_BUF("Block PCB"), blockPcbCommand,
-        STR_BUF(
-        "Block PCB\r\n"
-            "\tInput:\r\n"
-            "\tName of Process \r\n"
-            "\tOutput:\r\n"
-            "\tNo output\r\n"
-            "\tDescription:\r\n"
-            "\tSets the state of PCB to blocked if found\r\n"
-        )
-    },
-    { STR_BUF("13"), STR_BUF("Unblock PCB"), unblockPcbCommand,
-        STR_BUF(
-        "Unblock PCB\r\n"
-            "\tInput:\r\n"
-            "\tName of Process\r\n"
-            "\tOutput:\r\n"
-            "\tNo output\r\n"
-            "\tDescription:\r\n"
-            "\tSets the state of PCB to unblocked if found\r\n"
-        )
-    },
-    { STR_BUF("14"), STR_BUF("Suspend PCB"), suspendPcbCommand,
+    { STR_BUF("12"), STR_BUF("Suspend PCB"), suspendPcbCommand,
         STR_BUF(
         "Suspend PCB\r\n"
             "\tInput:\r\n"
@@ -248,7 +224,7 @@ cmd_entries[] =
             "\tSuspends the PCB if found\r\n"
         )
     },
-    { STR_BUF("15"), STR_BUF("Resume PCB"), resumePcbCommand,
+    { STR_BUF("13"), STR_BUF("Resume PCB"), resumePcbCommand,
         STR_BUF(
         "Resume PCB\r\n"
             "\tInput:\r\n"
@@ -259,7 +235,7 @@ cmd_entries[] =
             "\tUnsuspends the PCB if found\r\n"
         )
     },
-    { STR_BUF("16"), STR_BUF("Version"), versionCommand,
+    { STR_BUF("14"), STR_BUF("Version"), versionCommand,
         STR_BUF(
         "Version\r\n"
 		    "\tInput:\r\n"
@@ -270,7 +246,7 @@ cmd_entries[] =
 		    "\tprints the current version of MPX and the compilation date\r\n"
         )
     },
-    { STR_BUF("17"), STR_BUF("Shut Down"), shutdownCommand,
+    { STR_BUF("15"), STR_BUF("Shut Down"), shutdownCommand,
         STR_BUF(
         "Shut Down\r\n"
 		    "\tInput:\r\n"
@@ -281,7 +257,7 @@ cmd_entries[] =
 		    "\tshuts down the machine after confirmation is given by entering 1.\r\n"
         )
     },
-    { STR_BUF("18"), STR_BUF("LoadR3"), loadR3,
+    { STR_BUF("16"), STR_BUF("LoadR3"), loadR3,
         STR_BUF(
         "LoadR3\r\n"
 		    "\tInput:\r\n"
@@ -292,7 +268,7 @@ cmd_entries[] =
 		    "\tLoads the processes associated with module R3.\r\n"
         )
     },
-    { STR_BUF("19"), STR_BUF("Alarm"), alarmCommand,
+    { STR_BUF("17"), STR_BUF("Alarm"), alarmCommand,
         STR_BUF(
         "Alarm\r\n"
 		    "\tInput:\r\n"
@@ -721,54 +697,6 @@ int deletePcbCommand() {
     pcb_remove(procfound);
     pcb_free(procfound);
     return 0;
-}
-
-int blockPcbCommand() {
-    setTerminalColor(Yellow);
-    const char msg[] = "Enter the name of an existing process to block:\r\n";
-    write(COM1, STR_BUF(msg));
-    setTerminalColor(White);
-    user_input_promptread();
-
-    struct pcb* procfound = pcb_find(user_input);
-    user_input_clear();
-    if (procfound == NULL)
-    {
-        setTerminalColor(Red);
-        const char msgNotFound[] = "A process with the given name was not found\r\n";
-        write(COM1, STR_BUF(msgNotFound));
-        return 1;
-    }
-
-    pcb_remove(procfound);
-
-    procfound->state.exec = BLOCKED;
-    pcb_insert(procfound);
-    return 0;
-}
-
-int unblockPcbCommand() {
-    setTerminalColor(Yellow);
-    const char msg[] = "Enter the name of an existing process to unblock:\r\n";
-    write(COM1, STR_BUF(msg));
-    setTerminalColor(White);
-    user_input_promptread();
-
-    struct pcb* procfound = pcb_find(user_input);
-    user_input_clear();
-    if (procfound == NULL)
-    {
-        setTerminalColor(Red);
-        const char msgNotFound[] = "A process with the given name was not found\r\n";
-        write(COM1, STR_BUF(msgNotFound));
-        return 1;
-    }
-
-    pcb_remove(procfound);
-    
-    procfound->state.exec = READY;
-    pcb_insert(procfound);
-    return 0;  
 }
 
 int suspendPcbCommand() {
