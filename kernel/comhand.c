@@ -307,22 +307,22 @@ cmd_entries[] =
     { STR_BUF("20"), STR_BUF("Allocate Memory"), allocateMemoryCommand,
         STR_BUF(
         "Allocate Memory\r\n"
-		    "\tInput:\r\n"
+		    "\tInput: the size that needs to be allocated from the memory\r\n"
 		    "\tX.\r\n"
 		    "\tResult:\r\n"
 		    "\tX.\r\n"
-		    "\tDescription:\r\n"
+		    "\tDescription: Allocating memory to mcb that is already exist\r\n"
 		    "\tX\r\n"
         )
     },
     { STR_BUF("21"), STR_BUF("Free Memory"), freeMemoryCommand,
         STR_BUF(
         "Allocate Memory\r\n"
-		    "\tInput:\r\n"
+		    "\tInput: the size that needs to be free from the memory\r\n"
 		    "\tX.\r\n"
 		    "\tResult:\r\n"
 		    "\tX.\r\n"
-		    "\tDescription:\r\n"
+		    "\tDescription: Free memory to mcb that is already exist\r\n"
 		    "\tX\r\n"
         )
     },
@@ -333,7 +333,7 @@ cmd_entries[] =
             "\tX.\r\n"
             "\tResult:\r\n"
             "\tX.\r\n"
-            "\tDescription:\r\n"
+            "\tDescription: Show the free list\r\n"
             "\tX\r\n"
         )
     },
@@ -342,9 +342,9 @@ cmd_entries[] =
         "Show Allocate Memory\r\n"
             "\tInput:\r\n"
             "\tX.\r\n"
-            "\tResult:\r\n"
+            "\tResult: show the allocated list\r\n"
             "\tX.\r\n"
-            "\tDescription:\r\n"
+            "\tDescription: Show the allocated memory of mcb\r\n"
             "\tX\r\n"
         )
     }
