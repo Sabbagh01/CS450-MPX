@@ -8,6 +8,16 @@
  @brief MPX-specific dynamic memory functions.
 */
 
+struct mcb
+{
+    struct mcb* p_prev;
+    struct mcb* p_next;
+    size_t blk_size;
+};
+
+extern struct mcb* free_head;
+extern struct mcb* alloc_head;
+
 /**
  @brief
     Initializes the heap space available to MPX and processes.
@@ -33,8 +43,8 @@ void* allocate_memory(size_t size);
  @param ptr
     A valid pointer to the start address of an allocated memory block.
  @return
-    If successful, 0 is returned. If memory cannot be allocated at the time,
-    -1 is returned.
+    If successful, 0 is returned. If memory cannot be freed, or memory to free
+    cannot be found via provided pointer, then -1 is returned.
 */
 int free_memory(void* ptr);
 

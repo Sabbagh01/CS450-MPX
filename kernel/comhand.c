@@ -278,7 +278,7 @@ cmd_entries[] =
 		    "\tOutput:\r\n"
 		    "\tno output value\r\n"
 		    "\tDescription:\r\n"
-		    "\tshuts down the machine after confirmation is given by entering 1\r\n"
+		    "\tshuts down the machine after confirmation is given by entering 1.\r\n"
         )
     },
     { STR_BUF("18"), STR_BUF("LoadR3"), loadR3,
@@ -297,55 +297,55 @@ cmd_entries[] =
         "Alarm\r\n"
 		    "\tInput:\r\n"
 		    "\tTime to set off alarm.\r\n"
-            "\tMessage to display at the alarm\r\n"
+            "\tMessage to display at the alarm.\r\n"
 		    "\tResult:\r\n"
 		    "\tAlarm created to wait until past the set time.\r\n"
 		    "\tDescription:\r\n"
-		    "\tSpawns an alarm process to wait until it passes a set time\r\n"
+		    "\tSpawns an alarm process to wait until it passes a set time.\r\n"
         )
     },
     { STR_BUF("20"), STR_BUF("Allocate Memory"), allocateMemoryCommand,
         STR_BUF(
-        "Allocate Memory\r\n"
-		    "\tInput: the size that needs to be allocated from the memory\r\n"
-		    "\tX.\r\n"
+         "Allocate Memory\r\n"
+		    "\tInput:\r\n"
+		    "\tAn amount of memory to allocate in bytes.\r\n"
 		    "\tResult:\r\n"
-		    "\tX.\r\n"
-		    "\tDescription: Allocating memory to mcb that is already exist\r\n"
-		    "\tX\r\n"
-        )
+		    "\tReturns an address to a newly created block if successful, but not otherwise.\r\n"
+		    "\tDescription:\r\n"
+		    "\tAllocates memory in the heap.\r\n"
+       )
     },
     { STR_BUF("21"), STR_BUF("Free Memory"), freeMemoryCommand,
         STR_BUF(
-        "Allocate Memory\r\n"
-		    "\tInput: the size that needs to be free from the memory\r\n"
-		    "\tX.\r\n"
+        "Free Memory\r\n"
+		    "\tInput:\r\n"
+		    "\tAn address to the beginning of a block.\r\n"
 		    "\tResult:\r\n"
-		    "\tX.\r\n"
-		    "\tDescription: Free memory to mcb that is already exist\r\n"
-		    "\tX\r\n"
+		    "\tFrees memory if successful, but not otherwise.\r\n"
+		    "\tDescription:\r\n"
+		    "\tFrees existing memory in the heap.\r\n"
         )
     },
     { STR_BUF("22"), STR_BUF("Show Free Memory"), showFreeMemoryCommand,
         STR_BUF(
         "Show Free Memory\r\n"
             "\tInput:\r\n"
-            "\tX.\r\n"
+            "\tNone\r\n"
             "\tResult:\r\n"
-            "\tX.\r\n"
-            "\tDescription: Show the free list\r\n"
-            "\tX\r\n"
-        )
+            "\tA printed list of free memory.\r\n"
+            "\tDescription:\r\n"
+            "\tShow the list of free memory blocks in the heap.\r\n"
+       )
     },
     { STR_BUF("23"), STR_BUF("Show Allocated Memory"), showAllocatedMemoryCommand,
         STR_BUF(
-        "Show Allocate Memory\r\n"
+        "Show Allocated Memory\r\n"
             "\tInput:\r\n"
-            "\tX.\r\n"
-            "\tResult: show the allocated list\r\n"
-            "\tX.\r\n"
-            "\tDescription: Show the allocated memory of mcb\r\n"
-            "\tX\r\n"
+            "\tNone\r\n"
+            "\tResult:\r\n"
+            "\tA printed list of allocated memory.\r\n"
+            "\tDescription:\r\n"
+            "\tShow the list of allocated memory blocks in the heap.\r\n"
         )
     }
     
@@ -1310,14 +1310,67 @@ int freeMemoryCommand() {
     return 0;
 }
 
-int showAllocatedMemoryCommand(){
-    showAllocatedMemory();
-    return 1;
+int showAllocatedMemoryCommand() {    
+    struct mcb* currList = alloc_head;
+    char allocatedMemoryMsg[] = "\r\nAllocated Memory:\r\n";
+    write(COM1, STR_BUF(allocatedMemoryMsg));
+    
+    while(currList != NULL)
+    {
+        char addressMsg[] = "\tAddress: ";
+        write(COM1, STR_BUF(addressMsg));
+
+        void* addressPtr = (void*) currList + sizeof(struct mcb);
+    
+        char addressarr[11];
+    
+        //convert the integer to hex that is a string to be printed
+        addressToHex(addressarr, addressPtr);
+        write(COM1, STR_BUF(addressarr));
+
+        
+        char printSize[16] = { 0 };
+        itoa(printSize, (int) (currList -> blk_size));
+        
+        char sizeMsg[] = "\tSize: ";
+        char newLine[] = "\r\n";
+        write(COM1, STR_BUF(sizeMsg));
+        write(COM1, STR_BUF(printSize));
+        write(COM1, STR_BUF(newLine));
+        
+        currList = currList -> p_next;
+    }
+    return 0;
 }
 
-int showFreeMemoryCommand(){
-    showFreeMemory();
-    return 1;
+int showFreeMemoryCommand() {
+    struct mcb* currList = free_head;
+    char freeMemoryMsg[] = "\r\nFreed Memory:\r\n";
+    write(COM1, STR_BUF(freeMemoryMsg));
+    
+    while(currList != NULL)
+    {
+        char addressMsg[] = "\tAddress: ";
+        write(COM1, STR_BUF(addressMsg));
+
+        void* addressPtr = (void*) currList + sizeof(struct mcb);
+    
+        char addressarr[11];
+    
+        //convert the integer to hex that is a string to be printed
+        addressToHex(addressarr, addressPtr);
+        write(COM1, STR_BUF(addressarr));
+        char printSize[6];
+        itoa(printSize, (int) (currList -> blk_size));
+        char sizeMsg[] = "\tSize: ";
+        char newLine[] = "\r\n";
+        write(COM1, STR_BUF(sizeMsg));
+        write(COM1, STR_BUF(printSize));
+        write(COM1, STR_BUF(newLine));
+        
+        currList = currList -> p_next;
+    }
+    return 0;
 }
 
 void comhand() {
