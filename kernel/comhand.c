@@ -1145,22 +1145,68 @@ void* hexToAddress(const char *s)
 		s = s + 2;
 	}
 
-	while ( ( ('0' <= *s) && (*s <= '9') ) || ( ('A' <= *s) && (*s <= 'F') ) )
+	while (*s != '\0')
     {
 		if ( ('0' <= *s) && (*s <= '9') )
         {
 			res = (res << 4) + (*s - '0');
 		}
-        else
+        else if ( ('A' <= *s) && (*s <= 'F') )
         {
 			res = (res << 4) + (*s - 'A' + 10);
 		}
-		s++;
+        else if ( ('a' <= *s) && (*s <= 'f') )
+        {
+            res = (res << 4) + (*s - 'a' + 10);
+        }
+        else
+        {
+            break;
+        }
+		++s;
 	}
 
 	return (void*)res;
 }
 
+void addressToHex(char string[], void* address)
+{
+	size_t temp;
+	int size = 2;
+    string[0] = '0';
+	string[1] = 'x';
+	if (address == 0)
+    {
+		string[2] = '0';
+        ++size;
+	}
+    else
+    {
+        temp = (size_t)address;
+        // get the size to order digits correctly
+        while (temp != 0)
+        {
+            temp >>= 4;
+            ++size;
+        }
+        temp = size - 1;
+	    while (temp >= 2)
+        {
+            size_t mod = (size_t)address % 16;
+	        if (mod <= 9)
+            {
+                string[temp] = mod + '0';
+	        }
+            else
+            {
+	            string[temp] = (mod - 10) + 'A';
+	        }
+            address = (void*)((size_t)address / 16);
+            --temp;
+        }
+	}
+	string[size] = '\0';
+}
 
 int allocateMemoryCommand() {
     char inputNum[100] = "";
@@ -1196,19 +1242,17 @@ int allocateMemoryCommand() {
     void* addressPtr = allocate_memory((size_t) size);
     
     //if NULL then failure, otherwise success
-    if (addressPtr == NULL) {
+    if (addressPtr == NULL)
+    {
     	const char failMsg[] = "Memory could not be allocated:\r\n";
         write(COM1, STR_BUF(failMsg));
         return 1;
     }
     
-    //find int address
-    int address = ((int ) addressPtr);
-    
-    char addressMsg[10];
+    char addressMsg[11];
     
     //convert the integer to hex that is a string to be printed
-    decimalToHexText(addressMsg, address);
+    addressToHex(addressMsg, addressPtr);
     
     const char baseMsg[] = "The address of the allocated memory is: ";
     
@@ -1234,7 +1278,8 @@ int freeMemoryCommand() {
         user_input_promptread();
 	   
 	    //interpret text as hex and store the value as int
-	    if (hexParsable(user_input, user_input_len)) {
+	    if (hexParsable(user_input, user_input_len))
+        {
 	        memcpy(inputHexText, user_input, user_input_len);
 		    user_input_clear();
 		    break;
