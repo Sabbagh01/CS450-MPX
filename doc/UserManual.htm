@@ -67,13 +67,6 @@ When called, the system will output a confirmation question. If 1 is entered, th
 </p>
 
 <font size = "+2" <b>R2</b></font>
-<p> <font size= "+1"><i><b>Create PCB</b></i></font> <br>
-<i>Creats a PCB</i> <br>
-When called, it will ask the user for the desired name of the PCB, the class of the PCB, and its priority. The PCB will automatically be set as Active & Ready. There is no output. Erorrs will pop up if the name is not within 64 characters, the class is neither "user" or "kernel", or the priority is not within 0-9. <br>
-<img src="Pictures/CreatePCB.jpg" alt="Create PCB Command"><br>
-<font size= "-1">Create PCB Example</font><br><br>
-</p>
-
 <p> <font size= "+1"><i><b>Change PCB Priority</b></i></font> <br>
 <i>Changes the Priority of a PCB</i> <br>
 When called, it will ask the user for the name of the PCB whose priority wants to be changed, then it will ask what priority to set the PCB to. Errors will pop up if the name of the process is invalid or the priority is not within 0-9. The command has no output.<br>
@@ -167,6 +160,31 @@ When called, the system will ask for the name of the process to resume. If found
     When selected, it will ask the user for the month (1-12), last two digits of the year (0-99), day of the month, the hour (0-23), the minute (0-59), the second (0-59), and the message to display. If the user does not provide a valid time, an error will be outputted. At the given time, the alarm will say the given message. <br>
 <img src="Pictures/Alarm.jpg" alt="Alarm"><br>
 <font size= "-1">Alarm Command Example</font> <br><br>
+<font size = "+2" <b>R5</b></font>
+<p> <font size= "+1"><i><b>Allocate Memory</b></i></font> <br>
+ <i>Allocates memory</i><br> 
+    When selected, it will ask the user to enter the size of the memory allocation. If not valid, it will output an error, else it will give the address of the allocated memory. <br>
+<img src="Pictures/AllocateMem.jpg" alt="Allocate Memory"><br>
+<font size= "-1">Allocate Memory Command Example</font> <br><br>
+
+<p> <font size= "+1"><i><b>Free Memory</b></i></font> <br>
+ <i>Frees memory</i><br> 
+    When selected, it will ask the user for the hexadecimal address of the memory block to be freed. If a non hex input is inserted or the memory block was found it will output an error, else it will say the memory has been freed. <br>
+<img src="Pictures/FreeMem.jpg" alt="Free Memory"><br>
+<font size= "-1">Free Memory Command Example</font> <br><br>
+
+
+<p> <font size= "+1"><i><b>Show Freed Memory</b></i></font> <br>
+ <i>Shows all freed memory</i><br> 
+    When selected, it will show the user the address and size of all freed blocks of memory. <br>
+<img src="Pictures/ShowFreeMem.jpg" alt="Show Free Memory"><br>
+<font size= "-1">Show Free Memory Command Example</font> <br><br>
+
+<p> <font size= "+1"><i><b>Show Allocated Memory</b></i></font> <br>
+ <i>Shows all allocated memory</i><br> 
+    When selected, it will show the user the address and size of all allocated blocks of memory. <br>
+<img src="Pictures/ShowAllocateMem.jpg" alt="Show Allocate Memory"><br>
+<font size= "-1">Show Allocated Memory Command Example</font> <br><br>
 </p>
 </p>
 </body>

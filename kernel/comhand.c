@@ -540,7 +540,7 @@ int getDateCommand() {
 
 int versionCommand() {
     setTerminalColor(White);
-    static const char ver_msg[] = "MPX vR4.\r\nCompiled ";
+    static const char ver_msg[] = "MPX vR5.\r\nCompiled ";
     write(COM1, STR_BUF(ver_msg));
    
     write(COM1, STR_BUF(__DATE__));
@@ -1161,34 +1161,6 @@ void* hexToAddress(const char *s)
 	return (void*)res;
 }
 
-void decimalToHexText(char string[], int integer){
-	int temp;
-	int size = 2;
-	if(integer == 0) {
-		string[2] = '0';
-        ++size;
-	} else {
-        temp = integer;
-        // get the size to order digits correctly
-        while (temp != 0) {
-            temp /= 16;
-            ++size;
-        }
-        temp = size - 1;
-	    while (temp >= 0) {
-	        if (integer % 16 <= 9 || integer % 16 == 16) {
-                string[temp] = (integer % 16) + '0';
-	        } else {
-	            string[temp] = (integer % 16 - 10) + 'A';
-	        }
-            integer /= 16;
-            --temp;
-        }
-	}
-	string[size] = '\0';
-	string[0] = '0';
-	string[1] = 'x';
-}
 
 int allocateMemoryCommand() {
     char inputNum[100] = "";
@@ -1231,9 +1203,9 @@ int allocateMemoryCommand() {
     }
     
     //find int address
-    int address = *((int *) addressPtr);
+    int address = ((int ) addressPtr);
     
-    char addressMsg[50];
+    char addressMsg[10];
     
     //convert the integer to hex that is a string to be printed
     decimalToHexText(addressMsg, address);
@@ -1285,6 +1257,9 @@ int freeMemoryCommand() {
     	const char failMsg[] = "Memory could not be freed.\r\n";
         write(COM1, STR_BUF(failMsg));
         return 1;
+    } else {
+        const char succMsg[] = "Memory was freed.\r\n";
+        write(COM1, STR_BUF(succMsg));
     }
     
     return 0;

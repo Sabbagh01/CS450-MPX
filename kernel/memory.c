@@ -8,6 +8,7 @@
 #include <mpx/syscalls.h>
 
 
+
 struct mcb
 {
     struct mcb* p_prev;
@@ -171,7 +172,7 @@ void* allocate_memory(size_t size)
         mcb_alloc_new->p_prev = NULL;
     }
 
-    return mcb_free_select + sizeof(struct mcb);
+    return (void*) mcb_free_select + sizeof(struct mcb);
 }
 
 int free_memory(void* ptr)
@@ -190,6 +191,7 @@ int free_memory(void* ptr)
     while (mcb_alloc_iter != NULL)
     {
         //Check if desired allocated block has been found
+
         if (mcb_alloc_iter == mcb_alloc_tofree)
         {
             break;
@@ -200,6 +202,8 @@ int free_memory(void* ptr)
     // If alloc_iter is null, then the block was not found, i.e. invalid pointer to free.
     if (mcb_alloc_iter == NULL)
     {
+        static const char blockDNE[] = "Given block of memory DNE \n\r";
+        write(COM1, STR_BUF(blockDNE));
         return 1;
     }
 
@@ -251,6 +255,8 @@ int free_memory(void* ptr)
     // If no free blocks exist, just convert the mcb to a free block
     if (free_head == NULL)
     {
+        static const char nullHead[] = "null head \n\r";
+        write(COM1, STR_BUF(nullHead));
         free_head = mcb_alloc_tofree;
         mcb_alloc_tofree->p_next = NULL;
         mcb_alloc_tofree->p_prev = NULL;
@@ -297,7 +303,34 @@ int free_memory(void* ptr)
 
     return 0;
 }
-
+void decimalToHexText(char string[], int integer){
+	int temp;
+	int size = 2;
+	if(integer == 0) {
+		string[2] = '0';
+        ++size;
+	} else {
+        temp = integer;
+        // get the size to order digits correctly
+        while (temp != 0) {
+            temp /= 16;
+            ++size;
+        }
+        temp = size - 1;
+	    while (temp >= 0) {
+	        if (integer % 16 <= 9 || integer % 16 == 16) {
+                string[temp] = (integer % 16) + '0';
+	        } else {
+	            string[temp] = (integer % 16 - 10) + 'A';
+	        }
+            integer /= 16;
+            --temp;
+        }
+	}
+	string[size] = '\0';
+	string[0] = '0';
+	string[1] = 'x';
+}
 void showAllocatedMemory() {
     struct mcb* currList = alloc_head;
     char allocatedMemoryMsg[] = "\nAllocated Memory: \n";
@@ -309,16 +342,27 @@ void showAllocatedMemory() {
        // itoa(printAddress, (int) (currList -> Address));
         char addressMsg[] = "\tAddress: ";
         write(COM1, STR_BUF(addressMsg));
+
         //char newStr[20];
         //decimalToHexText(newStr, (int) (currList -> Address));
        //char startAddress1[] = newStr;
         //write(COM1, STR_BUF(startAddress1));
+
+        void* addressPtr = (void*) currList + sizeof(struct mcb);
+        int addressint = ((int ) addressPtr);
+    
+        char addressarr[10];
+    
+        //convert the integer to hex that is a string to be printed
+        decimalToHexText(addressarr, addressint);
+        write(COM1, STR_BUF(addressarr));
+
         
         char printSize[6];
         itoa(printSize, (int) (currList -> blk_size));
         
         char sizeMsg[] = "\tSize: ";
-        char newLine[] = "\n: ";
+        char newLine[] = "\n";
         write(COM1, STR_BUF(sizeMsg));
         write(COM1, STR_BUF(printSize));
         write(COM1, STR_BUF(newLine));
@@ -330,8 +374,8 @@ void showAllocatedMemory() {
 
 void showFreeMemory(){
     struct mcb* currList = free_head;
-    char allocatedMemoryMsg[] = "\nAllocated Memory: \n";
-    write(COM1, STR_BUF(allocatedMemoryMsg));
+    char freeMemoryMsg[] = "\nFreed Memory: \n";
+    write(COM1, STR_BUF(freeMemoryMsg));
     
     while(currList != NULL){
         
@@ -343,12 +387,19 @@ void showFreeMemory(){
        //decimalToHexText(newStr, (int) (currList -> Address));
        //char startAddress1[] = newStr;
        //write(COM1, STR_BUF(startAddress1));
-        
+
+        void* addressPtr = (void*) currList + sizeof(struct mcb);
+        int address = ((int ) addressPtr);
+    
+        char addressarr[10];
+    
+        //convert the integer to hex that is a string to be printed
+        decimalToHexText(addressarr, address);
+        write(COM1, STR_BUF(addressarr));
         char printSize[6];
         itoa(printSize, (int) (currList -> blk_size));
-        
         char sizeMsg[] = "\tSize: ";
-        char newLine[] = "\n: ";
+        char newLine[] = "\n";
         write(COM1, STR_BUF(sizeMsg));
         write(COM1, STR_BUF(printSize));
         write(COM1, STR_BUF(newLine));

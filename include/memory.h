@@ -31,4 +31,5 @@ void sys_set_heap_functions(void * (*alloc_fn)(size_t), int (*free_fn)(void *));
 
 void showFreeMemory();
 void showAllocatedMemory();
+void decimalToHexText(char string[], int integer);
 #endif // _MPX_MEMORY_H
