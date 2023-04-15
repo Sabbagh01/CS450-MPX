@@ -280,7 +280,7 @@ cmd_entries[] =
 		    "\tSpawns an alarm process to wait until it passes a set time.\r\n"
         )
     },
-    { STR_BUF("20"), STR_BUF("Allocate Memory"), allocateMemoryCommand,
+    { STR_BUF("19"), STR_BUF("Allocate Memory"), allocateMemoryCommand,
         STR_BUF(
          "Allocate Memory\r\n"
 		    "\tInput:\r\n"
@@ -291,7 +291,7 @@ cmd_entries[] =
 		    "\tAllocates memory in the heap.\r\n"
        )
     },
-    { STR_BUF("21"), STR_BUF("Free Memory"), freeMemoryCommand,
+    { STR_BUF("20"), STR_BUF("Free Memory"), freeMemoryCommand,
         STR_BUF(
         "Free Memory\r\n"
 		    "\tInput:\r\n"
@@ -302,7 +302,7 @@ cmd_entries[] =
 		    "\tFrees existing memory in the heap.\r\n"
         )
     },
-    { STR_BUF("22"), STR_BUF("Show Free Memory"), showFreeMemoryCommand,
+    { STR_BUF("21"), STR_BUF("Show Free Memory"), showFreeMemoryCommand,
         STR_BUF(
         "Show Free Memory\r\n"
             "\tInput:\r\n"
@@ -313,7 +313,7 @@ cmd_entries[] =
             "\tShow the list of free memory blocks in the heap.\r\n"
        )
     },
-    { STR_BUF("23"), STR_BUF("Show Allocated Memory"), showAllocatedMemoryCommand,
+    { STR_BUF("22"), STR_BUF("Show Allocated Memory"), showAllocatedMemoryCommand,
         STR_BUF(
         "Show Allocated Memory\r\n"
             "\tInput:\r\n"
@@ -655,15 +655,15 @@ int showPcbCommand(){
 
     setTerminalColor(Yellow);
     write(COM1, STR_BUF(msgName));
-    write(COM1, procfound->name, strlen(procfound->name));
+    write(COM1, DSTR_BUF(procfound->name));
     write(COM1, STR_BUF(msgClass));
-    write(COM1, charClass, strlen(charClass));
+    write(COM1, DSTR_BUF(charClass));
     write(COM1, STR_BUF(msgPri));
-    write(COM1, charPri, strlen(charPri));
+    write(COM1, DSTR_BUF(charPri));
     write(COM1, STR_BUF(msgState));
-    write(COM1, charState, strlen(charState));
+    write(COM1, DSTR_BUF(charState));
     write(COM1, STR_BUF(msgStatus));
-    write(COM1, charStatus, strlen(charStatus));
+    write(COM1, DSTR_BUF(charStatus));
     write(COM1, STR_BUF("\r\n"));
     return 0;
 }
@@ -767,38 +767,34 @@ int showPcbReadyCommand(){
     {
         struct pcb_queue* queue_curr = &pcb_queues[PSTATE_QUEUE_SELECTOR(i)];
         // check that the queue is not empty (size > 0)
-        if (queue_curr->head != NULL)
+        if (queue_curr->pcb_head != NULL)
         {
-            struct pcb_queue_node* node_temp = queue_curr->head;
+            struct pcb* proc_iter = queue_curr->pcb_head;
             while(1)
             {
-                //Get process info
-                // alias
-                struct pcb* proc = node_temp->pcb_elem;
-
                 //Display information on process
-                const char* charClass = class_str(proc->state.cls);
-                const char* charState = execstate_str(proc->state.exec);
-                const char* charStatus = dpatchstate_str(proc->state.dpatch);
+                const char* charClass = class_str(proc_iter->state.cls);
+                const char* charState = execstate_str(proc_iter->state.exec);
+                const char* charStatus = dpatchstate_str(proc_iter->state.dpatch);
                 char charPri[4];
-                itoa(charPri, (int) proc->state.pri);
+                itoa(charPri, (int) proc_iter->state.pri);
 
                 write(COM1, STR_BUF(msgName));
-                write(COM1, proc->name, strlen(proc->name));
+                write(COM1, DSTR_BUF(proc_iter->name));
                 write(COM1, STR_BUF(msgClass));
-                write(COM1, charClass, strlen(charClass));
+                write(COM1, DSTR_BUF(charClass));
                 write(COM1, STR_BUF(msgPri));
-                write(COM1, charPri, strlen(charPri));
+                write(COM1, DSTR_BUF(charPri));
                 write(COM1, STR_BUF(msgState));
-                write(COM1, charState, strlen(charState));
+                write(COM1, DSTR_BUF(charState));
                 write(COM1, STR_BUF(msgStatus));
-                write(COM1, charStatus, strlen(charStatus));
+                write(COM1, DSTR_BUF(charStatus));
                 write(COM1, STR_BUF("\r\n"));
-                if (node_temp->p_next == NULL)
+                if (proc_iter->p_next == NULL)
                 {
                     break;
                 }
-                node_temp = node_temp->p_next;
+                proc_iter = proc_iter->p_next;
             }
         }
    
@@ -818,38 +814,34 @@ int showPcbBlockedCommand() {
     {
         struct pcb_queue* queue_curr = &pcb_queues[PSTATE_QUEUE_SELECTOR(i)];
         // check that the queue is not empty (size > 0)
-        if (queue_curr->head != NULL)
+        if (queue_curr->pcb_head != NULL)
         {
-            struct pcb_queue_node* node_temp = queue_curr->head;
+            struct pcb* proc_iter = queue_curr->pcb_head;
             while(1)
-            {
-                //Get process info
-                // alias
-                struct pcb* proc = node_temp->pcb_elem;
-                
+            {                
                 //Display information on process
-                const char* charClass = class_str(proc->state.cls);
-                const char* charState = execstate_str(proc->state.exec);
-                const char* charStatus = dpatchstate_str(proc->state.dpatch);
+                const char* charClass = class_str(proc_iter->state.cls);
+                const char* charState = execstate_str(proc_iter->state.exec);
+                const char* charStatus = dpatchstate_str(proc_iter->state.dpatch);
                 char charPri[4];
-                itoa(charPri, (int) proc->state.pri);
+                itoa(charPri, (int) proc_iter->state.pri);
 
                 write(COM1, STR_BUF(msgName));
-                write(COM1, proc->name, strlen(proc->name));
+                write(COM1, DSTR_BUF(proc_iter->name));
                 write(COM1, STR_BUF(msgClass));
-                write(COM1, charClass, strlen(charClass));
+                write(COM1, DSTR_BUF(charClass));
                 write(COM1, STR_BUF(msgPri));
-                write(COM1, charPri, strlen(charPri));
+                write(COM1, DSTR_BUF(charPri));
                 write(COM1, STR_BUF(msgState));
-                write(COM1, charState, strlen(charState));
+                write(COM1, DSTR_BUF(charState));
                 write(COM1, STR_BUF(msgStatus));
-                write(COM1, charStatus, strlen(charStatus));
+                write(COM1, DSTR_BUF(charStatus));
                 write(COM1, STR_BUF("\r\n"));
-                if (node_temp->p_next == NULL)
+                if (proc_iter->p_next == NULL)
                 {
                     break;
                 }
-                node_temp = node_temp->p_next;
+                proc_iter = proc_iter->p_next;
             }
         }
    
@@ -869,38 +861,34 @@ int showPcbAllCommand() {
     {
         struct pcb_queue* queue_curr = &pcb_queues[i];
         // check that the queue is not empty (size > 0)
-        if (queue_curr->head != NULL)
+        if (queue_curr->pcb_head != NULL)
         {
-            struct pcb_queue_node* node_temp = queue_curr->head;
+            struct pcb* proc_iter = queue_curr->pcb_head;
             while(1)
-            {
-                //Get process info
-                // alias
-                struct pcb* proc = node_temp->pcb_elem;
-                
+            {                
                 //Display information on process
-                const char* charClass = class_str(proc->state.cls);
-                const char* charState = execstate_str(proc->state.exec);
-                const char* charStatus = dpatchstate_str(proc->state.dpatch);
+                const char* charClass = class_str(proc_iter->state.cls);
+                const char* charState = execstate_str(proc_iter->state.exec);
+                const char* charStatus = dpatchstate_str(proc_iter->state.dpatch);
                 char charPri[4];
-                itoa(charPri, (int) proc->state.pri);
+                itoa(charPri, (int) proc_iter->state.pri);
 
                 write(COM1, STR_BUF(msgName));
-                write(COM1, proc->name, strlen(proc->name));
+                write(COM1, DSTR_BUF(proc_iter->name));
                 write(COM1, STR_BUF(msgClass));
-                write(COM1, charClass, strlen(charClass));
+                write(COM1, DSTR_BUF(charClass));
                 write(COM1, STR_BUF(msgPri));
-                write(COM1, charPri, strlen(charPri));
+                write(COM1, DSTR_BUF(charPri));
                 write(COM1, STR_BUF(msgState));
-                write(COM1, charState, strlen(charState));
+                write(COM1, DSTR_BUF(charState));
                 write(COM1, STR_BUF(msgStatus));
-                write(COM1, charStatus, strlen(charStatus));
+                write(COM1, DSTR_BUF(charStatus));
                 write(COM1, STR_BUF("\r\n"));
-                if (node_temp->p_next == NULL)
+                if (proc_iter->p_next == NULL)
                 {
                     break;
                 }
-                node_temp = node_temp->p_next;
+                proc_iter = proc_iter->p_next;
             }
         }
    
@@ -926,9 +914,9 @@ int shutdownCommand() {
         // clean up all processes
         for (unsigned int i = 0; i < sizeof(pcb_queues) / sizeof(struct pcb_queue); ++i)
         {
-            while (pcb_queues[i].head != NULL)
+            while (pcb_queues[i].pcb_head != NULL)
             {
-                struct pcb* hdl = pcb_queues[i].head->pcb_elem;
+                struct pcb* hdl = pcb_queues[i].pcb_head;
                 pcb_remove(hdl);
                 pcb_free(hdl);
             }
@@ -1055,7 +1043,13 @@ unsigned char hexParsable(const char* string, size_t size) {
         }
         for (size_t i = 2; i < size; ++i)
         {
-            if ( ( (string[i] > '9') || (string[i] < '0') ) && ( (string[i] > 'F') || (string[i] < 'A') ) )
+            if ( 
+                ( (string[i] > '9') || (string[i] < '0') ) && 
+                ( 
+                    ( (string[i] > 'F') || (string[i] < 'A') ) &&
+                    ( (string[i] > 'f') || (string[i] < 'a') )
+                )
+            )
             {
                 return 0;
             }
@@ -1185,7 +1179,7 @@ int allocateMemoryCommand() {
     const char baseMsg[] = "The address of the allocated memory is: ";
     
     write(COM1, STR_BUF(baseMsg));
-    write(COM1, STR_BUF(addressMsg));
+    write(COM1, DSTR_BUF(addressMsg));
     write(COM1, STR_BUF("\r\n"));
     
     return 0;
@@ -1254,16 +1248,16 @@ int showAllocatedMemoryCommand() {
     
         //convert the integer to hex that is a string to be printed
         addressToHex(addressarr, addressPtr);
-        write(COM1, STR_BUF(addressarr));
+        write(COM1, DSTR_BUF(addressarr));
 
         
-        char printSize[16] = { 0 };
+        char printSize[10];
         itoa(printSize, (int) (currList -> blk_size));
         
         char sizeMsg[] = "\tSize: ";
         char newLine[] = "\r\n";
         write(COM1, STR_BUF(sizeMsg));
-        write(COM1, STR_BUF(printSize));
+        write(COM1, DSTR_BUF(printSize));
         write(COM1, STR_BUF(newLine));
         
         currList = currList -> p_next;
@@ -1287,13 +1281,13 @@ int showFreeMemoryCommand() {
     
         //convert the integer to hex that is a string to be printed
         addressToHex(addressarr, addressPtr);
-        write(COM1, STR_BUF(addressarr));
-        char printSize[6];
+        write(COM1, DSTR_BUF(addressarr));
+        char printSize[10];
         itoa(printSize, (int) (currList -> blk_size));
         char sizeMsg[] = "\tSize: ";
         char newLine[] = "\r\n";
         write(COM1, STR_BUF(sizeMsg));
-        write(COM1, STR_BUF(printSize));
+        write(COM1, DSTR_BUF(printSize));
         write(COM1, STR_BUF(newLine));
         
         currList = currList -> p_next;

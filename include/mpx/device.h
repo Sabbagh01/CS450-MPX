@@ -12,33 +12,34 @@ typedef enum {
 } device;
 
 typedef enum io_op {
-    IO_READ =  0x00,
-    IO_WRITE = 0x01,
+    IO_OP_READ =  0x00,
+    IO_OP_WRITE = 0x01,
 } io_op;
 
 struct dcb;
 
 struct iocb
 {
-    unsigned char op: 1;
-    struct pcb* proc;
-    struct dcb* dev;
     struct iocb* p_next;
+    struct pcb* pcb_req;
     void* buffer;
     size_t buffer_sz;
+    unsigned char io_op: 1;
 };
 
 struct dcb
 {
+    struct iocb* iocb_queue_head;
+    void* rbuffer;
+    size_t rbuffer_sz;
+    size_t rbuffer_ix_read; // read index
+    size_t rbuffer_ix_write; // write index
     unsigned char open:  1; // allocation state
     unsigned char idle:  1; // indicates no active operation
     unsigned char op:    1; // current (active) operation, if any
     unsigned char event: 1; // event flag
-    struct pcb* curr_proc;
-    struct iocb* op_queue;
-    void* rbuffer;
-    size_t rbuffer_sz;
-    size_t rbuffer_pos;
 };
+
+extern struct dcb* dcb_devices;
 
 #endif

@@ -73,9 +73,9 @@ struct pcb_state {
  @brief
     Defines a process control block (PCB) structure for maintaining process information
     for a process.
- @var pcb::pname
-    The current name of a process
- @var pcb::state
+@var pcb::p_next
+    Pointer to another node if the PCB is in a queue.
+@var pcb::state
     The state of a PCB. Includes process execution, dispatch, class, and priority.
  @var pcb::pstackseg
     A pointer to the stack section allocated for a process.
@@ -86,49 +86,35 @@ struct pcb_state {
  @var pcb::curr_io
     A pointer to a current I/O operation being done by a process. If not NULL,
     the process is waiting for I/O and will be blocked.
+@var pcb::pname
+    The current name of a process.
 */
 struct pcb {
-    char name[MPX_PCB_PROCNAME_BUFFER_SZ];
-    struct pcb_queue_node* pnode;
+    struct pcb* p_next;
     struct pcb_state state;
     void* pstackseg;
     struct context* pctxt;
-
     struct iocb* curr_io;
-};
-
-/**
- @struct pcb_queue_node
- @brief
-    A node to hold queued PCB handles for a `pcb_queue`.
- @var pcb_queue_node::pcb_elem
-    A pointer to an existing PCB.
- @var pcb_queue_node::p_next
-    A pointer to a next entry in a queue. NULL if there is no next entry.
-*/
-struct pcb_queue_node
-{
-    struct pcb* pcb_elem;
-    struct pcb_queue_node* p_next;
+    char name[MPX_PCB_PROCNAME_BUFFER_SZ];
 };
 
 /**
  @struct pcb_queue
  @brief
     A queue to hold queued PCB handles, linked list implementation.
- @var pcb_queue::head
+ @var pcb_queue::pcb_head
     If the queue is not empty, points to head/front of the queue which can be dequeued. NULL otherwise.
- @var pcb_queue::tail
+ @var pcb_queue::pcb_tail
     If the queue is not empty, points to the tail/back of the queue to help enqueue an element.
     NULL otherwise.
- @var pcb_queue::type_pri
+ @var pcb_queue::priority
     Identifies whether the queue is a priority queue. If so, inserting via `pcb_insert()`
     might not insert nodes at the tail and will insert based on first priority.
 */
 struct pcb_queue {
-    struct pcb_queue_node* head;
-    struct pcb_queue_node* tail;
-    const unsigned char type_pri;
+    struct pcb* pcb_head;
+    struct pcb* pcb_tail;
+    const unsigned char ispriority;
 };
 
 #ifndef MPX_PROC_USE_ALT_QUEUES
