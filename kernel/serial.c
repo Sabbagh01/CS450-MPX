@@ -195,14 +195,21 @@ int serial_poll(device dev, char *buffer, size_t len)
 
 #define SERIAL_RBUFFER_SIZE (32)
 unsigned char serial_rbuffers[4][SERIAL_RBUFFER_SIZE];
-struct dcb serial_dcb_list[4];
+// serial ports start closed
+struct dcb serial_dcb_list[4] = {
+    { NULL, &serial_rbuffers[0], SERIAL_RBUFFER_SIZE, 0, 0, 0, 1, 0, 0 },
+    { NULL, &serial_rbuffers[1], SERIAL_RBUFFER_SIZE, 0, 0, 0, 1, 0, 0 },
+    { NULL, &serial_rbuffers[2], SERIAL_RBUFFER_SIZE, 0, 0, 0, 1, 0, 0 },
+    { NULL, &serial_rbuffers[3], SERIAL_RBUFFER_SIZE, 0, 0, 0, 1, 0, 0 },
+};
 
-enum serial_open_error
+enum serial_errors
 {
-    SERIAL_O_ERR_DEV_NOT_FOUND     =   -1,
+    SERIAL_ERR_DEV_NOT_FOUND       =   -1,
     SERIAL_O_ERR_INVALID_EVPTR     = -101,
     SERIAL_O_ERR_INVALID_SPEED     = -102,
     SERIAL_O_ERR_PORT_ALREADY_OPEN = -103,
+    SERIAL_C_ERR_PORT_NOT_OPEN     = -201,
 };
 
 const int serial_supported_baud_rates[] =
@@ -217,13 +224,13 @@ int serial_open(device dev, int speed)
 {
 	int dno = serial_devno(dev);
 	if (dno == -1) {
-		return SERIAL_O_ERR_DEV_NOT_FOUND;
+		return SERIAL_ERR_DEV_NOT_FOUND;
 	}
-    if (initialized[dno])
+    if (!serial_dcb_list[dno].open)
     {
         return SERIAL_O_ERR_PORT_ALREADY_OPEN;
     }
-    for (int i = 0; i < sizeof(serial_supported_baud_rates); ++i)
+    for (size_t i = 0; i < sizeof(serial_supported_baud_rates); ++i)
     {
         if (serial_supported_baud_rates[i] == speed)
         {
@@ -233,39 +240,30 @@ int serial_open(device dev, int speed)
     return SERIAL_O_ERR_INVALID_SPEED;
     
     baud_rate_matched: ;
-    // alias
-    struct dcb* newdcb = &serial_dcb_list[dno];
-        newdcb->iocb_queue_head = NULL;
-        newdcb->rbuffer           = (void*)&serial_rbuffers[dno];
-        newdcb->rbuffer_sz        = SERIAL_RBUFFER_SIZE;
-        newdcb->rbuffer_idx_read  = 0;
-        newdcb->rbuffer_idx_write = 0;
-        newdcb->open  = 1;
-        newdcb->idle  = 1;
-        newdcb->event = 0;
+    serial_dcb_list[dno].open = 1;
 
     switch (dev)
     {
     case COM1:
-        if (!initialized[serial_devno(COM3)])
+        if (!serial_dcb_list[serial_devno(COM3)].open)
         {
             idt_install(IRQV_BASE + 4, serial_isr);
         }
         break;
     case COM3:
-        if (!initialized[serial_devno(COM1)])
+        if (!serial_dcb_list[serial_devno(COM1)].open)
         {
             idt_install(IRQV_BASE + 4, serial_isr);
         }
         break;
     case COM2:
-        if (!initialized[serial_devno(COM4)])
+        if (!serial_dcb_list[serial_devno(COM4)].open)
         {
             idt_install(IRQV_BASE + 3, serial_isr);
         }
         break;
     case COM4:
-        if (!initialized[serial_devno(COM2)])
+        if (!serial_dcb_list[serial_devno(COM2)].open)
         {
             idt_install(IRQV_BASE + 3, serial_isr);
         }
@@ -294,15 +292,80 @@ int serial_open(device dev, int speed)
     outb(dev + MCR, 0x08);	//enable device interrupts, no rts/dsr
     outb(dev + IER, 0x01); //enable input ready interrupts
 	(void)inb(dev);		//read bit to reset port
-	initialized[dno] = 1;
 	return 0;
 }
 
-int serial_close(device dev);
+int serial_close(device dev)
+{
+    int dno = serial_devno(dev);
+    if (dno == -1)
+    {
+        return SERIAL_ERR_DEV_NOT_FOUND;
+    }
+    if (!serial_dcb_list[dno].open)
+    {
+        return SERIAL_C_ERR_PORT_NOT_OPEN;
+    }
+
+    serial_dcb_list[dno].open = 0;
+
+    switch (dev)
+    {
+    case COM1:
+        if (serial_dcb_list[serial_devno(COM3)].open)
+        {
+            goto skip_pic_disable;
+        }
+        break;
+    case COM3:
+        if (serial_dcb_list[serial_devno(COM1)].open)
+        {
+            goto skip_pic_disable;
+        }
+        break;
+    case COM2:
+        if (serial_dcb_list[serial_devno(COM4)].open)
+        {
+            goto skip_pic_disable;
+        }
+        break;
+    case COM4:
+        if (serial_dcb_list[serial_devno(COM2)].open)
+        {
+            goto skip_pic_disable;
+        }
+        break;
+    }
+    cli();
+    int mask = inb(PIC1_MASK);
+    switch (dev)
+    {
+    case COM1:
+    case COM3:
+        mask |= (1 << (SERIAL_COM_1_3_IRQ - 1));
+    case COM2:
+    case COM4:
+        mask |= (1 << (SERIAL_COM_2_4_IRQ - 1));
+    }
+    outb(PIC1_MASK, mask);
+    sti();
+
+    skip_pic_disable: ;
+    outb(dev + IER, 0x00); // disable all serial interrupts
+    outb(dev + MCR, 0x00); // disable all device interrupts
+
+    return 0;
+}
 
 int serial_read(device dev, char* buf, size_t len);
 
 int serial_write(device dev, char* buf, size_t len);
+
+void serial_schedule_io(device dev, struct pcb* pcb, void* buffer,
+                        size_t buffer_sz, unsigned char io_op)
+{
+    return;
+}
 
 void serial_interrupt(void) {
     return;

@@ -42,7 +42,7 @@ struct context* sys_call(struct context* context_in)
             // Pass I/I request to iocb scheduler to queue iocb
             //  I/O scheduler calls serial_read/write if device available
             //  this should possibly(?) handle the case of no pcb
-            dev_schedule_io(dev, pcb_running, buffer, buffer_sz, IO_OP_WRITE);
+            serial_schedule_io(dev, pcb_running, buffer, buffer_sz, IO_OP_WRITE);
             // TODO: Block calling process, dispatch a ready process
         }
 

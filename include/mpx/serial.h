@@ -54,6 +54,9 @@ int serial_read(device dev, char* buf, size_t len);
 */
 int serial_write(device dev, char* buf, size_t len);
 
+void serial_schedule_io(device dev, struct pcb* pcb, void* buffer,
+                        size_t buffer_sz, unsigned char io_op);
+
 extern void serial_isr(void*);
 
 /**

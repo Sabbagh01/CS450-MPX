@@ -40,6 +40,4 @@ struct dcb
     unsigned char event: 1; // event flag
 };
 
-void dev_schedule_io(device dev, struct pcb* pcb, void* buffer, size_t buffer_sz, unsigned char io_op);
-
 #endif
