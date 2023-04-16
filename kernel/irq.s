@@ -47,5 +47,6 @@ sys_call_isr_ret:
 ;;; Serial port ISR. To be implemented in Module R6
 extern serial_interrupt
 serial_isr:
+    ; TODO: Work on ISR
     call serial_interrupt
 	iret

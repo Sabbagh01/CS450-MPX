@@ -68,6 +68,11 @@ void kmain(void)
 	klogv(COM1, "Initializing Interrupt Vectors...");
     irq_init (); // install initial (default) basic exception or trap handlers
 
+    // TODO: Enable installation of serial ISRs
+    // install serial interrupt handlers
+    // idt_install(0x23, serial_isr);
+    // idt_install(0x24, serial_isr);
+
 	// 5) Programmable Interrupt Controller -- mpx/interrupts.h
 	// Initialize the PIC so that the ISRs installed in the previous step are connected
 	// correctly.

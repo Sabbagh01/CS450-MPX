@@ -54,6 +54,8 @@ int serial_read(device dev, char* buf, size_t len);
 */
 int serial_write(device dev, char* buf, size_t len);
 
+extern void serial_isr(void*);
+
 /**
 
 */

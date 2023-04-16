@@ -5,6 +5,7 @@
 #include <mpx/context.h>
 #include <mpx/sys_req.h>
 #include <mpx/pcb.h>
+#include <mpx/serial.h>
 #include <mpx/device.h>
 
 
@@ -14,6 +15,12 @@ struct context* sys_call(struct context* context_in)
 {
     // get requested syscall operation
     int op = context_in->eax;
+    device dev;
+    void* buffer;
+    size_t buffer_sz;
+
+    // TODO: Check for completed I/O (via event flag) to then unblock and ready associated pcb
+    // TODO: Schedule next iocb via I/O via iocb scheduler, if any
     
     struct pcb* runnext;
     context_in->eax = 0;
@@ -23,10 +30,20 @@ struct context* sys_call(struct context* context_in)
         // given buffer:        context_in->ecx
         // given buffer length: context_in->edx
         case READ:
+        {
+            // TODO: Similar stuff as WRITE below
+        }
         case WRITE:
         {
-            context_in->eax = -1;
-            return (void*)0;
+            dev = (device)context_in->ebx;
+            buffer = (void*)context_in->ecx;
+            buffer_sz = (size_t)context_in->edx;
+            // TODO: Process dcb 
+            // Pass I/I request to iocb scheduler to queue iocb
+            //  I/O scheduler calls serial_read/write if device available
+            //  this should possibly(?) handle the case of no pcb
+            dev_schedule_io(dev, pcb_running, buffer, buffer_sz, IO_OP_WRITE);
+            // TODO: Block calling process, dispatch a ready process
         }
 
         // note: ctxt_in points to the stack pointer on the stack owned by a running process

@@ -34,6 +34,7 @@ struct dcb
     size_t rbuffer_sz;
     size_t rbuffer_ix_read; // read index
     size_t rbuffer_ix_write; // write index
+    device devid;
     unsigned char open:  1; // allocation state
     unsigned char idle:  1; // indicates no active operation
     unsigned char op:    1; // current (active) operation, if any
@@ -41,5 +42,7 @@ struct dcb
 };
 
 extern struct dcb* dcb_devices;
+
+void dev_schedule_io(device dev, struct pcb* pcb, void* buffer, size_t buffer_sz, unsigned char io_op);
 
 #endif
