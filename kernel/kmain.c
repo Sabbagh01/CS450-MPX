@@ -35,11 +35,7 @@ static void klogv(device dev, const char *msg)
 void kmain(void)
 {
     int stat;
-	// 0) Serial I/O -- mpx/serial.h
-	// Note that here, you should call the function *before* the output via klogv(),
-	// or the message won't print. In all other cases, the output should come first
-	// as it describes what is about to happen.
-    stat = serial_init (COM1);
+    stat = serial_open(COM1, 9600);
     if (!stat)
     {
         // handle the error
@@ -67,11 +63,6 @@ void kmain(void)
 	// (bare minimum for a functioning x86 system).
 	klogv(COM1, "Initializing Interrupt Vectors...");
     irq_init (); // install initial (default) basic exception or trap handlers
-
-    // TODO: Enable installation of serial ISRs
-    // install serial interrupt handlers
-    // idt_install(0x23, serial_isr);
-    // idt_install(0x24, serial_isr);
 
 	// 5) Programmable Interrupt Controller -- mpx/interrupts.h
 	// Initialize the PIC so that the ISRs installed in the previous step are connected

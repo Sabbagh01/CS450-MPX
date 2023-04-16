@@ -6,6 +6,9 @@
  @brief Kernel functions related to software and hardware interrupts
 */
 
+#define PIC1_MASK (0x21)
+#define IRQV_BASE (0x20)
+
 /** Disable interrupts */
 #define sti() __asm__ volatile ("sti")
 

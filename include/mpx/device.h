@@ -32,16 +32,13 @@ struct dcb
     struct iocb* iocb_queue_head;
     void* rbuffer;
     size_t rbuffer_sz;
-    size_t rbuffer_ix_read; // read index
-    size_t rbuffer_ix_write; // write index
-    device devid;
+    size_t rbuffer_idx_read;  // read index (to read from next)
+    size_t rbuffer_idx_write; // write index (to write to next)
     unsigned char open:  1; // allocation state
     unsigned char idle:  1; // indicates no active operation
     unsigned char op:    1; // current (active) operation, if any
     unsigned char event: 1; // event flag
 };
-
-extern struct dcb* dcb_devices;
 
 void dev_schedule_io(device dev, struct pcb* pcb, void* buffer, size_t buffer_sz, unsigned char io_op);
 

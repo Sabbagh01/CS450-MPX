@@ -1,5 +1,8 @@
 #include <mpx/io.h>
+#include <mpx/gdt.h>
 #include <mpx/serial.h>
+#include <mpx/interrupts.h>
+#include <memory.h>
 #include <mpx/sys_req.h>
 #include <ctype.h>
 
@@ -190,7 +193,110 @@ int serial_poll(device dev, char *buffer, size_t len)
     return currsz;
 }
 
-int serial_open(device dev, int speed);
+#define SERIAL_RBUFFER_SIZE (32)
+unsigned char serial_rbuffers[4][SERIAL_RBUFFER_SIZE];
+struct dcb serial_dcb_list[4];
+
+enum serial_open_error
+{
+    SERIAL_O_ERR_DEV_NOT_FOUND     =   -1,
+    SERIAL_O_ERR_INVALID_EVPTR     = -101,
+    SERIAL_O_ERR_INVALID_SPEED     = -102,
+    SERIAL_O_ERR_PORT_ALREADY_OPEN = -103,
+};
+
+const int serial_supported_baud_rates[] =
+{
+    110, 150, 300, 600, 1200, 2400, 4800, 9600, 19200,
+};
+
+#define SERIAL_COM_1_3_IRQ (4)
+#define SERIAL_COM_2_4_IRQ (3)
+
+int serial_open(device dev, int speed)
+{
+	int dno = serial_devno(dev);
+	if (dno == -1) {
+		return SERIAL_O_ERR_DEV_NOT_FOUND;
+	}
+    if (initialized[dno])
+    {
+        return SERIAL_O_ERR_PORT_ALREADY_OPEN;
+    }
+    for (int i = 0; i < sizeof(serial_supported_baud_rates); ++i)
+    {
+        if (serial_supported_baud_rates[i] == speed)
+        {
+            goto baud_rate_matched;
+        }
+    }
+    return SERIAL_O_ERR_INVALID_SPEED;
+    
+    baud_rate_matched: ;
+    // alias
+    struct dcb* newdcb = &serial_dcb_list[dno];
+        newdcb->iocb_queue_head = NULL;
+        newdcb->rbuffer           = (void*)&serial_rbuffers[dno];
+        newdcb->rbuffer_sz        = SERIAL_RBUFFER_SIZE;
+        newdcb->rbuffer_idx_read  = 0;
+        newdcb->rbuffer_idx_write = 0;
+        newdcb->open  = 1;
+        newdcb->idle  = 1;
+        newdcb->event = 0;
+
+    switch (dev)
+    {
+    case COM1:
+        if (!initialized[serial_devno(COM3)])
+        {
+            idt_install(IRQV_BASE + 4, serial_isr);
+        }
+        break;
+    case COM3:
+        if (!initialized[serial_devno(COM1)])
+        {
+            idt_install(IRQV_BASE + 4, serial_isr);
+        }
+        break;
+    case COM2:
+        if (!initialized[serial_devno(COM4)])
+        {
+            idt_install(IRQV_BASE + 3, serial_isr);
+        }
+        break;
+    case COM4:
+        if (!initialized[serial_devno(COM2)])
+        {
+            idt_install(IRQV_BASE + 3, serial_isr);
+        }
+        break;
+    }
+    unsigned int brd = 115200 / speed;
+	outb(dev + IER, 0x00);	//disable all serial interrupts
+	outb(dev + LCR, 0x80);	//set line control register
+	outb(dev + DLL, (char)(brd & 0x00FF));	//set bsd least significant byte
+	outb(dev + DLM, (char)(brd >> 8));	//set brd most significant byte
+	outb(dev + LCR, 0x03);	//lock divisor; 8bits, no parity, one stop
+	outb(dev + FCR, 0xC7);	//enable fifo, clear, 14byte threshold
+    cli();
+    int mask = inb(PIC1_MASK);
+    switch (dev)
+    {
+    case COM1:
+    case COM3:
+        mask |= (1 << (SERIAL_COM_1_3_IRQ - 1));
+    case COM2:
+    case COM4:
+        mask |= (1 << (SERIAL_COM_2_4_IRQ - 1));
+    }
+    outb(PIC1_MASK, mask);
+    sti();
+    outb(dev + MCR, 0x08);	//enable device interrupts, no rts/dsr
+    outb(dev + IER, 0x01); //enable input ready interrupts
+	(void)inb(dev);		//read bit to reset port
+	initialized[dno] = 1;
+	return 0;
+}
 
 int serial_close(device dev);
 
