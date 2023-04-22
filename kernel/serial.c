@@ -210,6 +210,7 @@ enum serial_errors
     SERIAL_O_ERR_INVALID_SPEED     = -102,
     SERIAL_O_ERR_PORT_ALREADY_OPEN = -103,
     SERIAL_C_ERR_PORT_NOT_OPEN     = -201,
+    SERIAL_S_ERR_PORT_NOT_OPEN     = -501,
 };
 
 const int serial_supported_baud_rates[] =
@@ -245,29 +246,37 @@ int serial_open(device dev, int speed)
     switch (dev)
     {
     case COM1:
+    {
         if (!serial_dcb_list[serial_devno(COM3)].open)
         {
             idt_install(IRQV_BASE + 4, serial_isr);
         }
         break;
+    }
     case COM3:
+    {
         if (!serial_dcb_list[serial_devno(COM1)].open)
         {
             idt_install(IRQV_BASE + 4, serial_isr);
         }
         break;
+    }
     case COM2:
+    {
         if (!serial_dcb_list[serial_devno(COM4)].open)
         {
             idt_install(IRQV_BASE + 3, serial_isr);
         }
         break;
+    }
     case COM4:
+    {
         if (!serial_dcb_list[serial_devno(COM2)].open)
         {
             idt_install(IRQV_BASE + 3, serial_isr);
         }
         break;
+    }
     }
     unsigned int brd = 115200 / speed;
 	outb(dev + IER, 0x00);	//disable all serial interrupts
@@ -282,10 +291,14 @@ int serial_open(device dev, int speed)
     {
     case COM1:
     case COM3:
+    {
         mask |= IRQ_BIT(SERIAL_IRQ_COM_1_3);
+    }
     case COM2:
     case COM4:
+    {
         mask |= IRQ_BIT(SERIAL_IRQ_COM_2_4);
+    }
     }
     outb(PIC1_MASK, mask);
     sti();
@@ -312,29 +325,37 @@ int serial_close(device dev)
     switch (dev)
     {
     case COM1:
+    {
         if (serial_dcb_list[serial_devno(COM3)].open)
         {
             goto skip_pic_disable;
         }
         break;
+    }
     case COM3:
+    {
         if (serial_dcb_list[serial_devno(COM1)].open)
         {
             goto skip_pic_disable;
         }
         break;
+    }
     case COM2:
+    {
         if (serial_dcb_list[serial_devno(COM4)].open)
         {
             goto skip_pic_disable;
         }
         break;
+    }
     case COM4:
+    {
         if (serial_dcb_list[serial_devno(COM2)].open)
         {
             goto skip_pic_disable;
         }
         break;
+    }
     }
     cli();
     int mask = inb(PIC1_MASK);
@@ -342,10 +363,14 @@ int serial_close(device dev)
     {
     case COM1:
     case COM3:
+    {
         mask |= IRQ_BIT(SERIAL_IRQ_COM_1_3);
+    }
     case COM2:
     case COM4:
+    {
         mask |= IRQ_BIT(SERIAL_IRQ_COM_2_4);
+    }
     }
     outb(PIC1_MASK, mask);
     sti();
@@ -361,13 +386,45 @@ int serial_read(device dev, char* buf, size_t len);
 
 int serial_write(device dev, char* buf, size_t len);
 
-void serial_schedule_io(device dev, struct pcb* pcb, void* buffer,
+int serial_schedule_io(device dev, struct pcb* pcb, unsigned char* buffer,
                         size_t buffer_sz, unsigned char io_op)
 {
-    return;
+    struct dcb* dcb_select = &serial_dcb_list[serial_devno(dev)];
+    if (!dcb_select->open)
+    {
+        return SERIAL_S_ERR_PORT_NOT_OPEN;
+    }
+    // check for no queued operations
+    if (dcb_select->iocb_queue_head == NULL)
+    {
+        switch (io_op)
+        {
+        case IO_OP_READ:
+            serial_read(dev, (char*)buffer, buffer_sz);
+            break;
+        case IO_OP_WRITE:
+            serial_write(dev, (char*)buffer, buffer_sz);
+            break;
+        }
+    }
+    else
+    {
+        struct iocb* iocb_new = (struct iocb*) sys_alloc_mem(sizeof(struct iocb));
+            iocb_new->pcb_rq     = pcb;
+            iocb_new->buffer     = buffer;
+            iocb_new->buffer_sz  = buffer_sz;
+            iocb_new->buffer_idx = 0;
+            iocb_new->io_op      = io_op;
+        
+        struct iocb* iocb_iter = dcb_select->iocb_queue_head;
+        while (iocb_iter->p_next != NULL)
+        {
+            iocb_iter = iocb_iter->p_next;
+        }
+        iocb_iter->p_next = iocb_new;
+    }
+    return 0;
 }
-
-#define SERIAL_IIR_
 
 void serial_interrupt(void) {
     cli();
@@ -382,6 +439,7 @@ void serial_interrupt(void) {
     // select specific device via bit 0 of IIR in associated serial devices 
     // COM2 or COM4
     case IRQ_BIT(SERIAL_IRQ_COM_2_4):
+    {
         // check for COM2 interrupt
         serial_iir = inb(COM2 + IIR);
         if (serial_iir & 0x01)
@@ -395,8 +453,10 @@ void serial_interrupt(void) {
             dcb_select = &serial_dcb_list[serial_devno(COM4)];
         }
         break;
+    }
     // COM1 or COM3
     case IRQ_BIT(SERIAL_IRQ_COM_1_3):
+    {
         // check for COM1 interrupt
         serial_iir = inb(COM1 + IIR);
         if (serial_iir & 0x01)
@@ -411,6 +471,7 @@ void serial_interrupt(void) {
         }
         break;
     }
+    }
 
     // check that selected device is open, if not, ignore interrupt and return
     if (!dcb_select->open)
@@ -422,18 +483,26 @@ void serial_interrupt(void) {
     switch (serial_iir & 0x06)
     {
     case (0 << 1): // Modem Status
+    {
         inb(dcb_select->dev + MSR);
         break;
+    }
     case (1 << 1): // Output
+    {
         serial_output_interrupt(dcb_select);
         break;
+    }
     case (2 << 1): // Input
+    {
         serial_input_interrupt(dcb_select);
         break;
+    }
     case (3 << 1): // Line Status
+    {
         // simply read and discard
         inb(dcb_select->dev + LSR);
         break;
+    }
     }
     
     handler_exit: ;

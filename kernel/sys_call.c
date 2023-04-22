@@ -31,21 +31,76 @@ struct context* sys_call(struct context* context_in)
         // given buffer length: context_in->edx
         case READ:
         {
-            // TODO: Similar stuff as WRITE below
+            if (pcb_running != NULL)
+            {
+                dev = (device)context_in->ebx;
+                buffer = (unsigned char*)context_in->ecx;
+                buffer_sz = (size_t)context_in->edx;
+                serial_schedule_io(dev, pcb_running, buffer, buffer_sz, IO_OP_READ);
+
+                // block process after request
+                pcb_running->state.exec = BLOCKED;
+                // set the requesting process' stack pointer to the context to switch to after next run
+                pcb_running->pctxt = context_in;
+                // enqueue the requesting process into the active blocked queue
+                pcb_insert(pcb_running);
+                if (pcb_queues[0].pcb_head != NULL)
+                {
+                    // dequeue the next active ready process
+                    runnext = pcb_queues[0].pcb_head;
+                    pcb_remove(runnext);                    
+                    // set the running pcb to the dequeued one and return its context to switch to
+                    pcb_running = runnext;
+                    runnext->state.exec = RUNNING;
+                    return runnext->pctxt;
+                }
+                else // this case should never happen as long as there's an idle process
+                {
+                    pcb_running = NULL;
+                }
+            }
+            else
+            {
+                context_in->eax = -1;
+            }
+            break;
         }
         case WRITE:
         {
-            dev = (device)context_in->ebx;
-            buffer = (void*)context_in->ecx;
-            buffer_sz = (size_t)context_in->edx;
-            // TODO: Process dcb 
-            // Pass I/I request to iocb scheduler to queue iocb
-            //  I/O scheduler calls serial_read/write if device available
-            //  this should possibly(?) handle the case of no pcb
-            serial_schedule_io(dev, pcb_running, buffer, buffer_sz, IO_OP_WRITE);
-            // TODO: Block calling process, dispatch a ready process
-        }
+            if (pcb_running != NULL)
+            {
+                dev = (device)context_in->ebx;
+                buffer = (unsigned char*)context_in->ecx;
+                buffer_sz = (size_t)context_in->edx;
+                serial_schedule_io(dev, pcb_running, buffer, buffer_sz, IO_OP_WRITE);
 
+                // block process after request
+                pcb_running->state.exec = BLOCKED;
+                // set the requesting process' stack pointer to the context to switch to after next run
+                pcb_running->pctxt = context_in;
+                // enqueue the requesting process into the active blocked queue
+                pcb_insert(pcb_running);
+                if (pcb_queues[0].pcb_head != NULL)
+                {
+                    // dequeue the next active ready process
+                    runnext = pcb_queues[0].pcb_head;
+                    pcb_remove(runnext);                    
+                    // set the running pcb to the dequeued one and return its context to switch to
+                    pcb_running = runnext;
+                    runnext->state.exec = RUNNING;
+                    return runnext->pctxt;
+                }
+                else // this case should never happen as long as there's an idle process
+                {
+                    pcb_running = NULL;
+                }
+            }
+            else
+            {
+                context_in->eax = -1;
+            }
+            break;
+        }
         // note: ctxt_in points to the stack pointer on the stack owned by a running process
         // goal for scheduling out a process is to save the process context on its own
         //     stack, then set pcb->psp to the stack pointer (ESP) so we can dereference

@@ -21,10 +21,10 @@ struct dcb;
 struct iocb
 {
     struct iocb* p_next;
-    struct pcb* pcb_req;
+    struct pcb* pcb_rq;
     unsigned char* buffer;
     size_t buffer_sz;
-    size_t buffer_idx; // serves as to read from (write)
+    size_t buffer_idx; // indicates progress (how much has been read from, written to the buffer)
     unsigned char io_op: 1;
 };
 
