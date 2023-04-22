@@ -272,7 +272,7 @@ int serial_open(device dev, int speed)
     unsigned int brd = 115200 / speed;
 	outb(dev + IER, 0x00);	//disable all serial interrupts
 	outb(dev + LCR, 0x80);	//set line control register
-	outb(dev + DLL, (char)(brd & 0x00FF));	//set bsd least significant byte
+	outb(dev + DLL, (char)(brd));	    //set bsd least significant byte
 	outb(dev + DLM, (char)(brd >> 8));	//set brd most significant byte
 	outb(dev + LCR, 0x03);	//lock divisor; 8bits, no parity, one stop
 	outb(dev + FCR, 0xC7);	//enable fifo, clear, 14byte threshold
@@ -289,9 +289,9 @@ int serial_open(device dev, int speed)
     }
     outb(PIC1_MASK, mask);
     sti();
-    outb(dev + MCR, 0x08);	//enable device interrupts, no rts/dsr
-    outb(dev + IER, 0x01); //enable input ready interrupts
-	(void)inb(dev);		//read bit to reset port
+    outb(dev + MCR, (1 << 3));	// only enable device interrupts, set no rts/dsr
+    outb(dev + IER, (1 << 0)); // only enable serial received data interrupts
+	inb(dev); // read byte to reset port
 	return 0;
 }
 
@@ -418,11 +418,11 @@ void serial_interrupt(void) {
         goto handler_exit;
     }
 
-    // check interrupt type for the device
+    // check interrupt type for the device and execute second-level handlers
     switch (serial_iir & 0x06)
     {
     case (0 << 1): // Modem Status
-        // TODO: Add second-level handler
+        inb(dcb_select->dev + MSR);
         break;
     case (1 << 1): // Output
         serial_output_interrupt(dcb_select);
@@ -431,7 +431,8 @@ void serial_interrupt(void) {
         serial_input_interrupt(dcb_select);
         break;
     case (3 << 1): // Line Status
-        // TODO: Add second-level handler
+        // simply read and discard
+        inb(dcb_select->dev + LSR);
         break;
     }
     
