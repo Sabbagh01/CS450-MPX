@@ -197,10 +197,10 @@ int serial_poll(device dev, char *buffer, size_t len)
 unsigned char serial_rbuffers[4][SERIAL_RBUFFER_SIZE];
 // serial ports start closed
 struct dcb serial_dcb_list[4] = {
-    { NULL, &serial_rbuffers[0], SERIAL_RBUFFER_SIZE, 0, 0, 0, 1, 0, 0 },
-    { NULL, &serial_rbuffers[1], SERIAL_RBUFFER_SIZE, 0, 0, 0, 1, 0, 0 },
-    { NULL, &serial_rbuffers[2], SERIAL_RBUFFER_SIZE, 0, 0, 0, 1, 0, 0 },
-    { NULL, &serial_rbuffers[3], SERIAL_RBUFFER_SIZE, 0, 0, 0, 1, 0, 0 },
+    { COM1, NULL, (unsigned char*)&serial_rbuffers[0], SERIAL_RBUFFER_SIZE, 0, 0, 0, 1, 0, 0 },
+    { COM2, NULL, (unsigned char*)&serial_rbuffers[1], SERIAL_RBUFFER_SIZE, 0, 0, 0, 1, 0, 0 },
+    { COM3, NULL, (unsigned char*)&serial_rbuffers[2], SERIAL_RBUFFER_SIZE, 0, 0, 0, 1, 0, 0 },
+    { COM4, NULL, (unsigned char*)&serial_rbuffers[3], SERIAL_RBUFFER_SIZE, 0, 0, 0, 1, 0, 0 },
 };
 
 enum serial_errors
@@ -217,8 +217,8 @@ const int serial_supported_baud_rates[] =
     110, 150, 300, 600, 1200, 2400, 4800, 9600, 19200,
 };
 
-#define SERIAL_COM_1_3_IRQ (4)
-#define SERIAL_COM_2_4_IRQ (3)
+#define SERIAL_IRQ_COM_2_4 (3)
+#define SERIAL_IRQ_COM_1_3 (4)
 
 int serial_open(device dev, int speed)
 {
@@ -282,10 +282,10 @@ int serial_open(device dev, int speed)
     {
     case COM1:
     case COM3:
-        mask |= (1 << (SERIAL_COM_1_3_IRQ - 1));
+        mask |= IRQ_BIT(SERIAL_IRQ_COM_1_3);
     case COM2:
     case COM4:
-        mask |= (1 << (SERIAL_COM_2_4_IRQ - 1));
+        mask |= IRQ_BIT(SERIAL_IRQ_COM_2_4);
     }
     outb(PIC1_MASK, mask);
     sti();
@@ -342,10 +342,10 @@ int serial_close(device dev)
     {
     case COM1:
     case COM3:
-        mask |= (1 << (SERIAL_COM_1_3_IRQ - 1));
+        mask |= IRQ_BIT(SERIAL_IRQ_COM_1_3);
     case COM2:
     case COM4:
-        mask |= (1 << (SERIAL_COM_2_4_IRQ - 1));
+        mask |= IRQ_BIT(SERIAL_IRQ_COM_2_4);
     }
     outb(PIC1_MASK, mask);
     sti();
@@ -367,10 +367,134 @@ void serial_schedule_io(device dev, struct pcb* pcb, void* buffer,
     return;
 }
 
+#define SERIAL_IIR_
+
 void serial_interrupt(void) {
+    cli();
+    // get IRQ to identify serial device(s)
+    // command to read ISR
+    outb(PIC1_CMD, PIC_READ_ISR);
+    unsigned char irq = inb(PIC1_CMD);
+    struct dcb* dcb_select;
+    unsigned char serial_iir;
+    switch (irq)
+    {
+    // select specific device via bit 0 of IIR in associated serial devices 
+    // COM2 or COM4
+    case IRQ_BIT(SERIAL_IRQ_COM_2_4):
+        // check for COM2 interrupt
+        serial_iir = inb(COM2 + IIR);
+        if (serial_iir & 0x01)
+        {
+            dcb_select = &serial_dcb_list[serial_devno(COM2)];
+            break;
+        }
+        else // COM4 interrupt
+        {
+            serial_iir = inb(COM4 + IIR);
+            dcb_select = &serial_dcb_list[serial_devno(COM4)];
+        }
+        break;
+    // COM1 or COM3
+    case IRQ_BIT(SERIAL_IRQ_COM_1_3):
+        // check for COM1 interrupt
+        serial_iir = inb(COM1 + IIR);
+        if (serial_iir & 0x01)
+        {
+            dcb_select = &serial_dcb_list[serial_devno(COM1)];
+            break;
+        }
+        else // COM3 interrupt
+        {
+            serial_iir = inb(COM3 + IIR);
+            dcb_select = &serial_dcb_list[serial_devno(COM3)];
+        }
+        break;
+    }
+
+    // check that selected device is open, if not, ignore interrupt and return
+    if (!dcb_select->open)
+    {
+        goto handler_exit;
+    }
+
+    // check interrupt type for the device
+    switch (serial_iir & 0x06)
+    {
+    case (0 << 1): // Modem Status
+        // TODO: Add second-level handler
+        break;
+    case (1 << 1): // Output
+        serial_output_interrupt(dcb_select);
+        break;
+    case (2 << 1): // Input
+        serial_input_interrupt(dcb_select);
+        break;
+    case (3 << 1): // Line Status
+        // TODO: Add second-level handler
+        break;
+    }
+    
+    handler_exit: ;
+    outb(PIC1_CMD, PIC_EOI);
+    sti();
     return;
 }
 
-void serial_input_interrupt(struct dcb* dcb);
+void serial_input_interrupt(struct dcb* dcb)
+{
+    unsigned char byte = inb(dcb->dev);
+    if (dcb->op != IO_OP_READ)
+    {
+        if (dcb->rbuffer_idx_read == dcb->rbuffer_idx_write)
+        {
+            return;
+        }
+        dcb->rbuffer[dcb->rbuffer_idx_write] = byte;
+        ++dcb->rbuffer_idx_write;
+        if (dcb->rbuffer_idx_write == dcb->rbuffer_sz)
+        {
+            dcb->rbuffer_idx_write = 0;
+        }
+    }
+    else
+    {
+        // alias
+        struct iocb* iocb_rq = dcb->iocb_queue_head;
 
-void serial_output_interrupt(struct dcb* dcb);
+        iocb_rq->buffer[iocb_rq->buffer_idx] = byte;
+        ++iocb_rq->buffer_idx;
+        if ((iocb_rq->buffer_idx == iocb_rq->buffer_sz) || (byte == '\n'))
+        {
+            dcb->idle = 1;
+            dcb->event = 1;
+        }
+    }
+    return;
+}
+
+void serial_output_interrupt(struct dcb* dcb)
+{
+    if (dcb->op != IO_OP_WRITE)
+    {
+        return;
+    }
+    else
+    {
+        // alias
+        struct iocb* iocb_rq = dcb->iocb_queue_head;
+
+        unsigned char next_byte = iocb_rq->buffer[iocb_rq->buffer_idx];
+        outb(dcb->dev, next_byte);
+        ++iocb_rq->buffer_idx;
+        if (iocb_rq->buffer_idx == iocb_rq->buffer_sz)
+        {
+            dcb->idle = 1;
+            dcb->event = 1;
+            // clear write-out interrupts
+            next_byte = inb(dcb->dev + IER);
+            outb(dcb->dev + IER, next_byte & ~(1 << 1));
+        }
+    }
+    return;
+}

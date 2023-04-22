@@ -22,15 +22,17 @@ struct iocb
 {
     struct iocb* p_next;
     struct pcb* pcb_req;
-    void* buffer;
+    unsigned char* buffer;
     size_t buffer_sz;
+    size_t buffer_idx; // serves as to read from (write)
     unsigned char io_op: 1;
 };
 
 struct dcb
 {
+    device dev;
     struct iocb* iocb_queue_head;
-    void* rbuffer;
+    unsigned char* rbuffer;
     size_t rbuffer_sz;
     size_t rbuffer_idx_read;  // read index (to read from next)
     size_t rbuffer_idx_write; // write index (to write to next)
