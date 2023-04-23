@@ -20,7 +20,7 @@ struct context* sys_call(struct context* context_in)
     size_t buffer_sz;
 
     // TODO: Check for completed I/O (via event flag) to then unblock and ready associated pcb
-    // TODO: Schedule next iocb via I/O via iocb scheduler, if any
+    // TODO: Dequeue next iocb into a dcb if it has completed I/O, if any
     
     struct pcb* runnext;
     context_in->eax = 0;
@@ -36,7 +36,7 @@ struct context* sys_call(struct context* context_in)
                 dev = (device)context_in->ebx;
                 buffer = (unsigned char*)context_in->ecx;
                 buffer_sz = (size_t)context_in->edx;
-                serial_schedule_io(dev, pcb_running, buffer, buffer_sz, IO_OP_READ);
+                serial_schedule_io(dev, buffer, buffer_sz, IO_OP_READ);
 
                 // block process after request
                 pcb_running->state.exec = BLOCKED;
@@ -72,7 +72,7 @@ struct context* sys_call(struct context* context_in)
                 dev = (device)context_in->ebx;
                 buffer = (unsigned char*)context_in->ecx;
                 buffer_sz = (size_t)context_in->edx;
-                serial_schedule_io(dev, pcb_running, buffer, buffer_sz, IO_OP_WRITE);
+                serial_schedule_io(dev, buffer, buffer_sz, IO_OP_WRITE);
 
                 // block process after request
                 pcb_running->state.exec = BLOCKED;

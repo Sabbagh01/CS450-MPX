@@ -197,10 +197,10 @@ int serial_poll(device dev, char *buffer, size_t len)
 unsigned char serial_rbuffers[4][SERIAL_RBUFFER_SIZE];
 // serial ports start closed
 struct dcb serial_dcb_list[4] = {
-    { COM1, NULL, (unsigned char*)&serial_rbuffers[0], SERIAL_RBUFFER_SIZE, 0, 0, 0, 1, 0, 0 },
-    { COM2, NULL, (unsigned char*)&serial_rbuffers[1], SERIAL_RBUFFER_SIZE, 0, 0, 0, 1, 0, 0 },
-    { COM3, NULL, (unsigned char*)&serial_rbuffers[2], SERIAL_RBUFFER_SIZE, 0, 0, 0, 1, 0, 0 },
-    { COM4, NULL, (unsigned char*)&serial_rbuffers[3], SERIAL_RBUFFER_SIZE, 0, 0, 0, 1, 0, 0 },
+    { COM1, { 0 }, (unsigned char*)&serial_rbuffers[0], SERIAL_RBUFFER_SIZE, 0, 0, 0, 1, 0 },
+    { COM2, { 0 }, (unsigned char*)&serial_rbuffers[1], SERIAL_RBUFFER_SIZE, 0, 0, 0, 1, 0 },
+    { COM3, { 0 }, (unsigned char*)&serial_rbuffers[2], SERIAL_RBUFFER_SIZE, 0, 0, 0, 1, 0 },
+    { COM4, { 0 }, (unsigned char*)&serial_rbuffers[3], SERIAL_RBUFFER_SIZE, 0, 0, 0, 1, 0 },
 };
 
 enum serial_errors
@@ -210,7 +210,16 @@ enum serial_errors
     SERIAL_O_ERR_INVALID_SPEED     = -102,
     SERIAL_O_ERR_PORT_ALREADY_OPEN = -103,
     SERIAL_C_ERR_PORT_NOT_OPEN     = -201,
+    SERIAL_R_ERR_PORT_NOT_OPEN     = -301,
+    SERIAL_R_ERR_INVALID_BUFFER    = -302,
+    SERIAL_R_ERR_INVALID_BUF_LEN   = -303,
+    SERIAL_R_ERR_DEV_BUSY          = -304,
+    SERIAL_W_ERR_PORT_NOT_OPEN     = -401,
+    SERIAL_W_ERR_INVALID_BUFFER    = -402,
+    SERIAL_W_ERR_INVALID_BUF_LEN   = -403,
+    SERIAL_W_ERR_DEV_BUSY          = -404,
     SERIAL_S_ERR_PORT_NOT_OPEN     = -501,
+    SERIAL_S_ERR_OUT_OF_MEM        = -502,
 };
 
 const int serial_supported_baud_rates[] =
@@ -357,7 +366,7 @@ int serial_close(device dev)
         break;
     }
     }
-    cli();
+    
     int mask = inb(PIC1_MASK);
     switch (dev)
     {
@@ -373,7 +382,6 @@ int serial_close(device dev)
     }
     }
     outb(PIC1_MASK, mask);
-    sti();
 
     skip_pic_disable: ;
     outb(dev + IER, 0x00); // disable all serial interrupts
@@ -382,45 +390,169 @@ int serial_close(device dev)
     return 0;
 }
 
-int serial_read(device dev, char* buf, size_t len);
-
-int serial_write(device dev, char* buf, size_t len);
-
-int serial_schedule_io(device dev, struct pcb* pcb, unsigned char* buffer,
-                        size_t buffer_sz, unsigned char io_op)
+int serial_read(device dev, char* buf, size_t len)
 {
-    struct dcb* dcb_select = &serial_dcb_list[serial_devno(dev)];
+    if (buf == NULL)
+    {
+        return SERIAL_R_ERR_INVALID_BUFFER;
+    }
+    if (len == 0)
+    {
+        return SERIAL_R_ERR_INVALID_BUF_LEN;
+    }
+    int devno = serial_devno(dev);
+    if (devno == -1)
+    {
+        return SERIAL_ERR_DEV_NOT_FOUND;
+    }
+    struct dcb* dcb_select = &serial_dcb_list[devno];
+    if (!dcb_select->open)
+    {
+        return SERIAL_R_ERR_PORT_NOT_OPEN;
+    }
+    if (!dcb_select->idle)
+    {
+        return SERIAL_R_ERR_DEV_BUSY;
+    }
+
+    cli();
+    dcb_select->event = 0;
+    dcb_select->idle = 0;
+    
+    size_t buf_idx = 0;
+    while (dcb_select->rbuffer_idx_read < dcb_select->rbuffer_idx_write &&
+           buf_idx < len)
+    {
+        buf[buf_idx] = dcb_select->rbuffer[dcb_select->rbuffer_idx_read];
+        ++dcb_select->rbuffer_idx_read;
+        if (dcb_select->rbuffer_idx_read == dcb_select->rbuffer_sz)
+        {
+            dcb_select->rbuffer_idx_read = 0;
+        }
+        ++buf_idx;
+        if (buf[buf_idx - 1] == '\n')
+        {
+            goto read_complete;
+        }
+    }
+    if (buf_idx < len)
+    {
+        dcb_select->iocb_queue_head.pcb_rq = pcb_running;
+        dcb_select->iocb_queue_head.buffer = (unsigned char*) buf;
+        dcb_select->iocb_queue_head.buffer_sz = len;
+        dcb_select->iocb_queue_head.buffer_idx = buf_idx;
+        dcb_select->iocb_queue_head.io_op = IO_OP_READ;
+        sti();
+        return 0;
+    }
+    read_complete: ;
+    sti();
+    
+    dcb_select->idle = 1;
+    dcb_select->event = 1;
+    return 0;
+}
+
+int serial_write(device dev, char* buf, size_t len)
+{
+    if (buf == NULL)
+    {
+        return SERIAL_W_ERR_INVALID_BUFFER;
+    }
+    if (len == 0)
+    {
+        return SERIAL_W_ERR_INVALID_BUF_LEN;
+    }
+    int devno = serial_devno(dev);
+    if (devno == -1)
+    {
+        return SERIAL_ERR_DEV_NOT_FOUND;
+    }
+    struct dcb* dcb_select = &serial_dcb_list[devno];
+    if (!dcb_select->open)
+    {
+        return SERIAL_W_ERR_PORT_NOT_OPEN;
+    }
+    if (!dcb_select->idle)
+    {
+        return SERIAL_W_ERR_DEV_BUSY;
+    }
+
+    cli();
+    dcb_select->event = 0;
+    dcb_select->idle = 0;
+
+    unsigned char next_byte = dcb_select->iocb_queue_head.buffer[0];
+    outb(dcb_select->dev, next_byte);
+    dcb_select->iocb_queue_head.buffer_idx = 1;
+
+    dcb_select->iocb_queue_head.pcb_rq = pcb_running;
+    dcb_select->iocb_queue_head.buffer = (unsigned char*) buf;
+    dcb_select->iocb_queue_head.buffer_sz = len;
+    dcb_select->iocb_queue_head.io_op = IO_OP_WRITE;
+
+    int ier = inb(dev + IER);
+    outb(dev + IER, ier | (1 << 1));
+    sti();
+    return 0;
+}
+
+int serial_schedule_io(device dev, unsigned char* buffer, size_t buffer_sz,
+                       unsigned char io_op)
+{
+    int devno = serial_devno(dev);
+    if (devno == -1)
+    {
+        return SERIAL_ERR_DEV_NOT_FOUND;
+    }
+    struct dcb* dcb_select = &serial_dcb_list[devno];
     if (!dcb_select->open)
     {
         return SERIAL_S_ERR_PORT_NOT_OPEN;
     }
-    // check for no queued operations
-    if (dcb_select->iocb_queue_head == NULL)
+    // check for no queued operations (device is idle)
+    if (dcb_select->idle)
     {
         switch (io_op)
         {
         case IO_OP_READ:
-            serial_read(dev, (char*)buffer, buffer_sz);
-            break;
-        case IO_OP_WRITE:
-            serial_write(dev, (char*)buffer, buffer_sz);
+        {
+            if (serial_read(dev, (char*)buffer, buffer_sz) == 0)
+            {
+                
+            }
             break;
         }
+        case IO_OP_WRITE:
+        {
+            if (serial_write(dev, (char*)buffer, buffer_sz) == 0)
+            {
+                
+            }
+            break;
+        }
+        }
     }
-    else
+    else // selected device is not idle
     {
-        struct iocb* iocb_new = (struct iocb*) sys_alloc_mem(sizeof(struct iocb));
-            iocb_new->pcb_rq     = pcb;
-            iocb_new->buffer     = buffer;
-            iocb_new->buffer_sz  = buffer_sz;
-            iocb_new->buffer_idx = 0;
-            iocb_new->io_op      = io_op;
-        
-        struct iocb* iocb_iter = dcb_select->iocb_queue_head;
+        // queue an I/O operation on the selected device
+        struct iocb* iocb_iter = &dcb_select->iocb_queue_head;
         while (iocb_iter->p_next != NULL)
         {
             iocb_iter = iocb_iter->p_next;
         }
+        struct iocb* iocb_new = (struct iocb*) sys_alloc_mem(sizeof(struct iocb));
+        if (iocb_new == NULL)
+        {
+            return SERIAL_S_ERR_OUT_OF_MEM;
+        }
+        iocb_new->p_next = NULL;
+        iocb_new->pcb_rq = pcb_running;
+        iocb_new->buffer = buffer;
+        iocb_new->buffer_sz = buffer_sz;
+        iocb_new->buffer_idx = 0;
+        iocb_new->io_op = io_op;
+
         iocb_iter->p_next = iocb_new;
     }
     return 0;
@@ -514,7 +646,7 @@ void serial_interrupt(void) {
 void serial_input_interrupt(struct dcb* dcb)
 {
     unsigned char byte = inb(dcb->dev);
-    if (dcb->op != IO_OP_READ)
+    if (dcb->iocb_queue_head.io_op != IO_OP_READ)
     {
         if (dcb->rbuffer_idx_read == dcb->rbuffer_idx_write)
         {
@@ -530,7 +662,7 @@ void serial_input_interrupt(struct dcb* dcb)
     else
     {
         // alias
-        struct iocb* iocb_rq = dcb->iocb_queue_head;
+        struct iocb* iocb_rq = &dcb->iocb_queue_head;
 
         iocb_rq->buffer[iocb_rq->buffer_idx] = byte;
         ++iocb_rq->buffer_idx;
@@ -545,25 +677,29 @@ void serial_input_interrupt(struct dcb* dcb)
 
 void serial_output_interrupt(struct dcb* dcb)
 {
-    if (dcb->op != IO_OP_WRITE)
+    if (dcb->iocb_queue_head.io_op != IO_OP_WRITE)
     {
         return;
     }
     else
     {
         // alias
-        struct iocb* iocb_rq = dcb->iocb_queue_head;
+        struct iocb* iocb_rq = &dcb->iocb_queue_head;
 
-        unsigned char next_byte = iocb_rq->buffer[iocb_rq->buffer_idx];
-        outb(dcb->dev, next_byte);
-        ++iocb_rq->buffer_idx;
+        // check for write completion
         if (iocb_rq->buffer_idx == iocb_rq->buffer_sz)
         {
             dcb->idle = 1;
             dcb->event = 1;
             // clear write-out interrupts
-            next_byte = inb(dcb->dev + IER);
-            outb(dcb->dev + IER, next_byte & ~(1 << 1));
+            unsigned char ier = inb(dcb->dev + IER);
+            outb(dcb->dev + IER, ier & ~(1 << 1));
+        }
+        else // writing is still not done
+        {
+            unsigned char next_byte = iocb_rq->buffer[iocb_rq->buffer_idx];
+            outb(dcb->dev, next_byte);
+            ++iocb_rq->buffer_idx;
         }
     }
     return;
