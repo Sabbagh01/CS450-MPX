@@ -7,6 +7,7 @@
 #include <mpx/pcb.h>
 #include <mpx/serial.h>
 #include <mpx/device.h>
+#include <mpx/interrupts.h>
 
 
 void* context_original = NULL;
@@ -20,7 +21,37 @@ struct context* sys_call(struct context* context_in)
     size_t buffer_sz;
 
     // TODO: Check for completed I/O (via event flag) to then unblock and ready associated pcb
-    // TODO: Dequeue next iocb into a dcb if it has completed I/O, if any
+    for (size_t i = 0; i < sizeof(serial_dcb_list); ++i)
+    {
+        if (!serial_dcb_list[i].open)
+        {
+            continue;
+        }
+        if (serial_dcb_list[i].event)
+        {
+            cli();
+            pcb_remove(serial_dcb_list[i].iocb_queue_head.pcb_rq);
+
+            serial_dcb_list[i].iocb_queue_head.pcb_rq->state.exec = READY;
+            serial_dcb_list[i].iocb_queue_head.pcb_rq->pctxt->eax = serial_dcb_list[i].iocb_queue_head.buffer_idx;
+
+            pcb_insert(serial_dcb_list[i].iocb_queue_head.pcb_rq);
+            serial_dcb_list[i].event = 0;
+
+            // check for queued requests, if any, dequeue them into the dcb
+            if (serial_dcb_list[i].iocb_queue_head.p_next != NULL)
+            {
+                struct iocb* iocb_tofree = serial_dcb_list[i].iocb_queue_head.p_next;
+                serial_dcb_list[i].iocb_queue_head = *iocb_tofree;
+                sys_free_mem(iocb_tofree);
+            }
+            else // set current to idle
+            {
+                serial_dcb_list[i].iocb_queue_head.pcb_rq = NULL;
+            }
+            sti();
+        }
+    }
     
     struct pcb* runnext;
     context_in->eax = 0;
@@ -36,8 +67,12 @@ struct context* sys_call(struct context* context_in)
                 dev = (device)context_in->ebx;
                 buffer = (unsigned char*)context_in->ecx;
                 buffer_sz = (size_t)context_in->edx;
-                serial_schedule_io(dev, buffer, buffer_sz, IO_OP_READ);
-
+                if (serial_schedule_io(dev, buffer, buffer_sz, IO_OP_READ) != 0)
+                {
+                    // indicate nothing was read via eax (error)
+                    // context_in->eax is 0
+                    break;
+                }
                 // block process after request
                 pcb_running->state.exec = BLOCKED;
                 // set the requesting process' stack pointer to the context to switch to after next run
@@ -72,7 +107,12 @@ struct context* sys_call(struct context* context_in)
                 dev = (device)context_in->ebx;
                 buffer = (unsigned char*)context_in->ecx;
                 buffer_sz = (size_t)context_in->edx;
-                serial_schedule_io(dev, buffer, buffer_sz, IO_OP_WRITE);
+                if (serial_schedule_io(dev, buffer, buffer_sz, IO_OP_WRITE) != 0)
+                {
+                    // indicate nothing was read via eax (error)
+                    // context_in->eax is 0
+                    break;
+                }
 
                 // block process after request
                 pcb_running->state.exec = BLOCKED;
@@ -163,6 +203,6 @@ struct context* sys_call(struct context* context_in)
             return (void*)0;
         }
     }
-    // unrecognized operation request or bad request
+    // unrecognized operation, bad request or error
     return (void*)0;
 }

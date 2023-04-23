@@ -34,6 +34,8 @@ int serial_out(device dev, const char *buffer, size_t len);
 */
 int serial_poll(device dev, char *buffer, size_t len);
 
+extern struct dcb serial_dcb_list[4];
+
 /**
 
 */
@@ -44,18 +46,10 @@ int serial_open(device dev, int speed);
 */
 int serial_close(device dev);
 
-/**
-
-*/
-int serial_read(device dev, char* buf, size_t len);
-
-/**
-
-*/
-int serial_write(device dev, char* buf, size_t len);
 
 int serial_schedule_io(device dev, unsigned char* buffer, size_t buffer_sz,
                        unsigned char io_op);
+
 
 extern void serial_isr(void*);
 
@@ -63,15 +57,5 @@ extern void serial_isr(void*);
 
 */
 void serial_interrupt(void);
-
-/**
-
-*/
-void serial_input_interrupt(struct dcb* dcb);
-
-/**
-
-*/
-void serial_output_interrupt(struct dcb* dcb);
 
 #endif

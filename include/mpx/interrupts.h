@@ -9,9 +9,9 @@
 #define PIC_EOI      (0x20)
 #define PIC_READ_ISR (0x0b)
 
-#define PIC1      (0x20)
-#define PIC1_CMD  (PIC1)
-#define PIC1_MASK (PIC1 + 1)
+#define PIC_1      (0x20)
+#define PIC_1_CMD  (PIC_1)
+#define PIC_1_MASK (PIC_1 + 1)
 #define IRQV_BASE (0x20)
 
 #define IRQ_BIT(irq) (1 << irq)

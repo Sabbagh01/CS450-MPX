@@ -29,13 +29,12 @@ struct iocb
 struct dcb
 {
     device dev;
-    struct iocb iocb_queue_head;
+    struct iocb iocb_queue_head; // if pcb_rq is NULL, the dcb is idle and other state in iocb should be ignored
     unsigned char* rbuffer;
     size_t rbuffer_sz;
-    size_t rbuffer_idx_read;  // read index (to read from next)
-    size_t rbuffer_idx_write; // write index (to write to next)
+    size_t rbuffer_idx_begin; // read index (to read from next)
+    size_t rbuffer_idx_end; // write index (last written to) [if begin == end, rbuffer is empty]
     unsigned char open:  1; // initialization state
-    unsigned char idle:  1; // indicates no active operation. If set, code should ignore the state of iocb head
     unsigned char event: 1; // event flag
 };
 
