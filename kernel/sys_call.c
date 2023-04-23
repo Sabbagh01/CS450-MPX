@@ -32,7 +32,7 @@ struct context* sys_call(struct context* context_in)
             cli();
             pcb_remove(serial_dcb_list[i].iocb_queue_head.pcb_rq);
 
-            serial_dcb_list[i].iocb_queue_head.pcb_rq->state.exec = READY;
+            serial_dcb_list[i].iocb_queue_head.pcb_rq->state.exec = PCB_EXEC_READY;
             serial_dcb_list[i].iocb_queue_head.pcb_rq->pctxt->eax = serial_dcb_list[i].iocb_queue_head.buffer_idx;
 
             pcb_insert(serial_dcb_list[i].iocb_queue_head.pcb_rq);
@@ -73,8 +73,9 @@ struct context* sys_call(struct context* context_in)
                     // context_in->eax is 0
                     break;
                 }
+                cli();
                 // block process after request
-                pcb_running->state.exec = BLOCKED;
+                pcb_running->state.exec = PCB_EXEC_BLOCKED;
                 // set the requesting process' stack pointer to the context to switch to after next run
                 pcb_running->pctxt = context_in;
                 // enqueue the requesting process into the active blocked queue
@@ -86,13 +87,13 @@ struct context* sys_call(struct context* context_in)
                     pcb_remove(runnext);                    
                     // set the running pcb to the dequeued one and return its context to switch to
                     pcb_running = runnext;
-                    runnext->state.exec = RUNNING;
+                    runnext->state.exec = PCB_EXEC_RUNNING;
+                    sti();
                     return runnext->pctxt;
                 }
-                else // this case should never happen as long as there's an idle process
-                {
-                    pcb_running = NULL;
-                }
+                // this case should never happen as long as there's an idle process
+                pcb_running = NULL;
+                sti();
             }
             else
             {
@@ -113,9 +114,9 @@ struct context* sys_call(struct context* context_in)
                     // context_in->eax is 0
                     break;
                 }
-
+                cli();
                 // block process after request
-                pcb_running->state.exec = BLOCKED;
+                pcb_running->state.exec = PCB_EXEC_BLOCKED;
                 // set the requesting process' stack pointer to the context to switch to after next run
                 pcb_running->pctxt = context_in;
                 // enqueue the requesting process into the active blocked queue
@@ -127,13 +128,13 @@ struct context* sys_call(struct context* context_in)
                     pcb_remove(runnext);                    
                     // set the running pcb to the dequeued one and return its context to switch to
                     pcb_running = runnext;
-                    runnext->state.exec = RUNNING;
+                    runnext->state.exec = PCB_EXEC_RUNNING;
+                    sti();
                     return runnext->pctxt;
                 }
-                else // this case should never happen as long as there's an idle process
-                {
-                    pcb_running = NULL;
-                }
+                // this case should never happen as long as there's an idle process
+                pcb_running = NULL;
+                sti();
             }
             else
             {
@@ -154,6 +155,7 @@ struct context* sys_call(struct context* context_in)
             {
                 context_original = context_in;
             }
+            cli();
             // check for any ready processes
             if (pcb_queues[0].pcb_head != NULL)
             {
@@ -165,23 +167,25 @@ struct context* sys_call(struct context* context_in)
                 {
                     // set the yielding process' stack pointer to the context to switch to after next run
                     pcb_running->pctxt = context_in;
-                    pcb_running->state.exec = READY;
+                    pcb_running->state.exec = PCB_EXEC_READY;
                     pcb_insert(pcb_running);
                 }
                 // set the running pcb to the dequeued one and return its context to switch to
                 pcb_running = runnext;
-                runnext->state.exec = RUNNING;
+                runnext->state.exec = PCB_EXEC_RUNNING;
+                sti();
                 return runnext->pctxt;
             }
             // continue to original context in the absence of processes
             pcb_running = NULL;
+            sti();
             struct context* temp = context_original;
             context_original = NULL;
             return temp;
         }
-
         case EXIT:
         {
+            cli();
             pcb_free(pcb_running);
             if (pcb_queues[0].pcb_head != NULL)
             {
@@ -190,6 +194,8 @@ struct context* sys_call(struct context* context_in)
                 pcb_remove(pcb_queues[0].pcb_head);
                 // set the running pcb to the dequeued one and return its context to switch to
                 pcb_running = runnext;
+                runnext->state.exec = PCB_EXEC_RUNNING;
+                sti();
                 return runnext->pctxt;
             }
             else if (context_original != NULL) // no dequeueable processes, load first arrived context
@@ -197,8 +203,10 @@ struct context* sys_call(struct context* context_in)
                 pcb_running = NULL;
                 struct context* temp = context_original;
                 context_original = NULL;
+                sti();
                 return temp;
             }
+            sti();
             // this case should never be reached in normal operation and state
             return (void*)0;
         }

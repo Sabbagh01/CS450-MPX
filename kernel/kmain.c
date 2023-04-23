@@ -90,15 +90,15 @@ void kmain(void)
 
 	// 9) YOUR command handler -- *create and #include an appropriate .h file*
 	// Pass execution to your command handler so the user can interact with the system.
-	struct pcb* comhandpcb = pcb_setup("comhand", KERNEL, 0);
+	struct pcb* comhandpcb = pcb_setup("comhand", PCB_CLASS_KERNEL, 0);
 	pcb_context_init(comhandpcb, comhand, NULL, 0);
     pcb_insert(comhandpcb);
 
-	struct pcb* idlepcb = pcb_setup("idle", KERNEL, 9);
+	struct pcb* idlepcb = pcb_setup("idle", PCB_CLASS_KERNEL, 9);
     pcb_context_init(idlepcb, sys_idle_process, NULL, 0);
 	pcb_insert(idlepcb);
 
-	klogv(COM1, "Transferring control to commhand...");
+	klogv(COM1, "Transferring control to comhand...");
 	__asm__ volatile ("int $0x60" :: "a"(IDLE));
 
 	// 10) System Shutdown -- *headers to be determined by your design*

@@ -34,28 +34,12 @@ static int serial_devno(device dev)
 	return -1;
 }
 
-int serial_init(device dev)
-{
-	int dno = serial_devno(dev);
-	if (dno == -1) {
-		return -1;
-	}
-	outb(dev + IER, 0x00);	//disable interrupts
-	outb(dev + LCR, 0x80);	//set line control register
-	outb(dev + DLL, 115200 / 9600);	//set bsd least sig bit
-	outb(dev + DLM, 0x00);	//brd most significant bit
-	outb(dev + LCR, 0x03);	//lock divisor; 8bits, no parity, one stop
-	outb(dev + FCR, 0xC7);	//enable fifo, clear, 14byte threshold
-	outb(dev + MCR, 0x0B);	//enable interrupts, rts/dsr set
-	(void)inb(dev);		//read bit to reset port
-	initialized[dno] = 1;
-	return 0;
-}
-
 int serial_out(device dev, const char *buffer, size_t len)
 {
 	int dno = serial_devno(dev);
-	if (dno == -1 || initialized[dno] == 0) {
+	if (dno == -1)
+        if (!serial_dcb_list[dno].open)
+    {
 		return -1;
 	}
 	for (size_t i = 0; i < len; i++) {

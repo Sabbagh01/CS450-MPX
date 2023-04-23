@@ -20,18 +20,18 @@
     Defines unique process execution state identifiers.
 */
 enum ProcExecState {
-    BLOCKED     = 0x00,
-    READY       = 0x01,
-    RUNNING     = 0x02,
+    PCB_EXEC_BLOCKED = 0x00,
+    PCB_EXEC_READY   = 0x01,
+    PCB_EXEC_RUNNING = 0x02,
 };
 
 /**
  @brief
     Defines unique process dispatch state identifiers.
 */
-enum ProcDpatchState {
-    SUSPENDED   = 0x00,
-    ACTIVE      = 0x01,
+enum ProcDispatchState {
+    PCB_DPATCH_SUSPENDED = 0x00,
+    PCB_DPATCH_ACTIVE    = 0x01,
 };
 
 /**
@@ -39,8 +39,8 @@ enum ProcDpatchState {
     Defines unique process class identifiers.
 */
 enum ProcClassState {
-    KERNEL      = 0x00,
-    USER        = 0x01,
+    PCB_CLASS_KERNEL = 0x00,
+    PCB_CLASS_USER   = 0x01,
 };
 
 #define MPX_PCB_STACK_SZ (4096)
@@ -118,7 +118,7 @@ struct pcb_queue {
 };
 
 #ifndef MPX_PROC_USE_ALT_QUEUES
-#define PSTATE_QUEUE_SELECTOR(state) ((state.exec != READY) + 2 * ((state.dpatch != ACTIVE)))
+#define PSTATE_QUEUE_SELECTOR(state) ((state.exec != PCB_EXEC_READY) + 2 * ((state.dpatch != PCB_DPATCH_ACTIVE)))
 #define QUEUE_SZ (4)
 
 /**

@@ -21,19 +21,19 @@ struct str_pcbprop_map {
 };
 
 const struct str_pcbprop_map avail_pcb_class[] = {
-    { KERNEL,   "kernel",   "Kernel" }, 
-    { USER,     "user",     "User"   },
+    { PCB_CLASS_KERNEL,   "kernel",   "Kernel" }, 
+    { PCB_CLASS_USER,     "user",     "User"   },
 };
 
 const struct str_pcbprop_map avail_pcb_execstate[] = {
-    { BLOCKED,      "blocked",      "Blocked"   },
-    { READY,        "ready",        "Ready"     },
-    { RUNNING,      "running",      "Running"   },
+    { PCB_EXEC_BLOCKED,      "blocked",      "Blocked"   },
+    { PCB_EXEC_READY,        "ready",        "Ready"     },
+    { PCB_EXEC_RUNNING,      "running",      "Running"   },
 };
 
 const struct str_pcbprop_map avail_pcb_dpatchstate[] = {
-    { SUSPENDED,    "suspended",    "Suspended" },
-    { ACTIVE,       "active",       "Active"    },
+    { PCB_DPATCH_SUSPENDED,    "suspended",    "Suspended" },
+    { PCB_DPATCH_ACTIVE,       "active",       "Active"    },
 };
 
 const char* class_str(enum ProcClassState state) {
@@ -44,7 +44,7 @@ const char* execstate_str(enum ProcExecState state) {
     return avail_pcb_execstate[state].str_out;
 }
 
-const char* dpatchstate_str(enum ProcDpatchState state) {
+const char* dpatchstate_str(enum ProcDispatchState state) {
     return avail_pcb_dpatchstate[state].str_out;
 }
 
@@ -686,7 +686,7 @@ int deletePcbCommand() {
         return 1;
     }
 
-    if (procfound->state.cls == KERNEL)
+    if (procfound->state.cls == PCB_CLASS_KERNEL)
     {
         setTerminalColor(Red);
         const char msgKernel[] = "Process is a kernel process, cannot be removed\n";
@@ -716,7 +716,7 @@ int suspendPcbCommand() {
         return 1;
     }
 
-    if (procfound->state.cls == KERNEL)
+    if (procfound->state.cls == PCB_CLASS_KERNEL)
     {
         setTerminalColor(Red);
         const char msgKernel[] = "Process is a kernel process, cannot be suspended\n";
@@ -726,7 +726,7 @@ int suspendPcbCommand() {
 
     pcb_remove(procfound);
     
-    procfound->state.dpatch = SUSPENDED;
+    procfound->state.dpatch = PCB_DPATCH_SUSPENDED;
     pcb_insert(procfound);
     return 0;  
 }
@@ -750,7 +750,7 @@ int resumePcbCommand() {
     
     pcb_remove(procfound);
     
-    procfound->state.dpatch = ACTIVE;
+    procfound->state.dpatch = PCB_DPATCH_ACTIVE;
     pcb_insert(procfound);
     return 0;
 }
@@ -763,7 +763,7 @@ int showPcbReadyCommand(){
     const char msgState[] = "\r\nProcess State: ";
     const char msgStatus[] = "\r\nProcess Status: ";
     
-    for (struct pcb_state i = { 0, SUSPENDED, READY, 0 }; i.exec <= ACTIVE; ++i.exec)
+    for (struct pcb_state i = { 0, PCB_DPATCH_SUSPENDED, PCB_EXEC_READY, 0 }; i.exec <= PCB_DPATCH_ACTIVE; ++i.exec)
     {
         struct pcb_queue* queue_curr = &pcb_queues[PSTATE_QUEUE_SELECTOR(i)];
         // check that the queue is not empty (size > 0)
@@ -810,7 +810,7 @@ int showPcbBlockedCommand() {
     const char msgState[] = "\r\nProcess State: ";
     const char msgStatus[] = "\r\nProcess Status: ";
     
-    for (struct pcb_state i = { 0, SUSPENDED, BLOCKED, 0 }; i.exec <= ACTIVE; ++i.exec)
+    for (struct pcb_state i = { 0, PCB_DPATCH_SUSPENDED, PCB_EXEC_BLOCKED, 0 }; i.exec <= PCB_DPATCH_ACTIVE; ++i.exec)
     {
         struct pcb_queue* queue_curr = &pcb_queues[PSTATE_QUEUE_SELECTOR(i)];
         // check that the queue is not empty (size > 0)
@@ -1020,7 +1020,7 @@ int alarmCommand() {
         }
         memset (timername + ALARMCMD_TIMER_PREFIX_SZ, 0, strlen(&timername[ALARMCMD_TIMER_PREFIX_SZ]));
     }
-    struct pcb* timerpcb = pcb_setup(timername, USER, 0);
+    struct pcb* timerpcb = pcb_setup(timername, PCB_CLASS_USER, 0);
     struct alarmProcessParams alarm_args = {
         hour,
         minute,

@@ -122,7 +122,7 @@ struct pcb* pcb_setup(const char* name, enum ProcClassState cls, unsigned char p
     if(pcb_find(name) == NULL)
     {
         if (
-            ((cls == USER) || (cls == KERNEL))
+            ((cls == PCB_CLASS_USER) || (cls == PCB_CLASS_KERNEL))
             && ((pri >= 0) && (pri <= 9))
         )
         {
@@ -134,8 +134,8 @@ struct pcb* pcb_setup(const char* name, enum ProcClassState cls, unsigned char p
                     pcb_new->p_next = NULL;
                     memcpy(pcb_new->name, name, namelen);
                     pcb_new->state.pri = pri;
-                    pcb_new->state.exec = ACTIVE;
-                    pcb_new->state.dpatch = READY; 
+                    pcb_new->state.exec = PCB_EXEC_READY;
+                    pcb_new->state.dpatch = PCB_DPATCH_ACTIVE; 
                     pcb_new->state.cls = cls;
                     pcb_new->pctxt = pcb_new->pstackseg + MPX_PCB_STACK_SZ - 1;
                 return pcb_new;
