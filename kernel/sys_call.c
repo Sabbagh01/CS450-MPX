@@ -12,16 +12,10 @@
 
 void* context_original = NULL;
 
-struct context* sys_call(struct context* context_in)
+unsigned char check_io()
 {
-    // get requested syscall operation
-    int op = context_in->eax;
-    device dev;
-    void* buffer;
-    size_t buffer_sz;
-
-    // TODO: Check for completed I/O (via event flag) to then unblock and ready associated pcb
-    for (size_t i = 0; i < sizeof(serial_dcb_list); ++i)
+    unsigned char procs_ready = 0;
+    for (size_t i = 0; i < sizeof(serial_dcb_list) / sizeof(struct dcb); ++i)
     {
         if (!serial_dcb_list[i].open)
         {
@@ -50,9 +44,22 @@ struct context* sys_call(struct context* context_in)
                 serial_dcb_list[i].iocb_queue_head.pcb_rq = NULL;
             }
             sti();
+            procs_ready = 1;
         }
     }
-    
+    return procs_ready;
+}
+
+struct context* sys_call(struct context* context_in)
+{
+    // get requested syscall operation
+    int op = context_in->eax;
+    device dev;
+    void* buffer;
+    size_t buffer_sz;
+
+    check_io();
+
     struct pcb* runnext;
     context_in->eax = 0;
     switch (op)
@@ -91,9 +98,15 @@ struct context* sys_call(struct context* context_in)
                     sti();
                     return runnext->pctxt;
                 }
-                // this case should never happen as long as there's an idle process
+                // no more processes to execute
                 pcb_running = NULL;
                 sti();
+                // wait for interrupt
+                do
+                {
+                    __asm__ volatile ("hlt");
+                }
+                while (!check_io());
             }
             else
             {
@@ -132,9 +145,15 @@ struct context* sys_call(struct context* context_in)
                     sti();
                     return runnext->pctxt;
                 }
-                // this case should never happen as long as there's an idle process
+                // no more processes to execute
                 pcb_running = NULL;
                 sti();
+                // wait for interrupt
+                do
+                {
+                    __asm__ volatile ("hlt");
+                }
+                while (!check_io());
             }
             else
             {

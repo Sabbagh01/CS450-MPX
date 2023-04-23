@@ -34,14 +34,35 @@ static int serial_devno(device dev)
 	return -1;
 }
 
+int serial_init(device dev)
+{
+	int dno = serial_devno(dev);
+	if (dno == -1) {
+		return -1;
+	}
+	outb(dev + IER, 0x00);	//disable interrupts
+	outb(dev + LCR, 0x80);	//set line control register
+	outb(dev + DLL, 115200 / 9600);	//set bsd least sig bit
+	outb(dev + DLM, 0x00);	//brd most significant bit
+	outb(dev + LCR, 0x03);	//lock divisor; 8bits, no parity, one stop
+	outb(dev + FCR, 0xC7);	//enable fifo, clear, 14byte threshold
+	outb(dev + MCR, 0x0B);	//enable interrupts, rts/dsr set
+	(void)inb(dev);		//read bit to reset port
+	initialized[dno] = 1;
+	return 0;
+}
+
 int serial_out(device dev, const char *buffer, size_t len)
 {
 	int dno = serial_devno(dev);
 	if (dno == -1)
-        if (!serial_dcb_list[dno].open)
     {
 		return -1;
 	}
+    if (!initialized[dno])
+    {
+        return -1;
+    }
 	for (size_t i = 0; i < len; i++) {
 		outb(dev, buffer[i]);
 	}
@@ -221,10 +242,11 @@ const int serial_supported_baud_rates[] =
 int serial_open(device dev, int speed)
 {
 	int dno = serial_devno(dev);
-	if (dno == -1) {
+	if (dno == -1)
+    {
 		return SERIAL_ERR_DEV_NOT_FOUND;
 	}
-    if (!serial_dcb_list[dno].open)
+    if (serial_dcb_list[dno].open)
     {
         return SERIAL_O_ERR_PORT_ALREADY_OPEN;
     }
@@ -239,6 +261,7 @@ int serial_open(device dev, int speed)
     
     baud_rate_matched: ;
     serial_dcb_list[dno].open = 1;
+    serial_dcb_list[dno].event = 0;
 
     switch (dev)
     {
@@ -246,7 +269,7 @@ int serial_open(device dev, int speed)
     {
         if (!serial_dcb_list[serial_devno(COM3)].open)
         {
-            idt_install(IRQV_BASE + 4, serial_isr);
+            idt_install(IRQV_BASE + SERIAL_IRQ_COM_1_3, serial_isr);
         }
         break;
     }
@@ -254,7 +277,7 @@ int serial_open(device dev, int speed)
     {
         if (!serial_dcb_list[serial_devno(COM1)].open)
         {
-            idt_install(IRQV_BASE + 4, serial_isr);
+            idt_install(IRQV_BASE + SERIAL_IRQ_COM_1_3, serial_isr);
         }
         break;
     }
@@ -262,7 +285,7 @@ int serial_open(device dev, int speed)
     {
         if (!serial_dcb_list[serial_devno(COM4)].open)
         {
-            idt_install(IRQV_BASE + 3, serial_isr);
+            idt_install(IRQV_BASE + SERIAL_IRQ_COM_2_4, serial_isr);
         }
         break;
     }
@@ -270,7 +293,7 @@ int serial_open(device dev, int speed)
     {
         if (!serial_dcb_list[serial_devno(COM2)].open)
         {
-            idt_install(IRQV_BASE + 3, serial_isr);
+            idt_install(IRQV_BASE + SERIAL_IRQ_COM_2_4, serial_isr);
         }
         break;
     }
@@ -298,10 +321,10 @@ int serial_open(device dev, int speed)
     }
     }
     outb(PIC_1_MASK, mask);
-    sti();
     outb(dev + MCR, (1 << 3));	// only enable device interrupts, set no rts/dsr
-    outb(dev + IER, (1 << 0)); // only enable serial received data interrupts
+    outb(dev + IER, (1 << 0)); // only enable serial input data received interrupts
 	inb(dev); // read byte to reset port
+    sti();
 	return 0;
 }
 
@@ -361,12 +384,12 @@ int serial_close(device dev)
     case COM1:
     case COM3:
     {
-        mask |= IRQ_BIT(SERIAL_IRQ_COM_1_3);
+        mask &= ~IRQ_BIT(SERIAL_IRQ_COM_1_3);
     }
     case COM2:
     case COM4:
     {
-        mask |= IRQ_BIT(SERIAL_IRQ_COM_2_4);
+        mask &= ~IRQ_BIT(SERIAL_IRQ_COM_2_4);
     }
     }
     outb(PIC_1_MASK, mask);
@@ -468,7 +491,7 @@ int serial_write(device dev, char* buf, size_t len)
 
     cli();
 
-    unsigned char next_byte = dcb_select->iocb_queue_head.buffer[0];
+    unsigned char next_byte = buf[0];
     outb(dcb_select->dev, next_byte);
     dcb_select->iocb_queue_head.buffer_idx = 1;
 
@@ -479,7 +502,7 @@ int serial_write(device dev, char* buf, size_t len)
     dcb_select->iocb_queue_head.io_op = IO_OP_WRITE;
 
     int ier = inb(dev + IER);
-    outb(dev + IER, ier | (1 << 1));
+    outb(dev + IER, (ier | (1 << 1)));
     sti();
     return 0;
 }

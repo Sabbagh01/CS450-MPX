@@ -34,58 +34,56 @@ static void klogv(device dev, const char *msg)
 
 void kmain(void)
 {
-    int stat;
-    stat = serial_open(COM1, 9600);
-    if (!stat)
-    {
-        // handle the error
-    }
+    serial_init(COM1);
 	klogv(COM1, "Initialized serial I/O on COM1 device...");
 
 	// 1) Global Descriptor Table -- mpx/gdt.h
 	// Keeps track of the various memory segments (Code, Data, Stack, etc.) required by the
 	// x86 architecture.
 	klogv(COM1, "Initializing Global Descriptor Table...");
-    gdt_init ();
+    gdt_init();
 
 	// 2) Interrupt Descriptor Table -- mpx/interrupts.h
 	// Keeps track of where the various Interrupt Vectors are stored.
 	klogv(COM1, "Initializing Interrupt Descriptor Table...");
-    idt_init ();
+    idt_init();
     
 	// 3) Disable Interrupts -- mpx/interrupts.h
 	// You'll be modifying how interrupts work, so disable them to avoid crashing.
 	klogv(COM1, "Disabling interrupts...");
-    cli ();
+    cli();
 
 	// 4) Interrupt Vector -- mpx/interrupts.h
 	// Initialize and install Interrupt Service Routines for the first 32 IRQs
 	// (bare minimum for a functioning x86 system).
 	klogv(COM1, "Initializing Interrupt Vectors...");
-    irq_init (); // install initial (default) basic exception or trap handlers
+    irq_init(); // install initial (default) basic exception or trap handlers
 
 	// 5) Programmable Interrupt Controller -- mpx/interrupts.h
 	// Initialize the PIC so that the ISRs installed in the previous step are connected
 	// correctly.
 	klogv(COM1, "Initializing Programmble Interrupt Controller...");
-    pic_init ();
+    pic_init();
 
 	// 6) Reenable interrupts -- mpx/interrupts.h
 	// Now that interrupt routines are set up, allow interrupts to happen again.
 	klogv(COM1, "Enabling Interrupts...");
-    sti ();
+    sti();
 
 	// 7) Virtual Memory -- mpx/vm.h
 	// Initialize the Memory Management Unit's Page Tables and enable virtual memory. This
 	// will also enable the kernel's (basic) heap manager, allowing the use of sys_alloc_mem()
 	// (which has a maximum of 64kiB until you implement a full memory manager).
 	klogv(COM1, "Initializing virtual memory...");
-    vm_init ();
+    vm_init();
 
 	// 8) MPX Modules -- *headers vary*
 	// Module specific initialization -- not all modules require this
+    serial_open(COM1, 19200);
+    klogv(COM1, "Opened COM1 for full interrupt driven I/O...");
+
 	klogv(COM1, "Initializing MPX modules...");
-    initialize_heap(0x10000 >> 1); // half of KHEAP_SIZE in core.c
+    initialize_heap(50000);
 	sys_set_heap_functions(allocate_memory, free_memory);
 
 	// 9) YOUR command handler -- *create and #include an appropriate .h file*
