@@ -107,7 +107,14 @@ struct context* sys_call(struct context* context_in)
                     __asm__ volatile ("hlt");
                 }
                 while (!check_io());
-            }
+                 cli();
+                // guaranteed ready pcb at head
+                runnext = pcb_queues[0].pcb_head;
+                pcb_remove(runnext);
+                pcb_running = runnext;
+                runnext->state.exec = PCB_EXEC_RUNNING;
+                sti();
+           }
             else
             {
                 context_in->eax = -1;
@@ -148,12 +155,20 @@ struct context* sys_call(struct context* context_in)
                 // no more processes to execute
                 pcb_running = NULL;
                 sti();
-                // wait for interrupt
+                // wait for interrupts to finish IO to then run unblocked process
                 do
                 {
                     __asm__ volatile ("hlt");
                 }
                 while (!check_io());
+                cli();
+                // guaranteed ready pcb at head
+                runnext = pcb_queues[0].pcb_head;
+                pcb_remove(runnext);
+                pcb_running = runnext;
+                runnext->state.exec = PCB_EXEC_RUNNING;
+                sti();
+                return runnext->pctxt;
             }
             else
             {
