@@ -36,6 +36,30 @@ int serial_poll(device dev, char *buffer, size_t len);
 
 extern struct dcb serial_dcb_list[4];
 
+typedef enum serial_errors
+{
+    SERIAL_ERR_DEV_NOT_FOUND       =   -1,
+    SERIAL_O_ERR_INVALID_EVPTR     = -101,
+    SERIAL_O_ERR_INVALID_SPEED     = -102,
+    SERIAL_O_ERR_PORT_ALREADY_OPEN = -103,
+    SERIAL_C_ERR_PORT_NOT_OPEN     = -201,
+    SERIAL_C_ERR_DEV_BUSY          = -204,
+    SERIAL_R_ERR_PORT_NOT_OPEN     = -301,
+    SERIAL_R_ERR_INVALID_BUFFER    = -302,
+    SERIAL_R_ERR_INVALID_BUF_LEN   = -303,
+    SERIAL_R_ERR_DEV_BUSY          = -304,
+    SERIAL_W_ERR_PORT_NOT_OPEN     = -401,
+    SERIAL_W_ERR_INVALID_BUFFER    = -402,
+    SERIAL_W_ERR_INVALID_BUF_LEN   = -403,
+    SERIAL_W_ERR_DEV_BUSY          = -404,
+    SERIAL_S_ERR_DEV_NOT_FOUND     = -500,
+    SERIAL_S_ERR_PORT_NOT_OPEN     = -501,
+    SERIAL_S_ERR_INVALID_BUFFER    = -502,
+    SERIAL_S_ERR_INVALID_BUF_LEN   = -503,
+    SERIAL_S_ERR_DEV_BUSY          = -504,
+    SERIAL_S_ERR_OUT_OF_MEM        = -505,
+} serial_errors;
+
 /**
 
 */

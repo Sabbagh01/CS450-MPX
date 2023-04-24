@@ -91,14 +91,14 @@ struct context* sys_call(struct context* context_in)
                 {
                     // dequeue the next active ready process
                     runnext = pcb_queues[0].pcb_head;
-                    pcb_remove(runnext);                    
+                    pcb_remove(runnext);
                     // set the running pcb to the dequeued one and return its context to switch to
                     pcb_running = runnext;
                     runnext->state.exec = PCB_EXEC_RUNNING;
                     sti();
                     return runnext->pctxt;
                 }
-                // no more processes to execute
+                // ready queue empty, so no more processes to execute
                 pcb_running = NULL;
                 sti();
                 // wait for interrupt
@@ -107,14 +107,14 @@ struct context* sys_call(struct context* context_in)
                     __asm__ volatile ("hlt");
                 }
                 while (!check_io());
-                 cli();
+                cli();
                 // guaranteed ready pcb at head
                 runnext = pcb_queues[0].pcb_head;
                 pcb_remove(runnext);
                 pcb_running = runnext;
                 runnext->state.exec = PCB_EXEC_RUNNING;
                 sti();
-           }
+            }
             else
             {
                 context_in->eax = -1;
@@ -145,14 +145,14 @@ struct context* sys_call(struct context* context_in)
                 {
                     // dequeue the next active ready process
                     runnext = pcb_queues[0].pcb_head;
-                    pcb_remove(runnext);                    
+                    pcb_remove(runnext);
                     // set the running pcb to the dequeued one and return its context to switch to
                     pcb_running = runnext;
                     runnext->state.exec = PCB_EXEC_RUNNING;
                     sti();
                     return runnext->pctxt;
                 }
-                // no more processes to execute
+                // ready queue empty, so no more processes to execute
                 pcb_running = NULL;
                 sti();
                 // wait for interrupts to finish IO to then run unblocked process

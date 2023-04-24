@@ -208,39 +208,16 @@ struct dcb serial_dcb_list[4] = {
     { COM4, { 0 }, (unsigned char*)&serial_rbuffers[3], SERIAL_RBUFFER_SIZE, 0, 0, 0, 0 },
 };
 
-enum serial_errors
-{
-    SERIAL_ERR_DEV_NOT_FOUND       =   -1,
-    SERIAL_O_ERR_INVALID_EVPTR     = -101,
-    SERIAL_O_ERR_INVALID_SPEED     = -102,
-    SERIAL_O_ERR_PORT_ALREADY_OPEN = -103,
-    SERIAL_C_ERR_PORT_NOT_OPEN     = -201,
-    SERIAL_R_ERR_PORT_NOT_OPEN     = -301,
-    SERIAL_R_ERR_INVALID_BUFFER    = -302,
-    SERIAL_R_ERR_INVALID_BUF_LEN   = -303,
-    SERIAL_R_ERR_DEV_BUSY          = -304,
-    SERIAL_W_ERR_PORT_NOT_OPEN     = -401,
-    SERIAL_W_ERR_INVALID_BUFFER    = -402,
-    SERIAL_W_ERR_INVALID_BUF_LEN   = -403,
-    SERIAL_W_ERR_DEV_BUSY          = -404,
-    SERIAL_S_ERR_DEV_NOT_FOUND     = -500,
-    SERIAL_S_ERR_PORT_NOT_OPEN     = -501,
-    SERIAL_S_ERR_INVALID_BUFFER    = -502,
-    SERIAL_S_ERR_INVALID_BUF_LEN   = -503,
-    SERIAL_S_ERR_DEV_BUSY          = -504,
-    SERIAL_S_ERR_OUT_OF_MEM        = -505,
-};
-
-const int serial_supported_baud_rates[] =
-{
-    110, 150, 300, 600, 1200, 2400, 4800, 9600, 19200,
-};
-
 #define SERIAL_IRQ_COM_2_4 (3)
 #define SERIAL_IRQ_COM_1_3 (4)
 
 int serial_open(device dev, int speed)
 {
+    static const int serial_supported_baud_rates[] =
+    {
+        110, 150, 300, 600, 1200, 2400, 4800, 9600, 19200,
+    };
+
 	int dno = serial_devno(dev);
 	if (dno == -1)
     {
@@ -260,6 +237,13 @@ int serial_open(device dev, int speed)
     return SERIAL_O_ERR_INVALID_SPEED;
     
     baud_rate_matched: ;
+    // proceed to setup dcb
+    serial_dcb_list[dno].iocb_queue_head.p_next = NULL;
+    // the commented statements are not needed, as those fields should remain constant with set buffers
+    //    serial_dcb_list[dno].rbuffer = &serial_rbuffers[dno];
+    //    serial_dcb_list[dno].rbuffer_sz = SERIAL_RBUFFER_SIZE;
+    serial_dcb_list[dno].rbuffer_idx_begin = 0;
+    serial_dcb_list[dno].rbuffer_idx_end = 0;
     serial_dcb_list[dno].open = 1;
     serial_dcb_list[dno].event = 0;
 
@@ -339,8 +323,11 @@ int serial_close(device dev)
     {
         return SERIAL_C_ERR_PORT_NOT_OPEN;
     }
-
-    serial_dcb_list[dno].open = 0;
+    // ensure that there are no operations currently executing on the device
+    if (serial_dcb_list[dno].iocb_queue_head.pcb_rq != NULL)
+    {
+        return SERIAL_C_ERR_DEV_BUSY;
+    }
 
     switch (dev)
     {
@@ -378,6 +365,7 @@ int serial_close(device dev)
     }
     }
     
+    cli();
     int mask = inb(PIC_1_MASK);
     switch (dev)
     {
@@ -393,11 +381,13 @@ int serial_close(device dev)
     }
     }
     outb(PIC_1_MASK, mask);
-
+    sti();
     skip_pic_disable: ;
     outb(dev + IER, 0x00); // disable all serial interrupts
     outb(dev + MCR, 0x00); // disable all device interrupts
 
+    // set device to closed
+    serial_dcb_list[dno].open = 0;
     return 0;
 }
 
@@ -427,7 +417,6 @@ int serial_read(device dev, char* buf, size_t len)
     }
 
     cli();
-    
     size_t buf_idx = 0;
     while (dcb_select->rbuffer_idx_begin < dcb_select->rbuffer_idx_end &&
            buf_idx < len)
@@ -458,9 +447,8 @@ int serial_read(device dev, char* buf, size_t len)
     // buf_idx == len will cause fallthrough to here, as it indicates completion
     read_complete: ;
     dcb_select->iocb_queue_head.buffer_idx = buf_idx;
-    sti();
-
     dcb_select->event = 1;
+    sti();
     return 0;
 }
 
@@ -490,7 +478,6 @@ int serial_write(device dev, char* buf, size_t len)
     }
 
     cli();
-
     unsigned char next_byte = buf[0];
     outb(dcb_select->dev, next_byte);
     dcb_select->iocb_queue_head.buffer_idx = 1;
@@ -569,6 +556,7 @@ int serial_schedule_io(device dev, unsigned char* buffer, size_t buffer_sz,
     else // selected device is not idle
     {
         // queue an I/O operation on the selected device
+        cli();
         struct iocb* iocb_iter = &dcb_select->iocb_queue_head;
         while (iocb_iter->p_next != NULL)
         {
@@ -577,6 +565,7 @@ int serial_schedule_io(device dev, unsigned char* buffer, size_t buffer_sz,
         struct iocb* iocb_new = (struct iocb*) sys_alloc_mem(sizeof(struct iocb));
         if (iocb_new == NULL)
         {
+            sti();
             return SERIAL_S_ERR_OUT_OF_MEM;
         }
         iocb_new->p_next = NULL;
@@ -587,6 +576,7 @@ int serial_schedule_io(device dev, unsigned char* buffer, size_t buffer_sz,
         iocb_new->io_op = io_op;
 
         iocb_iter->p_next = iocb_new;
+        sti();
     }
     return 0;
 }
