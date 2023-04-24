@@ -301,7 +301,7 @@ int serial_open(device dev, int speed)
     unsigned int brd = 115200 / speed;
 	outb(dev + IER, 0x00);	//disable all serial interrupts
 	outb(dev + LCR, 0x80);	//set line control register
-	outb(dev + DLL, (char)(brd));	    //set bsd least significant byte
+	outb(dev + DLL, (char)(brd));	    //set brd least significant byte
 	outb(dev + DLM, (char)(brd >> 8));	//set brd most significant byte
 	outb(dev + LCR, 0x03);	//lock divisor; 8bits, no parity, one stop
 	outb(dev + FCR, 0xC7);	//enable fifo, clear, 14byte threshold
@@ -312,12 +312,12 @@ int serial_open(device dev, int speed)
     case COM1:
     case COM3:
     {
-        mask |= IRQ_BIT(SERIAL_IRQ_COM_1_3);
+        mask &= ~IRQ_BIT(SERIAL_IRQ_COM_1_3);
     }
     case COM2:
     case COM4:
     {
-        mask |= IRQ_BIT(SERIAL_IRQ_COM_2_4);
+        mask &= ~IRQ_BIT(SERIAL_IRQ_COM_2_4);
     }
     }
     outb(PIC_1_MASK, mask);
@@ -384,12 +384,12 @@ int serial_close(device dev)
     case COM1:
     case COM3:
     {
-        mask &= ~IRQ_BIT(SERIAL_IRQ_COM_1_3);
+        mask |= IRQ_BIT(SERIAL_IRQ_COM_1_3);
     }
     case COM2:
     case COM4:
     {
-        mask &= ~IRQ_BIT(SERIAL_IRQ_COM_2_4);
+        mask |= IRQ_BIT(SERIAL_IRQ_COM_2_4);
     }
     }
     outb(PIC_1_MASK, mask);

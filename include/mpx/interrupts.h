@@ -14,7 +14,7 @@
 #define PIC_1_MASK (PIC_1 + 1)
 #define IRQV_BASE (0x20)
 
-#define IRQ_BIT(irq) (1 << irq)
+#define IRQ_BIT(irq) (1 << (irq))
 
 /** Disable interrupts */
 #define sti() __asm__ volatile ("sti")
