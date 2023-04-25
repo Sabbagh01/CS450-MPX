@@ -1300,8 +1300,8 @@ void comhand() {
     static const char menu_options[] = "Please select an option by choosing a number.\r\n"
                                        "1 ) Help              2 ) Set Time          3 ) Get Time       4 ) Set Date\r\n"
                                        "5 ) Get Date          6 ) Change PCB Pri    7 ) Show PCB       8 ) Show Ready PCB\r\n"
-                                       "9 ) Show Blocked PCB  10) Show All PCB      11) Delete PCB     14) Suspend PCB\r\n"
-                                       "15) Resume PCB     16) Version\r\n"
+                                       "9 ) Show Blocked PCB  10) Show All PCB      11) Delete PCB     12) Suspend PCB\r\n"
+                                       "15) Resume PCB        16) Version\r\n"
                                        "17) Shutdown          18) loadR3            19) Alarm\r\n"
                                        "20) Allocate Memory   21) Free Memory       22) Show Free Mem  23) Show Alloced Mem\r\n"
                                        "Enter number of choice:\r\n";

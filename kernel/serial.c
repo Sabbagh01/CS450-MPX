@@ -416,7 +416,6 @@ int serial_read(device dev, char* buf, size_t len)
         return SERIAL_R_ERR_DEV_BUSY;
     }
 
-    cli();
     size_t buf_idx = 0;
     while (dcb_select->rbuffer_idx_begin < dcb_select->rbuffer_idx_end &&
            buf_idx < len)
@@ -448,7 +447,6 @@ int serial_read(device dev, char* buf, size_t len)
     read_complete: ;
     dcb_select->iocb_queue_head.buffer_idx = buf_idx;
     dcb_select->event = 1;
-    sti();
     return 0;
 }
 
@@ -477,7 +475,6 @@ int serial_write(device dev, char* buf, size_t len)
         return SERIAL_W_ERR_DEV_BUSY;
     }
 
-    cli();
     unsigned char next_byte = buf[0];
     outb(dcb_select->dev, next_byte);
     dcb_select->iocb_queue_head.buffer_idx = 1;
@@ -490,7 +487,6 @@ int serial_write(device dev, char* buf, size_t len)
 
     int ier = inb(dev + IER);
     outb(dev + IER, (ier | (1 << 1)));
-    sti();
     return 0;
 }
 
@@ -556,7 +552,6 @@ int serial_schedule_io(device dev, unsigned char* buffer, size_t buffer_sz,
     else // selected device is not idle
     {
         // queue an I/O operation on the selected device
-        cli();
         struct iocb* iocb_iter = &dcb_select->iocb_queue_head;
         while (iocb_iter->p_next != NULL)
         {
@@ -576,7 +571,6 @@ int serial_schedule_io(device dev, unsigned char* buffer, size_t buffer_sz,
         iocb_new->io_op = io_op;
 
         iocb_iter->p_next = iocb_new;
-        sti();
     }
     return 0;
 }
@@ -667,7 +661,7 @@ void serial_interrupt(void) {
     {
         // check for COM2 interrupt
         serial_iir = inb(COM2 + IIR);
-        if (serial_iir & 0x01)
+        if ((serial_iir & 0x01) == 0)
         {
             dcb_select = &serial_dcb_list[serial_devno(COM2)];
             break;
@@ -684,7 +678,7 @@ void serial_interrupt(void) {
     {
         // check for COM1 interrupt
         serial_iir = inb(COM1 + IIR);
-        if (serial_iir & 0x01)
+        if ((serial_iir & 0x01) == 0)
         {
             dcb_select = &serial_dcb_list[serial_devno(COM1)];
             break;

@@ -23,7 +23,6 @@ unsigned char check_io()
         }
         if (serial_dcb_list[i].event)
         {
-            cli();
             pcb_remove(serial_dcb_list[i].iocb_queue_head.pcb_rq);
 
             serial_dcb_list[i].iocb_queue_head.pcb_rq->state.exec = PCB_EXEC_READY;
@@ -43,7 +42,6 @@ unsigned char check_io()
             {
                 serial_dcb_list[i].iocb_queue_head.pcb_rq = NULL;
             }
-            sti();
             procs_ready = 1;
         }
     }
@@ -58,6 +56,7 @@ struct context* sys_call(struct context* context_in)
     void* buffer;
     size_t buffer_sz;
 
+    cli();
     check_io();
 
     struct pcb* runnext;
@@ -80,7 +79,6 @@ struct context* sys_call(struct context* context_in)
                     // context_in->eax is 0
                     break;
                 }
-                cli();
                 // block process after request
                 pcb_running->state.exec = PCB_EXEC_BLOCKED;
                 // set the requesting process' stack pointer to the context to switch to after next run
@@ -113,7 +111,6 @@ struct context* sys_call(struct context* context_in)
                 pcb_remove(runnext);
                 pcb_running = runnext;
                 runnext->state.exec = PCB_EXEC_RUNNING;
-                sti();
             }
             else
             {
@@ -134,7 +131,6 @@ struct context* sys_call(struct context* context_in)
                     // context_in->eax is 0
                     break;
                 }
-                cli();
                 // block process after request
                 pcb_running->state.exec = PCB_EXEC_BLOCKED;
                 // set the requesting process' stack pointer to the context to switch to after next run
@@ -189,7 +185,6 @@ struct context* sys_call(struct context* context_in)
             {
                 context_original = context_in;
             }
-            cli();
             // check for any ready processes
             if (pcb_queues[0].pcb_head != NULL)
             {
@@ -212,14 +207,13 @@ struct context* sys_call(struct context* context_in)
             }
             // continue to original context in the absence of processes
             pcb_running = NULL;
-            sti();
             struct context* temp = context_original;
             context_original = NULL;
+            sti();
             return temp;
         }
         case EXIT:
         {
-            cli();
             pcb_free(pcb_running);
             if (pcb_queues[0].pcb_head != NULL)
             {
@@ -245,6 +239,7 @@ struct context* sys_call(struct context* context_in)
             return (void*)0;
         }
     }
+    sti();
     // unrecognized operation, bad request or error
     return (void*)0;
 }
