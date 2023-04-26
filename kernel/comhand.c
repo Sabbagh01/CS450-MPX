@@ -519,7 +519,7 @@ int getDateCommand() {
 
 int versionCommand() {
     setTerminalColor(White);
-    static const char ver_msg[] = "MPX vR5.\r\nCompiled ";
+    static const char ver_msg[] = "MPX vR6.\r\nCompiled ";
     write(COM1, STR_BUF(ver_msg));
    
     write(COM1, STR_BUF(__DATE__));
