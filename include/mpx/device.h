@@ -22,18 +22,19 @@ struct iocb
     struct pcb* pcb_rq;
     unsigned char* buffer;
     size_t buffer_sz;
-    size_t buffer_idx; // indicates progress (how much has been read from, written to the buffer)
     unsigned char io_op: 1;
 };
 
 struct dcb
 {
     device dev;
-    struct iocb iocb_queue_head; // if pcb_rq is NULL, the dcb is idle and other state in iocb should be ignored
+    struct iocb* iocb_queue_head; // if pcb_rq is NULL, the dcb is idle and other state in iocb should be ignored
+    struct iocb* iocb_queue_tail;
     unsigned char* rbuffer;
     size_t rbuffer_sz;
     size_t rbuffer_idx_begin; // read index (to read from next)
-    size_t rbuffer_idx_end; // write index (last written to) [if begin == end, rbuffer is empty]
+    size_t rbuffer_idx_end; // write index (to write to next) [if begin == end, rbuffer must be empty]
+    size_t buffer_idx; // indicates progress (how much has been read from, written to the iocb buffer)
     unsigned char open:  1; // initialization state
     unsigned char event: 1; // event flag
 };

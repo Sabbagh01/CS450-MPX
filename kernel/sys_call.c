@@ -23,25 +23,27 @@ unsigned char check_io()
         }
         if (serial_dcb_list[i].event)
         {
-            pcb_remove(serial_dcb_list[i].iocb_queue_head.pcb_rq);
+            // queue a pcb if it has an event ready
+            // alias
+            struct pcb* pcb_hasevent = serial_dcb_list[i].iocb_queue_head->pcb_rq;
+            pcb_remove(pcb_hasevent);
 
-            serial_dcb_list[i].iocb_queue_head.pcb_rq->state.exec = PCB_EXEC_READY;
-            serial_dcb_list[i].iocb_queue_head.pcb_rq->pctxt->eax = serial_dcb_list[i].iocb_queue_head.buffer_idx;
+            pcb_hasevent->state.exec = PCB_EXEC_READY;
+            pcb_hasevent->pctxt->eax = serial_dcb_list[i].buffer_idx;
 
-            pcb_insert(serial_dcb_list[i].iocb_queue_head.pcb_rq);
+            pcb_insert(pcb_hasevent);
             serial_dcb_list[i].event = 0;
 
-            // check for queued requests, if any, dequeue them into the dcb
-            if (serial_dcb_list[i].iocb_queue_head.p_next != NULL)
+            // free iocb from active operation and proceed to the next
+            struct iocb* iocb_next = serial_dcb_list[i].iocb_queue_head->p_next;
+            sys_free_mem(serial_dcb_list[i].iocb_queue_head);
+            // only one operation in the list
+            if (serial_dcb_list[i].iocb_queue_head == serial_dcb_list[i].iocb_queue_tail)
             {
-                struct iocb* iocb_tofree = serial_dcb_list[i].iocb_queue_head.p_next;
-                serial_dcb_list[i].iocb_queue_head = *iocb_tofree;
-                sys_free_mem(iocb_tofree);
+                serial_dcb_list[i].iocb_queue_tail = iocb_next;
             }
-            else // set current to idle
-            {
-                serial_dcb_list[i].iocb_queue_head.pcb_rq = NULL;
-            }
+            serial_dcb_list[i].iocb_queue_head = iocb_next;
+
             procs_ready = 1;
         }
     }
@@ -56,7 +58,6 @@ struct context* sys_call(struct context* context_in)
     void* buffer;
     size_t buffer_sz;
 
-    cli();
     check_io();
 
     struct pcb* runnext;
@@ -93,19 +94,18 @@ struct context* sys_call(struct context* context_in)
                     // set the running pcb to the dequeued one and return its context to switch to
                     pcb_running = runnext;
                     runnext->state.exec = PCB_EXEC_RUNNING;
-                    sti();
                     return runnext->pctxt;
                 }
                 // ready queue empty, so no more processes to execute
                 pcb_running = NULL;
-                sti();
                 // wait for interrupt
                 do
                 {
+                    sti();
                     __asm__ volatile ("hlt");
+                    cli();
                 }
                 while (!check_io());
-                cli();
                 // guaranteed ready pcb at head
                 runnext = pcb_queues[0].pcb_head;
                 pcb_remove(runnext);
@@ -145,25 +145,23 @@ struct context* sys_call(struct context* context_in)
                     // set the running pcb to the dequeued one and return its context to switch to
                     pcb_running = runnext;
                     runnext->state.exec = PCB_EXEC_RUNNING;
-                    sti();
                     return runnext->pctxt;
                 }
                 // ready queue empty, so no more processes to execute
                 pcb_running = NULL;
-                sti();
                 // wait for interrupts to finish IO to then run unblocked process
                 do
                 {
+                    sti();
                     __asm__ volatile ("hlt");
+                    cli();
                 }
                 while (!check_io());
-                cli();
                 // guaranteed ready pcb at head
                 runnext = pcb_queues[0].pcb_head;
                 pcb_remove(runnext);
                 pcb_running = runnext;
                 runnext->state.exec = PCB_EXEC_RUNNING;
-                sti();
                 return runnext->pctxt;
             }
             else
@@ -202,14 +200,12 @@ struct context* sys_call(struct context* context_in)
                 // set the running pcb to the dequeued one and return its context to switch to
                 pcb_running = runnext;
                 runnext->state.exec = PCB_EXEC_RUNNING;
-                sti();
                 return runnext->pctxt;
             }
             // continue to original context in the absence of processes
             pcb_running = NULL;
             struct context* temp = context_original;
             context_original = NULL;
-            sti();
             return temp;
         }
         case EXIT:
@@ -223,7 +219,6 @@ struct context* sys_call(struct context* context_in)
                 // set the running pcb to the dequeued one and return its context to switch to
                 pcb_running = runnext;
                 runnext->state.exec = PCB_EXEC_RUNNING;
-                sti();
                 return runnext->pctxt;
             }
             else if (context_original != NULL) // no dequeueable processes, load first arrived context
@@ -231,15 +226,12 @@ struct context* sys_call(struct context* context_in)
                 pcb_running = NULL;
                 struct context* temp = context_original;
                 context_original = NULL;
-                sti();
                 return temp;
             }
-            sti();
             // this case should never be reached in normal operation and state
             return (void*)0;
         }
     }
-    sti();
     // unrecognized operation, bad request or error
     return (void*)0;
 }
