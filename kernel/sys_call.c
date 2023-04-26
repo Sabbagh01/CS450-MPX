@@ -12,38 +12,13 @@
 
 void* context_original = NULL;
 
-unsigned char check_io()
+unsigned char sys_check_io()
 {
     unsigned char procs_ready = 0;
     for (size_t i = 0; i < sizeof(serial_dcb_list) / sizeof(struct dcb); ++i)
     {
-        if (!serial_dcb_list[i].open)
+        if(serial_check_io(serial_dcb_list[i].dev))
         {
-            continue;
-        }
-        if (serial_dcb_list[i].event)
-        {
-            // queue a pcb if it has an event ready
-            // alias
-            struct pcb* pcb_hasevent = serial_dcb_list[i].iocb_queue_head->pcb_rq;
-            pcb_remove(pcb_hasevent);
-
-            pcb_hasevent->state.exec = PCB_EXEC_READY;
-            pcb_hasevent->pctxt->eax = serial_dcb_list[i].buffer_idx;
-
-            pcb_insert(pcb_hasevent);
-            serial_dcb_list[i].event = 0;
-
-            // free iocb from active operation and proceed to the next
-            struct iocb* iocb_next = serial_dcb_list[i].iocb_queue_head->p_next;
-            sys_free_mem(serial_dcb_list[i].iocb_queue_head);
-            // only one operation in the list
-            if (serial_dcb_list[i].iocb_queue_head == serial_dcb_list[i].iocb_queue_tail)
-            {
-                serial_dcb_list[i].iocb_queue_tail = iocb_next;
-            }
-            serial_dcb_list[i].iocb_queue_head = iocb_next;
-
             procs_ready = 1;
         }
     }
@@ -58,7 +33,7 @@ struct context* sys_call(struct context* context_in)
     void* buffer;
     size_t buffer_sz;
 
-    check_io();
+    sys_check_io();
 
     struct pcb* runnext;
     context_in->eax = 0;
@@ -78,7 +53,7 @@ struct context* sys_call(struct context* context_in)
                 {
                     // indicate nothing was read via eax (error)
                     // context_in->eax is 0
-                    break;
+                    return (void*)0;
                 }
                 // block process after request
                 pcb_running->state.exec = PCB_EXEC_BLOCKED;
@@ -98,14 +73,14 @@ struct context* sys_call(struct context* context_in)
                 }
                 // ready queue empty, so no more processes to execute
                 pcb_running = NULL;
-                // wait for interrupt
+                // wait for interrupts to finish operations for any waiting processes
                 do
                 {
                     sti();
                     __asm__ volatile ("hlt");
                     cli();
                 }
-                while (!check_io());
+                while (!sys_check_io());
                 // guaranteed ready pcb at head
                 runnext = pcb_queues[0].pcb_head;
                 pcb_remove(runnext);
@@ -115,8 +90,8 @@ struct context* sys_call(struct context* context_in)
             else
             {
                 context_in->eax = -1;
+                return (void*)0;
             }
-            break;
         }
         case WRITE:
         {
@@ -129,7 +104,7 @@ struct context* sys_call(struct context* context_in)
                 {
                     // indicate nothing was read via eax (error)
                     // context_in->eax is 0
-                    break;
+                    return (void*)0;
                 }
                 // block process after request
                 pcb_running->state.exec = PCB_EXEC_BLOCKED;
@@ -149,14 +124,14 @@ struct context* sys_call(struct context* context_in)
                 }
                 // ready queue empty, so no more processes to execute
                 pcb_running = NULL;
-                // wait for interrupts to finish IO to then run unblocked process
+                // wait for interrupts to finish operations for any waiting processes
                 do
                 {
                     sti();
                     __asm__ volatile ("hlt");
                     cli();
                 }
-                while (!check_io());
+                while (!sys_check_io());
                 // guaranteed ready pcb at head
                 runnext = pcb_queues[0].pcb_head;
                 pcb_remove(runnext);
@@ -167,8 +142,8 @@ struct context* sys_call(struct context* context_in)
             else
             {
                 context_in->eax = -1;
+                return (void*)0;
             }
-            break;
         }
         // note: ctxt_in points to the stack pointer on the stack owned by a running process
         // goal for scheduling out a process is to save the process context on its own

@@ -440,7 +440,7 @@ int serial_read(device dev, char* buf, size_t len)
         {
             dcb_select->rbuffer_idx_begin = 0;
         }
-        if (buf[buf_idx] == '\n')
+        if (buf[buf_idx] == '\r')
         {
             ++buf_idx;
             goto read_complete;
@@ -501,6 +501,89 @@ int serial_write(device dev, char* buf, size_t len)
     outb(dcb_select->dev, next_byte);
     int ier = inb(dev + IER);
     outb(dev + IER, (ier | (1 << 1)));
+    return 0;
+}
+
+int serial_check_io(device dev)
+{
+    int dno = serial_devno(dev);
+    if (dno == -1)
+    {
+        return -1;
+    }
+    struct dcb* dcb_select = &serial_dcb_list[dno];
+    if (!dcb_select->open)
+    {
+        return 0;
+    }
+    if (dcb_select->event)
+    {
+        // queue a pcb if it has an event ready
+        // alias
+        struct pcb* pcb_hasevent = dcb_select->iocb_queue_head->pcb_rq;
+        pcb_remove(pcb_hasevent);
+
+        pcb_hasevent->state.exec = PCB_EXEC_READY;
+        pcb_hasevent->pctxt->eax = dcb_select->buffer_idx;
+
+        pcb_insert(pcb_hasevent);
+        dcb_select->event = 0;
+
+        // free iocb from active operation and proceed to the next, if any
+        struct iocb* iocb_next = dcb_select->iocb_queue_head->p_next;
+        sys_free_mem(dcb_select->iocb_queue_head);
+        // only one operation in the list
+        if (dcb_select->iocb_queue_head == dcb_select->iocb_queue_tail)
+        {
+            dcb_select->iocb_queue_tail = iocb_next;
+        }
+        dcb_select->iocb_queue_head = iocb_next;
+        // if there is a next operation, configure accordingly
+        if (iocb_next != NULL)
+        {
+            switch (iocb_next->io_op)
+            {
+            case IO_OP_READ:
+            {
+                size_t buf_idx = 0;
+                while ((dcb_select->rbuffer_idx_begin < dcb_select->rbuffer_idx_end)
+                       && (buf_idx < iocb_next->buffer_sz))
+                {
+                    iocb_next->buffer[buf_idx] = dcb_select->rbuffer[dcb_select->rbuffer_idx_begin];
+                    ++dcb_select->rbuffer_idx_begin;
+                    // loop the ring buffer 'begin' index if needed
+                    if (dcb_select->rbuffer_idx_begin == dcb_select->rbuffer_sz)
+                    {
+                        dcb_select->rbuffer_idx_begin = 0;
+                    }
+                    if (iocb_next->buffer[buf_idx] == '\r')
+                    {
+                        ++buf_idx;
+                        goto read_complete;
+                    }
+                    ++buf_idx;
+                }
+                if (buf_idx < iocb_next->buffer_sz)
+                {
+                    dcb_select->buffer_idx = buf_idx;
+                    break;
+                }
+                // buf_idx == len will cause fallthrough to here, as it indicates completion
+                read_complete: ;
+                dcb_select->buffer_idx = buf_idx;
+                break;
+            }
+            case IO_OP_WRITE:
+            {
+                outb(serial_dcb_list[dno].dev, iocb_next->buffer[0]);
+                int ier = inb(dev + IER);
+                outb(dev + IER, (ier | (1 << 1)));
+                break;
+            }
+            }
+        }
+        return 1;
+    }
     return 0;
 }
 
@@ -620,7 +703,7 @@ void serial_input_interrupt(struct dcb* dcb)
 
         iocb_rq->buffer[dcb->buffer_idx] = byte;
         ++dcb->buffer_idx;
-        if ((dcb->buffer_idx == iocb_rq->buffer_sz) || (byte == '\n'))
+        if ((dcb->buffer_idx == iocb_rq->buffer_sz) || (byte == '\r'))
         {
             dcb->event = 1;
         }
