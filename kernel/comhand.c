@@ -21,7 +21,7 @@ struct str_pcbprop_map {
 };
 
 const struct str_pcbprop_map avail_pcb_class[] = {
-    { PCB_CLASS_KERNEL,   "kernel",   "Kernel" }, 
+    { PCB_CLASS_SYSTEM,   "system",   "System" }, 
     { PCB_CLASS_USER,     "user",     "User"   },
 };
 
@@ -70,7 +70,8 @@ int freeMemoryCommand();
 int showAllocatedMemoryCommand();
 int showFreeMemoryCommand();
 
-const struct cmd_entry {
+const struct cmd_entry
+{
     const char* key;
     const size_t key_len;
     const char* key_alt;
@@ -280,7 +281,7 @@ cmd_entries[] =
 		    "\tSpawns an alarm process to wait until it passes a set time.\r\n"
         )
     },
-    { STR_BUF("19"), STR_BUF("Allocate Memory"), allocateMemoryCommand,
+    { STR_BUF("18"), STR_BUF("Allocate Memory"), allocateMemoryCommand,
         STR_BUF(
          "Allocate Memory\r\n"
 		    "\tInput:\r\n"
@@ -291,7 +292,7 @@ cmd_entries[] =
 		    "\tAllocates memory in the heap.\r\n"
        )
     },
-    { STR_BUF("20"), STR_BUF("Free Memory"), freeMemoryCommand,
+    { STR_BUF("19"), STR_BUF("Free Memory"), freeMemoryCommand,
         STR_BUF(
         "Free Memory\r\n"
 		    "\tInput:\r\n"
@@ -302,7 +303,7 @@ cmd_entries[] =
 		    "\tFrees existing memory in the heap.\r\n"
         )
     },
-    { STR_BUF("21"), STR_BUF("Show Free Memory"), showFreeMemoryCommand,
+    { STR_BUF("20"), STR_BUF("Show Free Memory"), showFreeMemoryCommand,
         STR_BUF(
         "Show Free Memory\r\n"
             "\tInput:\r\n"
@@ -313,7 +314,7 @@ cmd_entries[] =
             "\tShow the list of free memory blocks in the heap.\r\n"
        )
     },
-    { STR_BUF("22"), STR_BUF("Show Allocated Memory"), showAllocatedMemoryCommand,
+    { STR_BUF("21"), STR_BUF("Show Allocated Memory"), showAllocatedMemoryCommand,
         STR_BUF(
         "Show Allocated Memory\r\n"
             "\tInput:\r\n"
@@ -345,6 +346,8 @@ void user_input_promptread() {
     }
 #endif
     user_input_len = read(COM1, user_input, sizeof(user_input));
+    --user_input_len;
+    user_input[user_input_len] = '\0';
     write(COM1, STR_BUF("\r\n"));
     return;
 }
@@ -686,10 +689,10 @@ int deletePcbCommand() {
         return 1;
     }
 
-    if (procfound->state.cls == PCB_CLASS_KERNEL)
+    if (procfound->state.cls == PCB_CLASS_SYSTEM)
     {
         setTerminalColor(Red);
-        const char msgKernel[] = "Process is a kernel process, cannot be removed\n";
+        const char msgKernel[] = "Process is a system process, cannot be removed\n";
         write(COM1, STR_BUF(msgKernel));
         return 1;
     }
@@ -716,10 +719,10 @@ int suspendPcbCommand() {
         return 1;
     }
 
-    if (procfound->state.cls == PCB_CLASS_KERNEL)
+    if (procfound->state.cls == PCB_CLASS_SYSTEM)
     {
         setTerminalColor(Red);
-        const char msgKernel[] = "Process is a kernel process, cannot be suspended\n";
+        const char msgKernel[] = "Process is a system process, cannot be suspended\n";
         write(COM1, STR_BUF(msgKernel));
         return 1;
     }
@@ -1297,14 +1300,13 @@ int showFreeMemoryCommand() {
 
 void comhand() {
     static const char menu_welcome_msg[] = "Welcome to 5x5 MPX.\r\n";
-    static const char menu_options[] = "Please select an option by choosing a number.\r\n"
-                                       "1 ) Help              2 ) Set Time          3 ) Get Time       4 ) Set Date\r\n"
-                                       "5 ) Get Date          6 ) Change PCB Pri    7 ) Show PCB       8 ) Show Ready PCB\r\n"
-                                       "9 ) Show Blocked PCB  10) Show All PCB      11) Delete PCB     12) Suspend PCB\r\n"
-                                       "15) Resume PCB        16) Version\r\n"
-                                       "17) Shutdown          18) loadR3            19) Alarm\r\n"
-                                       "20) Allocate Memory   21) Free Memory       22) Show Free Mem  23) Show Alloced Mem\r\n"
-                                       "Enter number of choice:\r\n";
+    static const char menu_options[] = "Please select an option by choosing a number from an entry below.\r\n"
+                                       "1 ) Help               2 ) Set Time          3 ) Get Time     4 ) Set Date\r\n"
+                                       "5 ) Get Date           6 ) Set PCB Priority  7 ) Show PCB     8 ) Show Ready PCB\r\n"
+                                       "9 ) Show Blocked PCBs  10) Show All PCBs     11) Delete PCB   12) Suspend PCB\r\n"
+                                       "13) Resume PCB         14) Version           15) Shut Down    16) loadR3\r\n"
+                                       "17) Alarm              18) Allocate Memory   19) Free Memory  20) Show Free Mem\r\n"
+                                       "21) Show Alloc\'ed Mem\r\n";
     
     setTerminalColor(Blue);
     write(COM1, STR_BUF(menu_welcome_msg));

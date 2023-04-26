@@ -39,7 +39,7 @@ enum ProcDispatchState {
     Defines unique process class identifiers.
 */
 enum ProcClassState {
-    PCB_CLASS_KERNEL = 0x00,
+    PCB_CLASS_SYSTEM = 0x00,
     PCB_CLASS_USER   = 0x01,
 };
 

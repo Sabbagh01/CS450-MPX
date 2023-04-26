@@ -122,7 +122,7 @@ struct pcb* pcb_setup(const char* name, enum ProcClassState cls, unsigned char p
     if(pcb_find(name) == NULL)
     {
         if (
-            ((cls == PCB_CLASS_USER) || (cls == PCB_CLASS_KERNEL))
+            ((cls == PCB_CLASS_USER) || (cls == PCB_CLASS_SYSTEM))
             && ((pri >= 0) && (pri <= 9))
         )
         {

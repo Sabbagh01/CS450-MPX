@@ -84,11 +84,11 @@ int serial_poll(device dev, char *buffer, size_t len)
     unsigned char c;
 	while ( currsz < len )
     {
-        if ( inb (dev + LSR) & 0x01 )
+        if ( inb(dev + LSR) & 0x01 )
         {
             c = inb (dev + RBR);
             // check for special buffer/position manipulation keys
-            if ( (c == 0x7F) && (i > 0) ) // backspace key
+            if ( (c == 0x08) && (i > 0) ) // backspace key
             {
                 // manip buffer
                 // shift bytes on and after cursor to left to overwrite char i-1
@@ -112,7 +112,7 @@ int serial_poll(device dev, char *buffer, size_t len)
                     outb (dev + RBR, 'D');
                 }
             }
-            else if ( c == '~' ) // delete key - mapped to send '~' for some reason
+            else if (c == 0x7F) // delete key
             {
                 if (i < currsz)
                 {

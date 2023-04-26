@@ -88,11 +88,11 @@ void kmain(void)
 
 	// 9) YOUR command handler -- *create and #include an appropriate .h file*
 	// Pass execution to your command handler so the user can interact with the system.
-	struct pcb* comhandpcb = pcb_setup("comhand", PCB_CLASS_KERNEL, 0);
+	struct pcb* comhandpcb = pcb_setup("comhand", PCB_CLASS_SYSTEM, 0);
 	pcb_context_init(comhandpcb, comhand, NULL, 0);
     pcb_insert(comhandpcb);
 
-	struct pcb* idlepcb = pcb_setup("idle", PCB_CLASS_KERNEL, 9);
+	struct pcb* idlepcb = pcb_setup("idle", PCB_CLASS_SYSTEM, 9);
     pcb_context_init(idlepcb, sys_idle_process, NULL, 0);
 	pcb_insert(idlepcb);
 
