@@ -415,7 +415,7 @@ int serial_read(device dev, char* buf, size_t len)
     {
         return SERIAL_R_ERR_DEV_BUSY;
     }
-
+    // set up operation
     struct iocb* iocb_new = (struct iocb*) sys_alloc_mem(sizeof(struct iocb));
     if (iocb_new == NULL)
     {
@@ -428,7 +428,7 @@ int serial_read(device dev, char* buf, size_t len)
     iocb_new->buffer = (unsigned char*) buf;
     iocb_new->buffer_sz = len;
     iocb_new->io_op = IO_OP_READ;
-
+    // start operation
     size_t buf_idx = 0;
     while ((dcb_select->rbuffer_idx_begin < dcb_select->rbuffer_idx_end)
            && (buf_idx < len))
@@ -482,7 +482,7 @@ int serial_write(device dev, char* buf, size_t len)
     {
         return SERIAL_W_ERR_DEV_BUSY;
     }
-
+    // set up operation
     struct iocb* iocb_new = (struct iocb*) sys_alloc_mem(sizeof(struct iocb));
     if (iocb_new == NULL)
     {
@@ -495,8 +495,8 @@ int serial_write(device dev, char* buf, size_t len)
     iocb_new->buffer = (unsigned char*) buf;
     iocb_new->buffer_sz = len;
     iocb_new->io_op = IO_OP_WRITE;
+    // start operation
     dcb_select->buffer_idx = 0;
-
     unsigned char next_byte = buf[0];
     outb(dcb_select->dev, next_byte);
     int ier = inb(dev + IER);
@@ -531,6 +531,7 @@ int serial_check_io(device dev)
 
         // free iocb from active operation and proceed to the next, if any
         struct iocb* iocb_next = dcb_select->iocb_queue_head->p_next;
+        unsigned char io_op_prev = dcb_select->iocb_queue_head->io_op;
         sys_free_mem(dcb_select->iocb_queue_head);
         // only one operation in the list
         if (dcb_select->iocb_queue_head == dcb_select->iocb_queue_tail)
@@ -541,6 +542,20 @@ int serial_check_io(device dev)
         // if there is a next operation, configure accordingly
         if (iocb_next != NULL)
         {
+            // deconfigure from previous operation
+            if (iocb_next->io_op != io_op_prev)
+            {
+                switch (io_op_prev)
+                {
+                case IO_OP_WRITE:
+                {
+                    int ier = inb(dev + IER);
+                    outb(dev + IER, (ier & ~(1 << 1)));
+                    break;
+                }
+                }
+            }
+            // proceed to initial steps in next operation
             switch (iocb_next->io_op)
             {
             case IO_OP_READ:
@@ -575,6 +590,7 @@ int serial_check_io(device dev)
             }
             case IO_OP_WRITE:
             {
+                dcb_select->buffer_idx = 0;
                 outb(serial_dcb_list[dno].dev, iocb_next->buffer[0]);
                 int ier = inb(dev + IER);
                 outb(dev + IER, (ier | (1 << 1)));

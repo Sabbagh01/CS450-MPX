@@ -86,6 +86,7 @@ struct context* sys_call(struct context* context_in)
                 pcb_remove(runnext);
                 pcb_running = runnext;
                 runnext->state.exec = PCB_EXEC_RUNNING;
+                return runnext->pctxt;
             }
             else
             {
@@ -177,11 +178,16 @@ struct context* sys_call(struct context* context_in)
                 runnext->state.exec = PCB_EXEC_RUNNING;
                 return runnext->pctxt;
             }
+            // no ready processes so just get back to the one that called
+            return (void*)0;
+
+            /*
             // continue to original context in the absence of processes
             pcb_running = NULL;
             struct context* temp = context_original;
             context_original = NULL;
             return temp;
+            */
         }
         case EXIT:
         {

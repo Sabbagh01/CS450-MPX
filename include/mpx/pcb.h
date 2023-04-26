@@ -73,9 +73,9 @@ struct pcb_state {
  @brief
     Defines a process control block (PCB) structure for maintaining process information
     for a process.
-@var pcb::p_next
+ @var pcb::p_next
     Pointer to another node if the PCB is in a queue.
-@var pcb::state
+ @var pcb::state
     The state of a PCB. Includes process execution, dispatch, class, and priority.
  @var pcb::pstackseg
     A pointer to the stack section allocated for a process.
@@ -83,10 +83,7 @@ struct pcb_state {
     A pointer to a saved context for a process. When the process is not active,
     it will point to a valid context in the allocated stack section,
     which will be situated on top of the stack.
- @var pcb::curr_io
-    A pointer to a current I/O operation being done by a process. If not NULL,
-    the process is waiting for I/O and will be blocked.
-@var pcb::pname
+ @var pcb::pname
     The current name of a process.
 */
 struct pcb {
@@ -94,7 +91,6 @@ struct pcb {
     struct pcb_state state;
     void* pstackseg;
     struct context* pctxt;
-    struct iocb* curr_io;
     char name[MPX_PCB_PROCNAME_BUFFER_SZ];
 };
 
